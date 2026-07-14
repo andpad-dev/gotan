@@ -1,0 +1,42 @@
+# Built binary files
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+
+# Test Binary
+*.test
+
+# Output from coverage tools, etc.
+*.out
+
+# Go Workspace Files
+go.work
+go.work.sum
+
+# Directory of Dependent Packages
+vendor/
+
+# =========================
+# IDE / Editor
+# =========================
+# VS Code
+.vscode/
+vscode/
+
+# IntelliJ IDEA
+.idea/
+idea/
+*.iml
+
+# Zed
+.zed/
+zed/
+
+# =========================
+# OS / macOS / Windows
+# =========================
+.DS_Store
+Thumbs.db
