@@ -7,7 +7,7 @@ on:
 jobs:
   # scenarios/ と solutions/ が対で存在するか検証する.
   pairing:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@v4
       - name: Check scenario/solution pairing
@@ -34,7 +34,7 @@ jobs:
 
   # Markdown 内のリンク切れを検証する.
   links:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@v4
       - uses: lycheeverse/lychee-action@v2
@@ -47,7 +47,7 @@ jobs:
 
   # scenarios/ を変更する PR に難易度ラベルを必須にする.
   difficulty-label:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@v4
         with:
