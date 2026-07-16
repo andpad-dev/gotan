@@ -27,7 +27,10 @@ HTML コメント（この囲み）は PR 上では表示されないので、�
 「なんでこうなってるの？背景を調べよう」
 言語仕様や標準ライブラリの設計判断の背景まで掘り下げる問題。
 
-具体的な例題は、各難易度ラベルが付いたマージ済みの PR を参照してください。
+具体的な例題は、各難易度ラベルが付いた以下の PR を参照してください。
+- 初級: https://github.com/andpad-dev/gotan/pull/2
+- 中級: https://github.com/andpad-dev/gotan/pull/3
+- 上級: https://github.com/andpad-dev/gotan/pull/4
 -->
 
 ## 問題のテーマ
