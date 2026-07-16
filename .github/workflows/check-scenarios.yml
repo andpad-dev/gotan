@@ -1,0 +1,73 @@
+name: check-scenarios
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+jobs:
+  # scenarios/ と solutions/ が対で存在するか検証する.
+  pairing:
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check scenario/solution pairing
+        run: |
+          set -euo pipefail
+          missing=0
+          for f in scenarios/*/*.md; do
+            [ -e "${f}" ] || continue
+            pair="solutions/${f#scenarios/}"
+            if [ ! -f "${pair}" ]; then
+              echo "::error file=${f}::対応する ${pair} がありません"
+              missing=1
+            fi
+          done
+          for f in solutions/*/*.md; do
+            [ -e "${f}" ] || continue
+            pair="scenarios/${f#solutions/}"
+            if [ ! -f "${pair}" ]; then
+              echo "::error file=${f}::対応する ${pair} がありません"
+              missing=1
+            fi
+          done
+          exit "${missing}"
+
+  # Markdown 内のリンク切れを検証する.
+  links:
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/checkout@v4
+      - uses: lycheeverse/lychee-action@v2
+        env:
+          # プライベートリポジトリ (このリポジトリの PR 等) へのリンク検証に必要.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: --no-progress --accept '200..=299,403,429' './**/*.md'
+          fail: true
+
+  # scenarios/ を変更する PR に難易度ラベルを必須にする.
+  difficulty-label:
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require difficulty label
+        env:
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          if ! git diff --name-only "${BASE_SHA}"...HEAD | grep -q '^scenarios/.*\.md$'; then
+            echo "scenarios/ の変更がないためスキップします"
+            exit 0
+          fi
+          case ",${LABELS}," in
+            *,初級,*|*,中級,*|*,上級,*)
+              echo "難易度ラベルが付いています: ${LABELS}"
+              ;;
+            *)
+              echo "::error::難易度ラベル（初級 / 中級 / 上級）を 1 つ付けてください"
+              exit 1
+              ;;
+          esac
