@@ -39,21 +39,11 @@ HTML コメント（この囲み）は PR 上では表示されないので、�
   https://cs.opensource.google/go/go/+/refs/tags/go1.26.5:src/sync/once.go;l=20
 - slog.Value はなぜ == で比較できないのか。その仕組みを言語仕様から説明しなさい
   https://cs.opensource.google/go/go/+/refs/tags/go1.26.5:src/log/slog/value.go;l=22
-- （それでも時間が余ったら）全部調べてスライドを作り、参加者に向けて発表してください
 -->
 
 ## 問題のテーマ
 
 <!-- 例: 「reflect パッケージで panic が起きる理由を調べる」など -->
-
-## 配置先
-
-<!-- シナリオを追加したディレクトリにチェックを入れてください。 -->
-
-- [ ] `scenarios/01-packages/`
-- [ ] `scenarios/02-features/`
-- [ ] `scenarios/03-cmd-tools/`
-- [ ] `scenarios/04-deep-dive/`
 
 ## チェックリスト
 
