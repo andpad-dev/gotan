@@ -22,12 +22,12 @@ slog.Value の型定義を読み、`==` を禁止している仕掛けを見つ�
 <details>
 <summary>答え</summary>
 
-### 調査ルート
+**調査ルート**
 
 1. [go1.26.5 の src/log/slog/value.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.5:src/log/slog/value.go;l=22) を開く。
 2. `type Value struct` の定義を読む。
 
-### 答え
+**答え**
 
 定義の先頭に、この 1 行があります。
 
@@ -43,6 +43,8 @@ type Value struct {
 フィールド名がブランク識別子 `_` なので、初期化も参照も不要で、型の性質だけを構造体に与えています。
 
 </details>
+
+---
 
 ## 設問 2: なぜその仕掛けで比較できなくなるのか、言語仕様から説明しよう
 
@@ -60,12 +62,12 @@ type Value struct {
 <details>
 <summary>答え</summary>
 
-### 調査ルート
+**調査ルート**
 
 1. https://go.dev/ref/spec の「[Comparison operators](https://go.dev/ref/spec#Comparison_operators)」を読む。
 2. struct / array / function それぞれの比較可能性のルールを拾う。
 
-### 答え
+**答え**
 
 仕様には次の 3 つのルールがあります。
 
@@ -89,6 +91,8 @@ invalid operation: v1 == v2 (struct containing [0]func() cannot be compared)
 
 </details>
 
+---
+
 ## 設問 3: なぜ「長さ 0 の配列」なのか
 
 この仕掛けのフィールドが slog.Value のメモリ消費を増やさないことを、仕様を根拠に説明しましょう。
@@ -104,12 +108,12 @@ invalid operation: v1 == v2 (struct containing [0]func() cannot be compared)
 <details>
 <summary>答え</summary>
 
-### 調査ルート
+**調査ルート**
 
 1. 仕様の「[Size and alignment guarantees](https://go.dev/ref/spec#Size_and_alignment_guarantees)」を読む。
 2. `unsafe.Sizeof` で実測する。
 
-### 答え
+**答え**
 
 仕様が長さ 0 の配列のサイズを 0 と保証しています。
 
@@ -125,6 +129,8 @@ fmt.Println(unsafe.Sizeof(withoutArray{})) // 24 (フィールドなし)
 ```
 
 </details>
+
+---
 
 ## 設問 4: そもそもなぜ == を禁止したいのか
 
@@ -143,13 +149,13 @@ fmt.Println(unsafe.Sizeof(withoutArray{})) // 24 (フィールドなし)
 <details>
 <summary>答え</summary>
 
-### 調査ルート
+**調査ルート**
 
 1. value.go の `num` / `any` フィールドのコメントを読む。
 2. 仕様の「Comparison operators」の interface の項を読む。
 3. pkg.go.dev/log/slog で Value のメソッド一覧から比較用のメソッドを探す。
 
-### 答え
+**答え**
 
 仮に `==` が許されても、slog.Value の比較は期待どおりに動かないためです。
 
@@ -170,6 +176,8 @@ fmt.Println(unsafe.Sizeof(withoutArray{})) // 24 (フィールドなし)
 
 </details>
 
+---
+
 <details>
 <summary>こぼれ話: フィールドが先頭に置かれている理由</summary>
 
@@ -177,6 +185,8 @@ fmt.Println(unsafe.Sizeof(withoutArray{})) // 24 (フィールドなし)
 末尾のゼロサイズフィールドへのポインタが構造体の外を指してしまうのを防ぐためで、ゼロサイズフィールドは先頭に置くのが定石です。
 
 </details>
+
+---
 
 ## 調査の入り口
 
