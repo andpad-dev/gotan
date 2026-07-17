@@ -25,13 +25,13 @@ fmt.Printf("%#[1]v %[1]T\n", value)
 <details>
 <summary>答え</summary>
 
-### 調査ルート
+**調査ルート**
 
 1. https://pkg.go.dev/fmt を開き、Overview 冒頭の「Printing」セクションを読む。
 2. `%v` や `%T` のような書式指定子を、fmt のドキュメントでは **verb** と呼ぶ。verb の一覧表から `%v` と `%T` を探す。
 3. 少し下の「Other flags」で `#` フラグの説明を探す。
 
-### 答え
+**答え**
 
 - `%v`: 値をデフォルトのフォーマットで出力する。
 - `%T`: 値の型を Go の構文で出力する。
@@ -47,6 +47,8 @@ fmt.Printf("%#[1]v %[1]T\n", value)
 
 </details>
 
+---
+
 ## 設問 2: `[1]` は何をしている？
 
 引数の `value` は 1 つしか渡していないのに、なぜ 2 回出力されるのでしょうか？
@@ -61,18 +63,20 @@ fmt.Printf("%#[1]v %[1]T\n", value)
 <details>
 <summary>答え</summary>
 
-### 調査ルート
+**調査ルート**
 
 1. https://pkg.go.dev/fmt の Overview で `[` を検索する。
 2. 「Explicit argument indexes」セクションにたどり着く。
 
-### 答え
+**答え**
 
 `[n]` は explicit argument index（明示的な引数インデックス）で、「次の verb が使う引数を n 番目に切り替える」指定です。
 通常、verb は引数を先頭から順番に消費しますが、`%#[1]v %[1]T` はどちらの verb にも「1 番目の引数を使え」と指定しているため、1 つの `value` が 2 回出力されます。
 同じ値を複数のフォーマットで出したいときに、引数を重複して渡さずに済みます。
 
 </details>
+
+---
 
 <details>
 <summary>こぼれ話: フラグと引数インデックスの順序</summary>
@@ -90,6 +94,8 @@ fmt.Printf("%[1]#v %[1]T\n", value)
 実際に動かない様子は Go Playground で確認できます: https://go.dev/play/p/aplHlg0U0Xc
 
 </details>
+
+---
 
 ## 調査の入り口
 
