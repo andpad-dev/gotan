@@ -6,7 +6,7 @@
 fmt.Printf("%#[1]v %[1]T\n", value)
 ```
 
-（Go Playground で動かす: https://go.dev/play/p/fbq6AWx_dDE ）
+（Go Playground で動かす: https://go.dev/play/p/RTNSvn_p2Ai ）
 
 何をやっているコードか調べてみましょう。
 
@@ -40,10 +40,13 @@ fmt.Printf("%#[1]v %[1]T\n", value)
 つまり `%#v` と `%T` を並べたこのコードは、「値の中身と型を、どちらも Go の構文で確認する」デバッグの定番イディオムです。
 
 ```go
-value := struct{ Name string }{"gopher"}
+value := "gopher"
 fmt.Printf("%#[1]v %[1]T\n", value)
-// 出力: struct { Name string }{Name:"gopher"} struct { Name string }
+// 出力: "gopher" string
 ```
+
+`%v` なら `gopher` と出るところが、`%#v` では Go のリテラルどおり `"gopher"`（クォート付き）になります。
+構造体やマップを入れると、`%#v` と `%v` の差はもっとはっきり見えます。
 
 </details>
 
@@ -85,13 +88,13 @@ fmt.Printf("%#[1]v %[1]T\n", value)
 
 ```go
 fmt.Printf("%[1]#v %[1]T\n", value)
-// 出力: {%!#(string=gopher)}v struct { Name string }
+// 出力: %!#(string=gopher)v string
 ```
 
 引数インデックスの直後には verb が来る必要があるため、`#` が不正な verb として扱われ、`%!#(...)` というエラー表記になります。
 フラグは引数インデックスより前に書く、と覚えておきましょう。
 
-実際に動かない様子は Go Playground で確認できます: https://go.dev/play/p/aplHlg0U0Xc
+実際に動かない様子は Go Playground で確認できます: https://go.dev/play/p/fYQqEjznC-T
 
 </details>
 
