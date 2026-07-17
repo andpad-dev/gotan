@@ -21,13 +21,13 @@ slog.Handler インタフェースにはメソッドがいくつあり、それ�
 <details>
 <summary>答え</summary>
 
-### 調査ルート
+**調査ルート**
 
 1. https://pkg.go.dev/log/slog を開き、`Handler` を検索してジャンプする。
 2. インタフェース定義とメソッドごとのコメントを読む。
 3. [Example](https://pkg.go.dev/log/slog#pkg-examples) と Index から、Handler を実装している標準の型を探す。
 
-### 答え
+**答え**
 
 メソッドは 4 つあります。
 
@@ -42,6 +42,8 @@ Example の [Wrapping](https://pkg.go.dev/log/slog#example-package-Wrapping) に
 出力の一部だけ変えたいならこの方法で十分ですが、今回は出力形式そのものを YAML にしたいので、`Handle` を自分で書く必要があり、ラッパーでは足りません。
 
 </details>
+
+---
 
 ## 設問 2: slog.Handler を実装する際の注意点を調べよう
 
@@ -66,12 +68,12 @@ Example の [Wrapping](https://pkg.go.dev/log/slog#example-package-Wrapping) に
 <details>
 <summary>答え</summary>
 
-### 調査ルート
+**調査ルート**
 
 1. slog のドキュメントの Overview にある「[Writing a handler](https://pkg.go.dev/log/slog#hdr-Writing_a_handler)」節を読む。
 2. そこからリンクされている詳細ガイド https://golang.org/s/slog-handler-guide （[golang/example の slog-handler-guide](https://github.com/golang/example/blob/master/slog-handler-guide/README.md)）を読む。
 
-### 答え
+**答え**
 
 主な注意点は 3 つです。
 
@@ -93,6 +95,8 @@ Example の [Wrapping](https://pkg.go.dev/log/slog#example-package-Wrapping) に
 
 </details>
 
+---
+
 ## 設問 3: slog.Handler のテストの書き方を調べよう
 
 自作ハンドラーが slog.Handler の決まりごとを守れているか、単体テストで確認する方法を調べましょう。
@@ -108,18 +112,20 @@ Example の [Wrapping](https://pkg.go.dev/log/slog#example-package-Wrapping) に
 <details>
 <summary>答え</summary>
 
-### 調査ルート
+**調査ルート**
 
 1. slog-handler-guide の「[Testing](https://github.com/golang/example/blob/master/slog-handler-guide/README.md#testing)」節を読む。
 2. そこで使われている [testing/slogtest](https://pkg.go.dev/testing/slogtest) パッケージのドキュメントを読む。
 
-### 答え
+**答え**
 
 標準パッケージの `testing/slogtest` を使います。
 `slogtest.TestHandler` に「自作ハンドラー」と「出力結果を map のスライスに変換して返す関数」を渡すと、Handler が守るべき決まりごと（属性の解決、グループの扱い、空の属性の無視など）を一括で検証してくれます。
 自分でテストケースを列挙しなくても、slog.Handler の仕様準拠を網羅的に確認できるのがポイントです。
 
 </details>
+
+---
 
 ## 調査の入り口
 
