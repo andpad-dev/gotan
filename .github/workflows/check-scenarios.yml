@@ -5,32 +5,36 @@ on:
     types: [opened, synchronize, reopened, labeled, unlabeled]
 
 jobs:
-  # scenarios/ と solutions/ が対で存在するか検証する.
-  pairing:
+  # 問題ディレクトリの構成 (<カテゴリ>/<難易度>/<問題名>/README.md) を検証する.
+  structure:
     runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@v4
-      - name: Check scenario/solution pairing
+      - name: Check question directory structure
         run: |
           set -euo pipefail
-          missing=0
-          for f in scenarios/*/*.md; do
-            [ -e "${f}" ] || continue
-            pair="solutions/${f#scenarios/}"
-            if [ ! -f "${pair}" ]; then
-              echo "::error file=${f}::対応する ${pair} がありません"
-              missing=1
+          bad=0
+          # 難易度ディレクトリ名の検証.
+          for d in [0-9][0-9]-*/*/; do
+            [ -d "${d}" ] || continue
+            level=$(basename "${d}")
+            case "${level}" in
+              01-beginner|02-intermediate|03-advanced) ;;
+              *)
+                echo "::error::${d} は難易度ディレクトリ (01-beginner / 02-intermediate / 03-advanced) ではありません"
+                bad=1
+                ;;
+            esac
+          done
+          # 問題ディレクトリ直下に README.md があるか検証.
+          for d in [0-9][0-9]-*/[0-9][0-9]-*/*/; do
+            [ -d "${d}" ] || continue
+            if [ ! -f "${d}README.md" ]; then
+              echo "::error::${d} に README.md がありません"
+              bad=1
             fi
           done
-          for f in solutions/*/*.md; do
-            [ -e "${f}" ] || continue
-            pair="scenarios/${f#solutions/}"
-            if [ ! -f "${pair}" ]; then
-              echo "::error file=${f}::対応する ${pair} がありません"
-              missing=1
-            fi
-          done
-          exit "${missing}"
+          exit "${bad}"
 
   # Markdown 内のリンク切れを検証する.
   links:
@@ -45,29 +49,43 @@ jobs:
           args: --no-progress --accept '200..=299,403,429' './**/*.md'
           fail: true
 
-  # scenarios/ を変更する PR に難易度ラベルを必須にする.
+  # 問題を変更する PR に、難易度ディレクトリと一致するラベルを必須にする.
   difficulty-label:
     runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Require difficulty label
+      - name: Require difficulty label matching level directory
         env:
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
-          if ! git diff --name-only "${BASE_SHA}"...HEAD | grep -q '^scenarios/.*\.md$'; then
-            echo "scenarios/ の変更がないためスキップします"
+          # 問題ディレクトリ (<カテゴリ>/<難易度>/<問題名>/) 配下の変更のみ対象.
+          # 難易度ディレクトリ直下の .gitkeep 等は含めない.
+          levels=$(git diff --name-only "${BASE_SHA}"...HEAD \
+            | { grep -E '^[0-9]{2}-[a-z-]+/(01-beginner|02-intermediate|03-advanced)/[^/]+/' || true; } \
+            | cut -d/ -f2 | sort -u)
+          if [ -z "${levels}" ]; then
+            echo "問題ディレクトリの変更がないためスキップします"
             exit 0
           fi
-          case ",${LABELS}," in
-            *,初級,*|*,中級,*|*,上級,*)
-              echo "難易度ラベルが付いています: ${LABELS}"
-              ;;
-            *)
-              echo "::error::難易度ラベル（初級 / 中級 / 上級）を 1 つ付けてください"
-              exit 1
-              ;;
-          esac
+          bad=0
+          for level in ${levels}; do
+            case "${level}" in
+              01-beginner) want="初級" ;;
+              02-intermediate) want="中級" ;;
+              03-advanced) want="上級" ;;
+            esac
+            case ",${LABELS}," in
+              *",${want},"*)
+                echo "${level} に対応するラベル「${want}」が付いています"
+                ;;
+              *)
+                echo "::error::${level} の問題を変更しています。ラベル「${want}」を付けてください"
+                bad=1
+                ;;
+            esac
+          done
+          exit "${bad}"
