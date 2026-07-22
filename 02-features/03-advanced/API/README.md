@@ -69,8 +69,8 @@ Go 式のサブセットなら、Go 開発者が直感的に書ける
 
 hasPrefix 関数を使って、packagePath が github.com から始まるものだけを抽出する例です。
 
-- Goの式: hasPrefix(packagePath, "github.com")
-- エンコード後: hasPrefix%28packagePath%2C%20%22github.com%22%29
+- Goの式: `hasPrefix(packagePath, "github.com")`
+- エンコード後: `hasPrefix%28packagePath%2C%20%22github.com%22%29`
 
 ```bash
 curl -L "https://pkg.go.dev/v1beta/search?q=xyzzy&filter=hasPrefix%28packagePath%2C%20%22github.com%22%29" | jq .
