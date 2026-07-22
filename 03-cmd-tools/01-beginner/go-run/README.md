@@ -15,8 +15,23 @@ Go はコンパイル言語のはずですが、この理解で合っている�
 <details>
 <summary>ヒント</summary>
 
-- まずは `go help run` を実行して、コマンドの説明を読んでみましょう
-- `go run -x main.go` のように `-x` フラグを付けて実行すると、実際に裏で呼ばれているコマンド列が表示されます。上記の Go Playground のコードをファイルに保存して手元で試してみましょう
+**ヘルプ文言から当たりをつける**
+
+- `go help run` の説明文を 1 文ずつ読み、動詞に注目する。「解釈する・実行する」ではなく、別の動詞が使われていないか確認する。
+
+**フラグを使って手を動かす**
+
+- 上記の Go Playground のコードをファイルに保存し、`go run -x main.go` を実行する。`-x` は「裏で実際に呼ばれた外部コマンドをそのまま表示する」フラグ。
+- 出力される行を 1 行ずつ眺めて、次の 2 つに仕分けしてみる。
+  - 「何かを生成している」行（コマンド名に `compile` や `link` が含まれる行、`mkdir` の行）
+  - 「生成済みの何かを実行している」行（パスだけがポツンと書かれた行）
+  - この仕分けができると、「作ってから動かしている」のか「その場で読みながら動かしている」のか判断できる。
+
+**ソースコードで裏取りする**
+
+- エントリポイント: https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go の `runRun` 関数（73 行目）。まずここを開く。
+- `runRun` を上から読まず、まず末尾（170〜173 行目）だけを見る。`b.LinkAction(...)` の結果を `a1` という変数に入れ、`work.Action{... Actor: work.ActorFunc(buildRunProgram) ...}` の `Deps` に `a1` を渡している。「ビルドを表すアクション」と「実行を表すアクション」が別の変数として分かれ、後者が前者に依存する形でつながれている点に注目する。
+- 依存されている側の `buildRunProgram` 関数（200〜201 行目）を読む。何を実行しているか（`a.Deps[0].BuiltTarget()`）を確認し、ソースファイルの中身を読んでいる形跡があるかどうかを見る。
 
 </details>
 
@@ -25,9 +40,10 @@ Go はコンパイル言語のはずですが、この理解で合っている�
 
 **調査ルート**
 
-1. `go help run`（= https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program ）を読む。「Run compiles and runs the named main Go package.」とあり、"compiles" という単語が使われている。インタプリタなら「解釈・実行する」という説明になるはずで、まず「コンパイルする」と書かれている時点で疑わしい。
-2. 実際に手元で `go run -x main.go` を実行し、裏で呼ばれているコマンド列を確認する。
-3. cmd/go のソース（ https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go ）を読むと、`runRun` 関数がパッケージをビルドするアクション（`b.LinkAction`）と、ビルドした実行ファイルを実行するアクション（`buildRunProgram`）を順につないでいることが分かる。
+1. `go help run`（= https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program ）を読む。「Run compiles and runs the named main Go package.」とあり、動詞は "compiles"（コンパイルする）。インタプリタなら "interprets" や "evaluates" のような動詞になるはずで、この時点で疑わしい。
+2. `go run -x main.go` を実行し、出力を「生成している行」と「実行している行」に仕分ける。
+3. cmd/go のソース（ https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go ）の `runRun` 関数（73 行目）を読む。170〜173 行目で、パッケージをビルドするアクション（`b.LinkAction`、変数 `a1`）と、ビルド済みの実行ファイルを実行するアクション（`Actor: work.ActorFunc(buildRunProgram)`）を、`Deps: []*work.Action{a1}` という依存関係でつないでいることが分かる。
+4. 依存先の `buildRunProgram` 関数（200〜201 行目）を読むと、`a.Deps[0].BuiltTarget()` で「ビルドアクションが作った実行ファイルのパス」を取得し、それをそのまま実行しているだけだと分かる。ソースファイルを 1 行ずつ読んでいる処理はどこにもない。
 
 **答え**
 
@@ -59,8 +75,21 @@ hello, gotan v2
 <details>
 <summary>ヒント</summary>
 
-- `go run -x main.go` の出力から `WORK=...` の行を控えておき、コマンドの実行が終わった後に、そのパスが実際に存在するか自分で確認してみましょう
-- 消えるとしたら、どこでその処理をしているのか、`go help build` のフラグ一覧にヒントがあります
+**まず手を動かして事実を確認する**
+
+- `go run -x main.go` の出力の 1 行目 `WORK=/var/folders/.../go-buildXXXXXXXXXX` を控える。
+- コマンドの実行が終わった後、そのパスに対して `ls` や `find` を実行し、実際にまだ存在するか確認する。
+
+**ヘルプから「デフォルトの挙動」を推測する**
+
+- `go help build` のフラグ一覧を眺め、一時ディレクトリに言及しているフラグを探す。見つけたフラグの説明文を読み、それが「デフォルトでは行われないこと」を指定するフラグなのか、「デフォルトの動作を止める」フラグなのかを見分ける。
+
+**ソースコードで裏取りする**
+
+- エントリポイント: https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/action.go 。ページ内検索（`f` キー）で `WorkDir` を検索すると、関連箇所にジャンプできる。
+- まず一時ディレクトリを作る側を読む: `NewBuilder` 関数（281 行目）の中で `os.MkdirTemp(cfg.Getenv("GOTMPDIR"), "go-build")`（298 行目）が呼ばれている箇所を見つける。第一引数・第二引数がそれぞれ何を意味するか（`os.MkdirTemp` のドキュメントも確認する）。
+- 次に片付ける側を読む: `Builder` 型の `Close` メソッド（340 行目）を見つける。中で `-work` フラグに対応する `cfg.BuildWork` が `false` のときだけ `robustio.RemoveAll(b.WorkDir)`（352 行目）が呼ばれていることを確認する。
+- `Close` がどこから呼ばれているかも遡ってみる（`run.go` の `runRun` 内で `defer func() { ... b.Close() ... }()` となっている）。「一時ディレクトリを作る処理」と「後片付けの処理」が対になっていることを、自分でソースを行き来して確認する。
 
 </details>
 
@@ -71,7 +100,9 @@ hello, gotan v2
 
 1. `go run -x main.go` で表示された `WORK=...` のパスを、コマンド終了後に `ls` してみる → ディレクトリごと消えている。
 2. `go help build` を読むと `-work` フラグの説明に「print the name of the temporary work directory and do not delete it when exiting」とあり、"delete it when exiting" が **デフォルトの挙動である**ことが読み取れる。
-3. 実際の削除処理は cmd/go のソース（ https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/action.go ）にある。`NewBuilder` が `os.MkdirTemp(cfg.Getenv("GOTMPDIR"), "go-build")` で一時ディレクトリを作り（207〜行目付近）、`Builder.Close()` が `-work` フラグが指定されていない限り `robustio.RemoveAll(b.WorkDir)` で削除している（343〜行目付近）。
+3. cmd/go のソース（ https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/action.go ）を読む。`NewBuilder` 関数（281 行目）が `os.MkdirTemp(cfg.Getenv("GOTMPDIR"), "go-build")`（298 行目）で一時ディレクトリを作成している。
+4. `Builder.Close()`（340 行目）を読むと、`-work` フラグ（`cfg.BuildWork`）が指定されていない限り `robustio.RemoveAll(b.WorkDir)`（352 行目）で削除している。
+5. `run.go` の `runRun` 関数冒頭で `b.Close()` が `defer` されており（90〜94 行目）、`go run` の実行が終わるタイミングで必ず後片付けが走ることが分かる。
 
 **答え**
 
