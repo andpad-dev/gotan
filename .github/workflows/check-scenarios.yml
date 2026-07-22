@@ -60,11 +60,14 @@ jobs:
         env:
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
           # 問題ディレクトリ (<カテゴリ>/<難易度>/<問題名>/) 配下の変更のみ対象.
           # 難易度ディレクトリ直下の .gitkeep 等は含めない.
-          levels=$(git diff --name-only "${BASE_SHA}"...HEAD \
+          # HEAD ではなく PR ブランチ先端 (HEAD_SHA) を使うことで、
+          # main に新しいコミットがマージされた後でも正確に PR の差分だけを比較する.
+          levels=$(git diff --name-only "${BASE_SHA}...${HEAD_SHA}" \
             | { grep -E '^[0-9]{2}-[a-z-]+/(01-beginner|02-intermediate|03-advanced)/[^/]+/' || true; } \
             | cut -d/ -f2 | sort -u)
           if [ -z "${levels}" ]; then
