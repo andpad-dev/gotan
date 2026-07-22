@@ -141,8 +141,7 @@ Go のモジュールシステムでは、モジュールパスとパッケー�
   "modulePath": "golang.org/x/time",
   "version": "v0.15.0",
   "path": "golang.org/x/time/rate",
-  "name": "rate",
-  ...
+  "name": "rate"
 }
 ```
 
