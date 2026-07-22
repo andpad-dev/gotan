@@ -5,6 +5,8 @@
 調べてみると、`//go:generate` ディレクティブに書けるのは決まったフォーマットの「コード生成コマンド」だけだと思っていたのですが、
 実際に手元で試してみると、想像以上に自由度が高いことに気づきました。
 
+同じディレクトリに置いてある [`main.go`](./main.go) が実際に試したサンプルコードです。
+
 ```go
 package main
 
@@ -17,10 +19,10 @@ package main
 func main() {}
 ```
 
-手元で `go generate ./...` を実行すると、以下のように出力されました（`go1.26.4` / macOS）。
+手元で `go generate main.go` を実行すると、以下のように出力されました（`go1.26.4` / macOS）。
 
 ```
-$ go generate ./...
+$ go generate main.go
 hello from go generate
 2026-07-22
 GOFILE=main.go GOLINE=5 GOPACKAGE=main
@@ -39,7 +41,7 @@ GOFILE=main.go GOLINE=5 GOPACKAGE=main
 さらに、コード生成という本来の目的から外れた、もっとトリッキーなコマンドを `//go:generate` に書いて試してみてください。
 （例: `pwd` や `whoami`、`git log -1` 、`env` など。手元の環境を壊さない範囲で自由に試してください）
 
-- `go generate -n ./...` と `go generate -x ./...` を実行すると、それぞれ何が表示されるでしょうか。通常実行との違いは何でしょうか。
+- `go generate -n main.go` と `go generate -x main.go` を実行すると、それぞれ何が表示されるでしょうか。通常実行との違いは何でしょうか。
 - コマンドに渡せる `$GOFILE` や `$GOLINE` のような変数は、どこに一覧がありますか。
 
 <details>
@@ -69,7 +71,7 @@ GOFILE=main.go GOLINE=5 GOPACKAGE=main
 `-n` は実際にはコマンドを実行せず、実行されるはずのコマンド列だけを表示します。`-x` は実際に実行しつつ、実行したコマンド列も表示します（`-v` はファイル名のみ表示で、実行コマンドは表示しません）。
 
 ```
-$ go generate -x ./...
+$ go generate -x main.go
 echo hello from go generate
 hello from go generate
 date +%Y-%m-%d
@@ -79,7 +81,7 @@ GOFILE=main.go GOLINE=5 GOPACKAGE=main
 echo -command による別名も使える
 -command による別名も使える
 
-$ go generate -n ./...
+$ go generate -n main.go
 echo hello from go generate
 date +%Y-%m-%d
 sh -c echo GOFILE=main.go GOLINE=5 GOPACKAGE=main
