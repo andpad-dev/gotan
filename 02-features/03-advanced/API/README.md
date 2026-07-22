@@ -242,9 +242,9 @@ pkg.go.dev は Google が無料で提供する公開サービスです。
 
 **調査ルート**
 
-- API ドキュメントの /v1beta/imported-by/{path} の説明を読む。
-- pkgsite のソースコード（https://cs.opensource.google/go/x/pkgsite）で、imported-by の実装を確認する。
-- Go のモジュールシステムのドキュメント（https://go.dev/ref/mod）で、モジュールの境界について確認する。
+- API ドキュメントの `/v1beta/imported-by/{path}` の説明を読む。
+- pkgsite のソースコード(https://cs.opensource.google/go/x/pkgsite)で、imported-by の実装を確認する。
+- Go のモジュールシステムのドキュメント(https://go.dev/ref/mod)で、モジュールの境界について確認する。
 
 **答え**
 
