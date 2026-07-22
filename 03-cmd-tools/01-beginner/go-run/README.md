@@ -101,35 +101,37 @@ $ find /var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-build1851907018 -maxdepth 3
 
 ---
 
-## 設問 3: 実際に `go run` を実装しているソースコードを読み解いてみよう
+## 設問 3: 「ディレクトリの作成」「ビルドの実行」「ビルドしたファイルの扱い」は、それぞれどこで行われている？
 
-`-x` の出力から「ビルドしてから実行し、後片付けする」という大まかな流れは分かりました。
-では実際に、この流れは `go` コマンド自身のソースコードのどこに書かれているのでしょうか。`cmd/go` のソースを実際に読んで確認してみましょう。
+設問 1・2 で、`go run` は ①一時ディレクトリを作り → ②その中でビルドし → ③できた実行ファイルを実行し → ④最後にディレクトリごと片付ける、という流れだと分かりました。
+では実際に、この 3 つの処理（ディレクトリの作成・ビルドの実行・ビルドしたファイルの扱い）は、`go` コマンド自身のソースコードのどこに書かれているのでしょうか。
+
+**前提知識: `go` のサブコマンドはソースコード上のどこにあるか**
+
+`go` コマンドは 1 つの大きなプログラムですが、内部ではサブコマンドごとに `cmd/go/internal/<サブコマンド名>` というパッケージに実装が分かれています。たとえば `go run` なら `cmd/go/internal/run`、`go build` なら `cmd/go/internal/work` です。各パッケージにはサブコマンド名と同じファイル（`run.go` など）があり、その中で `CmdRun.Run = runRun` のように `Cmd*.Run` フィールドへ登録されている関数が、そのサブコマンドが実行されたときに実際に呼ばれるエントリポイントになります（詳しくは [`03-cmd-tools` のカテゴリ README](../../README.md) を参照）。
+
+つまり `go run` を読み解くなら、まず `cmd/go/internal/run` パッケージのエントリポイントを開くところから始めます。
 
 <details>
-<summary>ヒント 1</summary>
+<summary>ヒント 1: run.go を読んで、どこを掘り下げればよいか当たりをつける</summary>
 
-`go` コマンド（`cmd/go`）も Go で書かれた 1 つのプログラムです。読み方の基本は普段のコードリーディングと同じなので、初めての場合は次の手順で少しずつ読み進めてみましょう。
+`cmd/go/internal/run` パッケージのエントリポイントとなる関数（https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go ）を開き、中で呼ばれている関数・型を上から順に眺めてみましょう。
 
-1. **ファイルを開く**: https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go を開きます。`cmd/go` の中では、サブコマンドごとに `internal/<サブコマンド名>` というパッケージが分かれていて、`go run` の処理はこの `internal/run` パッケージにまとまっています。
-   - URL の `refs/tags/go1.26.4` の部分は、手元の `go version` の結果とバージョンを揃えるためのものです。バージョンが違うと実装が変わっている可能性があります。
-2. **いきなり全部読まない**: 最初から 1 行ずつ読もうとせず、まずはファイル内の `func` と書かれた行だけを目で追って、どんな関数があるかをざっと把握しましょう。`runRun` という、いかにも中心になりそうな関数が見つかるはずです（73 行目）。
-3. **どこから呼ばれる関数か確認する**: `runRun` がいつ呼ばれるかを確認するため、`init()` 関数（65〜71 行目）を見てみましょう。`CmdRun.Run = runRun` という 1 行があります。これは「`go run` が実行されたときに、実際の処理として `runRun` 関数が呼ばれる」という意味です。ここが、これから読み進める出発点になります。
+- 1 つ 1 つの処理が、`run` パッケージ自身の中で定義されたものなのか、それとも別のパッケージのものなのかを見分けてみましょう（呼び出しの前についているパッケージ名がヒントになります）。
+- 別パッケージの処理が見つかったら、そのパッケージ名から「何を担当していそうか」を推測してみましょう。ビルドやリンクに関係していそうな名前のパッケージが見つかれば、そこが次に読むべき場所です。
+- 「これから何かを準備している」ように見える処理と、「準備したものを使って実行している」ように見える処理を区別できると、設問の 3 つの問い（ディレクトリ作成・ビルド実行・ファイルの扱い）がそれぞれどのあたりに対応するかが見えてきます。
 
 </details>
 
 <details>
-<summary>ヒント 2</summary>
+<summary>ヒント 2: 見つけたパッケージの中をどう読み解くか</summary>
 
-`runRun` 関数（73〜174 行目）は長いので、上から全部を理解しようとせず、まず空行で区切られたブロックごとに「何をしていそうか」を大づかみしてみましょう。
+ヒント 1 で見つかるパッケージは、`go build` とも共通処理を担当するくらい大きく、ファイルも複数に分かれています。全部を上から読もうとせず、次のように的を絞ってみましょう。
 
-- 74〜86 行目: `moduleLoaderState` まわりの分岐。何かのモードを判定している？
-- 88〜94 行目: `work.BuildInit` と `work.NewBuilder`、それに続く `defer func() { ... b.Close() ... }()`。設問 2 で調べた「後片付け」に関係しそうな行はどこでしょうか。
-- 96〜140 行目: `for` ループや `if`/`else if`/`else` が並ぶ、少し長いブロック。`args`（コマンドライン引数）を扱っていそうです。
-- 141〜168 行目: `p.Internal...` のように、`p` というパッケージらしき変数を操作している。
-- 170〜173 行目: 設問 1 で見た `LinkAction` と `buildRunProgram` が出てくる、最後の 4 行。
-
-それぞれのブロックの直前・直後にあるコメントや、変数名・関数名から「大まかに何のための処理か」を推測してみましょう。すべての行の意味が分からなくても構いません。
+- ページ内検索（`f` キー）で、「ディレクトリを作る／消す」といった処理に典型的に出てくる標準ライブラリの関数名（例: `os.MkdirTemp` や `RemoveAll` のような名前）を探してみましょう。
+- 「実行ファイルの実体」を表していそうな変数・フィールド名を探し、それがどこで値を設定され、どこで読み出されているかを追ってみましょう。
+- 「コンパイラ・リンカを実際に呼び出している」処理は、さらに別の関数に分かれています。ビルドの動詞そのもの（コンパイルする・リンクする）を含むような、短い名前の関数を探すと見つけやすいです。
+- 1 つの関数を最後まで読み切ろうとせず、空行で区切られたブロックごとに「これは準備をしているブロックか」「実際に何かを実行しているブロックか」を大づかみするのがコツです（設問 1 のヒントで使った読み方と同じです）。
 
 </details>
 
@@ -138,40 +140,76 @@ $ find /var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-build1851907018 -maxdepth 3
 
 **調査ルート**
 
-1. cmd/go のソース（ https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go ）を開く。
-2. `init()` 関数（65〜71 行目）を読み、`go run` 実行時に実際の処理を担う関数（`runRun`）がどう登録されているかを確認する。
-3. `runRun` 関数（73〜174 行目）を、空行で区切られたブロックごとに読み進める。
+1. https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go の `runRun` 関数（73 行目〜）を読む。
+2. `work.NewBuilder` の実体（https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/action.go の 281 行目〜）を読み、一時ディレクトリの作成箇所を確認する。
+3. `LinkAction`（同ファイル 922 行目〜）と `CompileAction`（633 行目〜）で、パッケージごとのサブディレクトリ（`Objdir`）と実行ファイルのパス（`Target`）がどう決まるかを確認する。
+4. https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/exec.go の `Builder.build`（723 行目〜、コンパイル担当）と `Builder.link`（1591 行目〜、リンク担当）を読み、実際にコンパイラ・リンカを呼び出している場所を確認する。
+5. `Builder.Close`（action.go 340 行目〜）を読み、後片付けの実装を確認する。
 
 **答え**
 
-**`init()` の処理（65〜71 行目）**
+**① ディレクトリの作成はどこで行われるか**
+
+`runRun`（run.go 89 行目）が `work.NewBuilder("", ...)` を呼ぶと、その内部（action.go 281〜310 行目）で
 
 ```go
-func init() {
-	CmdRun.Run = runRun // break init loop
+tmp, err := os.MkdirTemp(cfg.Getenv("GOTMPDIR"), "go-build")
+...
+b.WorkDir = tmp
+```
 
-	work.AddBuildFlags(CmdRun, work.DefaultBuildFlags)
-	work.AddCoverFlags(CmdRun, nil)
-	CmdRun.Flag.Var((*base.StringsFlag)(&work.ExecCmd), "exec", "")
+が実行され、`$WORK` にあたる一時ディレクトリが 1 つ作られます。
+
+さらにパッケージごとに、`$WORK` の下へ `b001/`, `b002/`... というサブディレクトリ（`Objdir`）のパスを割り当てる処理が `NewObjdir`（action.go 391 行目〜）にあります。
+
+```go
+func (b *Builder) NewObjdir() string {
+	b.objdirSeq++
+	return str.WithFilePathSeparator(filepath.Join(b.WorkDir, fmt.Sprintf("b%03d", b.objdirSeq)))
 }
 ```
 
-- 1 行目の `CmdRun.Run = runRun` は、22〜63 行目で定義されている `CmdRun`（`go run` コマンドそのものを表す変数）の `Run` フィールドに、実際の処理を行う `runRun` 関数を後から代入しています。`var CmdRun = &base.Command{..., Run: runRun, ...}` のように変数定義の中で直接代入せず、わざわざ `init()` の中で後から結び付けているのは、`// break init loop`（初期化ループを断ち切る）というコメントの通り、何らかの初期化順序の問題を避けるためです。ただし、なぜここで問題になるのかは `run.go` 単体を読むだけでは断定できませんでした。気になる場合は、Go 言語仕様の [Package initialization](https://go.dev/ref/spec#Package_initialization) で `var` の初期化順序のルールを確認したうえで、`git log -p` や https://go-review.googlesource.com でこの行の変更履歴を辿ってみると、実際にどんな問題が起きていたのか調べられます。
-- 2〜4 行目は `-race` や `-work` のような、`go build` と共通のビルドフラグ・カバレッジフラグ・`-exec` フラグを `go run` にも登録する処理です。「`go run` にも `go build` と同じフラグが使えるのはなぜか」を確かめたければ、`work.AddBuildFlags` の実装（同じ `cmd/go/internal/work` パッケージ内）を追いかけてみましょう。
+ただしこの時点ではまだパス文字列を組み立てているだけです。実際にディレクトリを作成しているのは、後述する `Builder.build`／`Builder.link`（exec.go）の中にある `sh.Mkdir(a.Objdir)` です。つまり「`$WORK` 本体」と「パッケージごとの `bNNN/` ディレクトリ」は、パスが決まるタイミングと実際に作られるタイミング（コード上の場所）が分かれています。
 
-**`runRun` のブロックごとの処理内容（73〜174 行目）**
+**② ビルドの実行はどこで行われるか**
 
-| 行番号 | 処理内容 |
-| --- | --- |
-| 74〜86 | `go run cmd@version` のようにバージョン付きで指定された場合は、カレントディレクトリの `go.mod` を無視してモジュールを取得するモードに切り替える（`shouldUseOutsideModuleMode` での判定）。それ以外は通常どおり、カレントディレクトリの `go.mod`/ワークスペースを使う。 |
-| 88〜94 | `work.BuildInit` でビルド設定を初期化したうえで、`work.NewBuilder("", ...)` を呼び、一時ディレクトリ（`$WORK`）を持つ `Builder` を作成する。直後の `defer func() { ... b.Close() ... }()` が、設問 2 で確認した「後片付け」の予約にあたる。`defer` は Go の構文で「この関数（`runRun`）の処理が終わるときに、必ず実行する」という意味なので、`go run` が実行されるたびに、最後に必ずこの後片付けが呼ばれることになる。 |
-| 96〜140 | コマンドライン引数（`args`）を解析し、「`.go` ファイルの並び」なのか「`import path` などのパッケージ指定」なのかを判定して、対象のパッケージ（`p`）をロードする。 |
-| 141〜168 | ロードしたパッケージのエラーチェック、カバレッジビルドの準備、デバッグ情報を省く設定（`OmitDebug = true`）、実行ファイル名の決定などを行う。 |
-| 170〜173 | 設問 1 で確認した本題の 4 行。`b.LinkAction(...)` でパッケージをビルドするアクション（`a1`）を作り、`buildRunProgram` を実行本体とする実行アクション（`a`）を `Deps: []*work.Action{a1}` で `a1` に依存させたうえで、`b.Do(ctx, a)` でこの依存関係ごと実行する。「`a1`（ビルド）が終わってから `a`（実行）が行われる」という、2 段階の処理として書かれている。 |
+`runRun`（run.go 170〜173 行目）に、次の 3 行があります。
 
-つまり `runRun` は、①モードの判定 → ②一時ディレクトリの準備と後片付けの予約 → ③対象パッケージの特定 → ④ビルド前の下ごしらえ → ⑤ビルドと実行、という流れの関数で、設問 1・2 で観察した「ビルドしてから実行し、最後に後片付けする」という挙動が、そのままコードの構造として表れています。
+```go
+a1 := b.LinkAction(moduleLoaderState, work.ModeBuild, work.ModeBuild, p)
+a1.CacheExecutable = true
+a := &work.Action{Mode: "go run", Actor: work.ActorFunc(buildRunProgram), Args: cmdArgs, Deps: []*work.Action{a1}}
+b.Do(ctx, a)
+```
 
-より深く追いたい場合は、`buildRunProgram` 関数（198〜201 行目）で `a.Deps[0].BuiltTarget()`（直前のビルドアクションが作った実行ファイルのパス）を実行していること、`Builder.Close()`（ https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/action.go の 340 行目）が `-work` フラグ（`cfg.BuildWork`）が指定されていない限り一時ディレクトリを `RemoveAll` していることも合わせて確認してみましょう。
+`LinkAction`（action.go 922 行目〜）は「まずコンパイルし、それが終わったらリンクする」という依存関係を持った `Action`（`a1`）を組み立てているだけで、実際にコンパイラ・リンカを呼び出す処理はここには書かれていません。実際に外部コマンドを実行しているのは `work/exec.go` の `Builder.build`（723 行目〜、コンパイルを担当）と `Builder.link`（1591 行目〜、リンクを担当）です。`b.Do(ctx, a)` が依存関係をたどりながらこの 2 つの関数を順番に呼び出すことで、初めて `compile`・`link` が実際に動きます。つまり「何をビルドするかを組み立てる場所（`LinkAction`）」と「実際にビルドする場所（`Builder.build`/`Builder.link`）」は、コード上で分かれています。
+
+**③ ビルドしたファイルはどのように扱われるか**
+
+`LinkAction`（action.go 955 行目）で、リンク後にできる実行ファイルのパスが
+
+```go
+a.Target = a.Objdir + filepath.Join("exe", name) + cfg.ExeSuffix
+a.built = a.Target
+```
+
+として `Action` の `built` フィールドに記録されます。`go run` が実際に実行する最後の一手である `buildRunProgram`（run.go 200 行目〜）は、この値を `a.Deps[0].BuiltTarget()` として取り出し、実行ファイルとして起動します。
+
+```go
+cmdline := str.StringList(work.FindExecCmd(), a.Deps[0].BuiltTarget(), a.Args)
+```
+
+そして実行が終わったあと、`runRun`（run.go 90〜94 行目）が `defer` していた `Builder.Close()`（action.go 340 行目〜）が呼ばれ、
+
+```go
+if !cfg.BuildWork {
+	if err := robustio.RemoveAll(b.WorkDir); err != nil {
+		return err
+	}
+}
+```
+
+という処理で `$WORK` ディレクトリ（＝実行ファイルを含む中間生成物すべて）がまとめて削除されます。つまりビルドされた実行ファイルは、「一時ディレクトリの中に作られる → パスだけを覚えておいて起動される → 実行後にディレクトリごと削除される」という、使い捨てのファイルとして扱われています。
 
 </details>
 
@@ -193,3 +231,4 @@ func init() {
 - https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program
 - https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go
 - https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/action.go
+- https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/exec.go
