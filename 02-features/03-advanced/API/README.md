@@ -1,4 +1,4 @@
-# pkg.go.dev API（v1beta）を活用する
+# pkg.go.dev API(v1beta)を活用する
 
 チームで使う HTTP ルーターライブラリを選定することになりました。
 「インポート数」や「メンテナンス状況」で比較・ソートしたいのですが、pkg.go.dev のブラウザ UI にはそうした機能がありません。
@@ -20,7 +20,7 @@
 <summary>ヒント</summary>
 
 - [API ドキュメント](https://pkg.go.dev/v1beta/api) の「Requests」セクションに filter の説明がある
-- filter で使える変数は、各エンドポイントのレスポンス型（JSON フィールド）によって決まる
+- filter で使える変数は、各エンドポイントのレスポンス型(JSON フィールド)によって決まる
 - SearchResult 型にどんなフィールドがあるか確認してみよう
 - インポート数のような人気度指標が含まれているか見てみよう
 
@@ -32,8 +32,8 @@
 **調査ルート**
 
 1. https://pkg.go.dev/v1beta/api の「Routes」セクションで `/v1beta/search` のレスポンス型を確認する。
-2. レスポンス型のリンク（`SearchResult`）をたどり、どんなフィールドが返されるか確認する。
-3. pkg.go.dev のソースコード（https://cs.opensource.google/go/x/pkgsite）で SearchResult の定義を見る。
+2. レスポンス型のリンク(`SearchResult`)をたどり、どんなフィールドが返されるか確認する。
+3. pkg.go.dev のソースコード(https://cs.opensource.google/go/x/pkgsite)で SearchResult の定義を見る。
 
 **答え**
 
@@ -41,7 +41,7 @@
 
 API の `/v1beta/search` レスポンスには、`packagePath`, `modulePath`, `version`, `synopsis` といった基本情報しか含まれておらず、**インポート数や更新日時などのメタデータは返されません**。
 
-SearchResult の定義は以下の通りです（https://cs.opensource.google/go/x/pkgsite/+/refs/tags/v0.3.0:internal/api/types.go;l=115-121）:
+SearchResult の定義は以下の通りです(https://cs.opensource.google/go/x/pkgsite/+/refs/tags/v0.3.0:internal/api/types.go;l=115-121):
 
 ```go
 type SearchResult struct {
@@ -62,7 +62,7 @@ type SearchResult struct {
 
 SQL や正規表現だと、インジェクション攻撃のリスクがある
 Go 式のサブセットなら、Go 開発者が直感的に書ける
-サーバー側で安全に評価できる範囲に制限されている（演算子・関数を限定）
+サーバー側で安全に評価できる範囲に制限されている(演算子・関数を限定)
 ただし、== や contains() などの比較しかできないため、「インポート数が多い順」のようなソートには使えません。
 
 ***例：特定のドメインのみに絞り込む***
@@ -110,7 +110,7 @@ curl -L "https://pkg.go.dev/v1beta/package/golang.org/x/time/rate" | jq .
 
 - curl -s "https://pkg.go.dev/v1beta/package/golang.org/x/time/rate" | jq . を実行して、実際の挙動を確認する。
 - API ドキュメントの「Requests」セクションでパッケージパスの曖昧性について読む。
-- Go のモジュールシステムのドキュメント（https://go.dev/ref/mod）で、モジュールパスとパッケージパスの関係を確認する。
+- Go のモジュールシステムのドキュメント(https://go.dev/ref/mod)で、モジュールパスとパッケージパスの関係を確認する。
 
 **答え**
 
@@ -133,8 +133,8 @@ Go のモジュールシステムでは、モジュールパスとパッケー�
 
 ***ブラウザ UI と API の挙動の違い:***
 
-- ブラウザ UI: 最長一致するモジュールパスを自動で選ぶ（ユーザーフレンドリー）
-- API: 曖昧な場合はエラーを返し、module クエリパラメータで明示することを要求する（明示的で安全）
+- ブラウザ UI: 最長一致するモジュールパスを自動で選ぶ(ユーザーフレンドリー)
+- API: 曖昧な場合はエラーを返し、module クエリパラメータで明示することを要求する(明示的で安全)
 - API の設計は、「暗黙の推測でクライアントに予期しない結果を返すより、明示的にエラーを返して再試行を促す」方針です。
 
 ***実際に golang.org/x/time/rate を叩くと：***
@@ -169,7 +169,7 @@ Go のモジュールシステムでは、モジュールパスとパッケー�
 
 ## 設問 3: レート制限とページネーションの設計を調べよう
 
-API には 45 QPS（queries per second）per IP block というレート制限があります。  
+API には 45 QPS(queries per second)per IP block というレート制限があります。  
 また、結果が多い場合は ページネーション で分割して返されます。
 
 なぜこのような制限・設計になっているのか、背景を考えてみましょう。  
@@ -180,7 +180,7 @@ API には 45 QPS（queries per second）per IP block というレート制限�
 
 - pkg.go.dev は Google が運営する公開サービスである
 - レート制限は DoS 攻撃の防止やリソース保護のため
-- nextPageToken は不透明な文字列（opaque token）として設計されている
+- nextPageToken は不透明な文字列(opaque token)として設計されている
 - API ドキュメントには「リクエストを一切変更せず、token だけ追加せよ」と書かれている
 </details> 
 <details> 
@@ -190,14 +190,14 @@ API には 45 QPS（queries per second）per IP block というレート制限�
 
 - API ドキュメントの「Rate Limiting」と「Pagination」セクションを読む。
 - 実際に検索結果を取得し、nextPageToken がどのような値になっているか確認する。
-- pkgsite のソースコード（https://cs.opensource.google/go/x/pkgsite）で、ページネーションの実装を確認する。
+- pkgsite のソースコード(https://cs.opensource.google/go/x/pkgsite)で、ページネーションの実装を確認する。
 
 **答え**
 
 ***レート制限の理由:***
 
 pkg.go.dev は Google が無料で提供する公開サービスです。  
-レート制限（45 QPS per IP block）は、以下を防ぐために設定されています。
+レート制限(45 QPS per IP block)は、以下を防ぐために設定されています。
 
 - DoS 攻撃や過負荷によるサービス停止
 - 特定のユーザーが大量のリクエストでリソースを独占すること
@@ -207,8 +207,8 @@ pkg.go.dev は Google が無料で提供する公開サービスです。
 
 ***ページネーションの設計:***
 
-- nextPageToken は**不透明なトークン（opaque token）**で、内部的にはページ位置を示す情報がエンコードされています。
-- 実際の値を見ると、長い16進数文字列（例: b689a63f15295533e6320e94470fbf1548acd25c327dff2a858024431056ffe4756658644ee6e2855482af42eb0bd15721a84772854ffd926b97db49479958d4d181f283）になっており、クライアントが解釈することは想定されていません。
+- nextPageToken は**不透明なトークン(opaque token)**で、内部的にはページ位置を示す情報がエンコードされています。
+- 実際の値を見ると、長い16進数文字列(例: b689a63f15295533e6320e94470fbf1548acd25c327dff2a858024431056ffe4756658644ee6e2855482af42eb0bd15721a84772854ffd926b97db49479958d4d181f283)になっており、クライアントが解釈することは想定されていません。
 
 ドキュメントには次のように書かれています.
 
@@ -256,7 +256,7 @@ pkg.go.dev は Google が無料で提供する公開サービスです。
 imported-by の典型的な用途は:
 
 - 「このパッケージを変更したら、どのプロジェクトに影響するか？」
-- 「このパッケージの人気度（外部からの利用度）はどのくらいか？」
+- 「このパッケージの人気度(外部からの利用度)はどのくらいか？」
 - 同一モジュール内のパッケージは、変更時に一緒に修正できるため、外部への影響とは性質が異なります。
 - API は「外部への影響範囲」に焦点を当てた設計になっています。
 
@@ -266,6 +266,6 @@ imported-by の典型的な用途は:
 
 ## 調査の入り口
 - https://pkg.go.dev/v1beta/api
-- https://pkg.go.dev/golang.org/x/pkgsite/internal/api （レスポンス型の定義）
-- https://cs.opensource.google/go/x/pkgsite （pkgsite のソースコード）
-- https://go.dev/ref/mod （Go Modules リファレンス）
+- https://pkg.go.dev/golang.org/x/pkgsite/internal/api (レスポンス型の定義)
+- https://cs.opensource.google/go/x/pkgsite (pkgsite のソースコード)
+- https://go.dev/ref/mod (Go Modules リファレンス)
