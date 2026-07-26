@@ -62,7 +62,7 @@ Goチームが何を大切にし、何をトレードオフにしたのかとい
 
 **01-packages** の **01-beginner** にある **fmt-printf** を実際に調査してみましょう。
 
-まず、[fmt-printf](01-packages/01-geginner/fmt-printf) を開いてください。
+まず、[fmt-printf](01-packages/01-beginner/fmt-printf) を開いてください。
 
 
 TODO
