@@ -86,17 +86,17 @@ fmt.Printf("%T\n", msg)
 - `%%`: verb ではなく、文字としての `%` を出力する。
 
 ```go
-fmt.Printf("[%5d]\n", 42)    // [   42]
-fmt.Printf("[%-5d]\n", 42)   // [42   ]
-fmt.Printf("[%05d]\n", 42)   // [00042]
-fmt.Printf("[%.2f]\n", 3.14159) // [3.14]
-fmt.Printf("[%8.2f]\n", 3.14159) // [    3.14]
-fmt.Printf("%d%%\n", 50)     // 50%
+fmt.Println(fmt.Sprintf("[%5d]", 42))      // [   42]
+fmt.Println(fmt.Sprintf("[%-5d]", 42))     // [42   ]
+fmt.Println(fmt.Sprintf("[%05d]", 42))     // [00042]
+fmt.Println(fmt.Sprintf("[%.2f]", 3.14159))   // [3.14]
+fmt.Println(fmt.Sprintf("[%8.2f]", 3.14159))  // [    3.14]
+fmt.Println(fmt.Sprintf("%d%%", 50))       // 50%
 ```
 
-（Go Playground で動かす: https://go.dev/play/p/NTbVG7EVA3k ）
+（Go Playground で動かす: https://go.dev/play/p/nUCAOoJdeG6 ）
 
-幅・精度は `Printf` でも `Sprintf` でも同じように使えます。
+幅・精度の指定は、設問 1 と同じく `fmt.Sprintf` で組み立てた文字列にもそのまま効きます。
 
 </details>
 
