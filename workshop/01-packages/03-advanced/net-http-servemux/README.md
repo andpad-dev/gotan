@@ -1,8 +1,8 @@
-# 管制塔のルーティング規約を解読せよ
+# 管理 API のルーティング規約を解読せよ
 
-月面港 API は `/flights/latest` と `/flights/{id}` を同じ管制塔に登録しました。登録順に頼らず、より具体的なルートが選ばれ、誤ったメソッドには 405 を返します。なんでこうなってるの？背景を調べよう。
+管理画面向け API は `/reports/latest` と `/reports/{id}` を同じ `ServeMux` に登録しました。登録順に頼らず、より具体的なルートが選ばれ、誤ったメソッドには 405 を返します。なんでこうなってるの？背景を調べよう。
 
-次のコードを [Go Playground で動かす](https://go.dev/play/p/xgCqZEBJCz3) と、リテラルな `latest`、ワイルドカード、メソッド不一致の振る舞いを観測できます。
+次のコードを [Go Playground で動かす](https://go.dev/play/p/fbR5kWMHL2Z) と、リテラルな `latest`、ワイルドカード、メソッド不一致の振る舞いを観測できます。
 
 ```go
 package main
@@ -15,38 +15,38 @@ import (
 
 func main() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /flights/latest", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /reports/latest", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "latest")
 	})
-	mux.HandleFunc("GET /flights/{id}", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "flight=%s", r.PathValue("id"))
+	mux.HandleFunc("GET /reports/{id}", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "report=%s", r.PathValue("id"))
 	})
 
-	for _, path := range []string{"/flights/latest", "/flights/M-17"} {
+	for _, path := range []string{"/reports/latest", "/reports/2026-08"} {
 		recorder := httptest.NewRecorder()
 		mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
 		fmt.Printf("GET %s -> %d %q\n", path, recorder.Code, recorder.Body.String())
 	}
 
 	recorder := httptest.NewRecorder()
-	mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/flights/M-17", nil))
-	fmt.Printf("POST /flights/M-17 -> %d\n", recorder.Code)
+	mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/reports/2026-08", nil))
+	fmt.Printf("POST /reports/2026-08 -> %d\n", recorder.Code)
 }
 ```
 
 実行結果:
 
 ```text
-GET /flights/latest -> 200 "latest"
-GET /flights/M-17 -> 200 "flight=M-17"
-POST /flights/M-17 -> 405
+GET /reports/latest -> 200 "latest"
+GET /reports/2026-08 -> 200 "report=2026-08"
+POST /reports/2026-08 -> 405
 ```
 
 ---
 
 ## 設問 1: どのルートが勝つ？
 
-`GET /flights/latest` が `GET /flights/{id}` より先か後かにかかわらず、`GET /flights/latest` はどちらのハンドラーへ届くでしょうか。また、`POST /flights/M-17` が 405 になる条件を説明してください。
+`GET /reports/latest` が `GET /reports/{id}` より先か後かにかかわらず、`GET /reports/latest` はどちらのハンドラーへ届くでしょうか。また、`POST /reports/2026-08` が 405 になる条件を説明してください。
 
 <details>
 <summary>ヒント</summary>
@@ -67,9 +67,9 @@ POST /flights/M-17 -> 405
 
 **答え**
 
-`GET /flights/latest` はリテラルな `latest` を要求するため、同じメソッドの `GET /flights/{id}` より一致するリクエスト集合が狭く、より具体的です。したがって登録順によらず `latest` ハンドラーが選ばれます。
+`GET /reports/latest` はリテラルな `latest` を要求するため、同じメソッドの `GET /reports/{id}` より一致するリクエスト集合が狭く、より具体的です。したがって登録順によらず `latest` ハンドラーが選ばれます。
 
-`POST /flights/M-17` はどちらの `GET` パターンにも一致しません。一方で同じパスに別メソッドのパターンがあるため、`ServeMux` は 405 Method Not Allowed を返します。
+`POST /reports/2026-08` はどちらの `GET` パターンにも一致しません。一方で同じパスに別メソッドのパターンがあるため、`ServeMux` は 405 Method Not Allowed を返します。
 
 </details>
 
@@ -77,7 +77,7 @@ POST /flights/M-17 -> 405
 
 ## 設問 2: なぜこの 2 つは登録時に衝突する？
 
-管制官が `GET /flights/{id}` と `/flights/latest` を登録しようとしています。両方とも一部の GET リクエストに一致しますが、なぜどちらも「常により具体的」とは言えず、`HandleFunc` が panic するのでしょうか。
+API 担当者が `GET /reports/{id}` と `/reports/latest` を登録しようとしています。両方とも一部の GET リクエストに一致しますが、なぜどちらも「常により具体的」とは言えず、`HandleFunc` が panic するのでしょうか。
 
 <details>
 <summary>ヒント</summary>
@@ -98,7 +98,7 @@ POST /flights/M-17 -> 405
 
 **答え**
 
-`GET /flights/{id}` は GET に限る代わりに任意の ID を受け、`/flights/latest` は任意のメソッドを受ける代わりに `latest` だけを受けます。`GET /flights/latest` は両方に一致しますが、片方はメソッド、もう片方はパスの方向でしか狭くありません。
+`GET /reports/{id}` は GET に限る代わりに任意の ID を受け、`/reports/latest` は任意のメソッドを受ける代わりに `latest` だけを受けます。`GET /reports/latest` は両方に一致しますが、片方はメソッド、もう片方はパスの方向でしか狭くありません。
 
 片方の一致集合がもう片方の厳密な部分集合ではないため、優先順位を決められません。登録時に panic して曖昧さを早く発見させる設計です。両方を使いたいなら、メソッドまたはパスをそろえて一方を明確に狭くします。
 
@@ -139,7 +139,7 @@ Go 1.22 から、メソッド付きパターンと `{name}` / `{name...}` のワ
 
 ## 設問 4: なぜ「最後に登録したものが勝つ」ではない？
 
-提案 Issue と実装をたどり、順序独立の優先順位と登録時の衝突検出が、管制塔の設定を複数チームで保守するときにどんな利点を持つか説明してください。
+提案 Issue と実装をたどり、順序独立の優先順位と登録時の衝突検出が、管理 API のルートを複数チームで保守するときにどんな利点を持つか説明してください。
 
 <details>
 <summary>ヒント</summary>
@@ -162,7 +162,7 @@ Go 1.22 から、メソッド付きパターンと `{name}` / `{name...}` のワ
 
 登録順で結果が変わると、別チームがルートを追加しただけで既存 API の到達先が変わり得ます。集合としてより具体的なパターンを選べば、設定の並び順ではなくルールから到達先を説明できます。
 
-一方で比較できない重なりは、実行時まで隠さず登録時に panic します。実装は具体的なパターンを先に探索しつつ、衝突検出を起動時に行います。管制 API の変更をレビューするときも、「どのリクエスト集合が増減するか」で議論できるようになります。
+一方で比較できない重なりは、実行時まで隠さず登録時に panic します。実装は具体的なパターンを先に探索しつつ、衝突検出を起動時に行います。管理 API の変更をレビューするときも、「どのリクエスト集合が増減するか」で議論できるようになります。
 
 </details>
 
