@@ -77,8 +77,9 @@ func main() {
 
 **調査ルート**
 
-1. [strings.Cut](https://pkg.go.dev/strings#Cut) の「first instance」の説明を読む。
-2. [実装の該当箇所](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/strings/strings.go;l=1273) を開き、`Cut` の責務が 1 回の分割であることを確認する。
+1. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `strings` パッケージを開く。
+2. [strings.Cut](https://pkg.go.dev/strings#Cut) の「first instance」の説明を読む。
+3. [実装の該当箇所](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/strings/strings.go;l=1273) を開き、`Cut` の責務が 1 回の分割であることを確認する。
 
 **答え**
 
