@@ -1,10 +1,10 @@
-# 秘匿航路図を片道で届けよう
+# 監査先へ暗号化ファイルを届けよう
 
-月周回船へ航路図を届ける任務では、送信側が受信者の公開鍵だけを知り、受信者だけが内容を開ける形にしたいです。Go 1.26 で追加された `crypto/hpke` を使って、標準ライブラリの例に沿って一通のメッセージを届けたいです。どういうふうにやればいいか調べよう。
+外部監査への顧客データ提出では、送信側が監査先の公開鍵だけを知り、監査先だけが内容を開ける形にしたいです。Go 1.26 で追加された `crypto/hpke` を使って、標準ライブラリの例に沿って一通のメッセージを届けたいです。どういうふうにやればいいか調べよう。
 
 これは API の役割を調べる演習です。実運用のプロトコル選定や鍵管理には、必ず組織のセキュリティレビューを加えてください。
 
-次のコードを [Go Playground で動かす](https://go.dev/play/p/q7HxiZQR__N) と、同じ `info` なら復号でき、異なる `info` なら拒否されることを確認できます。
+次のコードを [Go Playground で動かす](https://go.dev/play/p/FDMWW7yXLFE) と、同じ `info` なら復号でき、異なる `info` なら拒否されることを確認できます。
 
 ```go
 package main
@@ -25,8 +25,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	info := []byte("lunar-control/v1")
-	ciphertext, err := hpke.Seal(publicKey, kdf, aead, info, []byte("launch at 09:00"))
+	info := []byte("audit-export/v1")
+	ciphertext, err := hpke.Seal(publicKey, kdf, aead, info, []byte("customer export ready"))
 	if err != nil {
 		panic(err)
 	}
@@ -35,7 +35,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	_, wrongInfoErr := hpke.Open(privateKey, kdf, aead, []byte("lunar-control/v2"), ciphertext)
+	_, wrongInfoErr := hpke.Open(privateKey, kdf, aead, []byte("audit-export/v2"), ciphertext)
 	fmt.Printf("received=%q\n", plaintext)
 	fmt.Println("different info rejected:", wrongInfoErr != nil)
 }
@@ -44,7 +44,7 @@ func main() {
 実行結果:
 
 ```text
-received="launch at 09:00"
+received="customer export ready"
 different info rejected: true
 ```
 
@@ -105,7 +105,7 @@ HPKE の暗号スイートは KEM（鍵カプセル化方式）、KDF（鍵導�
 
 送信側は受信者の公開鍵で `Seal` し、受信側は対応する秘密鍵で `Open` します。ここでは `privateKey.PublicKey().Bytes()` を送信側が受け取り、`kem.NewPublicKey` で公開鍵として復元しています。
 
-`info` は両者で同じ値を使う文脈情報です。サンプルでは航路図プロトコルの版を表します。復号側に異なる `info` を渡すと、同じ文脈で作られた暗号文ではないため `Open` がエラーを返します。
+`info` は両者で同じ値を使う文脈情報です。サンプルでは監査データのエクスポート形式の版を表します。復号側に異なる `info` を渡すと、同じ文脈で作られた暗号文ではないため `Open` がエラーを返します。
 
 </details>
 
