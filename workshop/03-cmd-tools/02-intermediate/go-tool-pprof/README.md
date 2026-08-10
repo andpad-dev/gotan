@@ -1,10 +1,12 @@
 [03-cmd-tools の調べ方に戻る](../../README.md)
 
-# 管制塔の 600ms を追え: `go tool pprof`
+# バッチ処理の 600ms を追え: `go tool pprof`
 
-月面シャトルの管制塔では、乗客に渡す座席コードを毎晩まとめて発行しています。発車までの余裕は短く、CI の計測ではコード発行テストだけで約 600ms かかっていました。
+顧客向けのコード発行バッチでは、利用者に渡すコードを毎晩まとめて発行しています。処理開始までの余裕は短く、CI の計測ではコード発行テストだけで約 600ms かかっていました。
 
 「ループ回数を減らせば速そう」と言う人もいますが、座席コードはすでに別システムと照合しています。出力を変えずに速くするには、まず**実際に CPU を使っている場所**を確かめなければなりません。
+
+CPU の使用箇所を調べたいです。どういうふうにやればいいか調べよう。
 
 **`main.go`**
 
@@ -60,7 +62,7 @@ func BenchmarkSeatCode(b *testing.B) {
 }
 ```
 
-Go 1.26.4 / macOS（Apple M1 Max）で、管制塔のテストを profile 付きで実行しました。
+Go 1.26.4 / macOS（Apple M1 Max）で、コード発行バッチのテストを profile 付きで実行しました。
 
 ```console
 $ go test -run '^TestIssueCodes$' -cpuprofile=cpu.out
@@ -79,7 +81,7 @@ Showing nodes accounting for 410ms, 100% of 410ms total
          0     0%   100%      410ms   100%  testing.tRunner
 ```
 
-`cpu.out` を虫眼鏡、`pprof-demo.test` を地図にして、管制塔の電力がどこへ消えたかを追いましょう。
+`cpu.out` を虫眼鏡、`pprof-demo.test` を地図にして、コード発行処理の CPU 時間がどこへ消えたかを追いましょう。
 
 ---
 
@@ -137,9 +139,10 @@ Showing nodes accounting for 410ms, 100% of 410ms total
 
 **調査ルート**
 
-1. `go tool pprof -h` で `-list` が関数に対応するソースを表示する形式だと確認する。
-2. `go tool pprof -list='seatCode' pprof-demo.test cpu.out` を実行し、`seatCode` の各行に対応する flat / cumulative time を読む。
-3. `main_test.go` の `TestSeatCode` を読み、コード値が既存システムとの照合に使われるという問題文の制約と突き合わせる。
+1. [pprof の公式ドキュメント](https://go.dev/cmd/pprof/) で、関数やソース行ごとの profile 表示を確認する。
+2. `go tool pprof -h` で `-list` が関数に対応するソースを表示する形式だと確認する。
+3. `go tool pprof -list='seatCode' pprof-demo.test cpu.out` を実行し、`seatCode` の各行に対応する flat / cumulative time を読む。
+4. `main_test.go` の `TestSeatCode` を読み、コード値が既存システムとの照合に使われるという問題文の制約と突き合わせる。
 
 **答え**
 
@@ -165,7 +168,7 @@ ROUTINE ======================== example.com/pprof-demo.seatCode
 
 ## 設問 3: 「速くなった」と、互換性を崩さずに報告するには？
 
-管制塔チームは、変更前後の比較を再現できる形で PR に残したいと考えています。
+バッチ処理チームは、変更前後の比較を再現できる形で PR に残したいと考えています。
 
 この例にすでにあるテストと benchmark をどう使い分けますか。次のコマンドを実行して、何を比較対象として記録すべきかを説明してください。
 
@@ -187,9 +190,10 @@ go test -run '^$' -bench '^BenchmarkSeatCode$' -benchmem -count=3
 
 **調査ルート**
 
-1. `go help testflag` で、`-bench` が benchmark を選び、`-benchmem` が割り当て統計を出し、`-count` が各 benchmark を複数回実行することを確認する。
-2. `go test -run '^$' -bench '^BenchmarkSeatCode$' -benchmem -count=3` を変更前に実行して基準値を残す。
-3. 変更後に同じコマンドを実行し、`TestSeatCode` と通常のテストも通して、値の互換性と計測値を別々に比較する。
+1. [Go の診断ツール案内](https://go.dev/doc/diagnostics) で、profile と benchmark の役割を区別する。
+2. `go help testflag` で、`-bench` が benchmark を選び、`-benchmem` が割り当て統計を出し、`-count` が各 benchmark を複数回実行することを確認する。
+3. `go test -run '^$' -bench '^BenchmarkSeatCode$' -benchmem -count=3` を変更前に実行して基準値を残す。
+4. 変更後に同じコマンドを実行し、`TestSeatCode` と通常のテストも通して、値の互換性と計測値を別々に比較する。
 
 **答え**
 
