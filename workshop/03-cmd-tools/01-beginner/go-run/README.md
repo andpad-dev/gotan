@@ -1,5 +1,7 @@
 # `go run` の裏側を覗いてみよう
 
+`go run` を見かけました。どんなものか調べてみましょう。
+
 先輩から「動作確認は `go run main.go` でいいよ」と言われました。
 Python や Ruby の経験がある同僚は「`go run` ってスクリプト感覚でサクッと動くね。Go ってインタプリタでも動かせるんだ」と言っています。
 
@@ -29,25 +31,28 @@ Go はコンパイル言語のはずですが、この理解で合っている�
 
 **調査ルート**
 
-1. `go help run`（= https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program ）を読む。「Run compiles and runs the named main Go package.」とあり、動詞は "compiles"（コンパイルする）。インタプリタなら "interprets" や "evaluates" のような動詞になるはずで、この時点で疑わしい。
-2. `go run -x main.go` を実行し、出力を「生成している行」と「実行している行」に仕分ける。
+1. https://go.dev/cmd/go/ を開き、`go` コマンドの公式ドキュメントから `go run` の説明を探す。
+2. `go help run`（= https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program ）を読む。「Run compiles and runs the named main Go package.」とあり、動詞は "compiles"（コンパイルする）。インタプリタなら "interprets" や "evaluates" のような動詞になるはずで、この時点で疑わしい。
+3. `go run -x main.go` を実行し、出力を「生成している行」と「実行している行」に仕分ける。
 
 **答え**
 
 インタプリタではありません。実際に `-x` フラグを付けて実行すると、次のような出力になります（実際に `go run -x main.go` を実行した出力の抜粋）。
 
 ```
-WORK=/var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-build1851907018
+WORK=/var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX
 ...
 mkdir -p $WORK/b001/exe/
 .../compile ... # ソースをコンパイル
-.../link -o $WORK/b001/exe/main2 ... # 実行ファイルにリンク
-$WORK/b001/exe/main2 # できた実行ファイルを実行
-hello, gotan v2
+.../link -o $WORK/b001/exe/main ... # 実行ファイルにリンク
+$WORK/b001/exe/main # できた実行ファイルを実行
+hello, gotan
 ```
 
 `$WORK` という一時ディレクトリを作り、その中でコンパイル・リンクして実行ファイルを組み立て、最後にその実行ファイルを実行しているだけです。
 `main.go` の中身を 1 行ずつ読みながら評価するような処理はどこにもなく、`go build` して一時ファイルとして出力 → その一時ファイルを実行、という 2 段階の処理を 1 コマンドにまとめたものだと分かります。
+
+`WORK` のパスやビルドIDは実行環境ごとに変わるため、上の出力では環境依存部分を `X` と `...` で省略しています。
 
 </details>
 
@@ -72,8 +77,9 @@ hello, gotan v2
 
 **調査ルート**
 
-1. `go run -x main.go` で表示された `WORK=...` のパスを、コマンド終了後に `ls` してみる → ディレクトリごと消えている。
-2. `go help build` を読むと `-work` フラグの説明に「print the name of the temporary work directory and do not delete it when exiting」とあり、"delete it when exiting" が **デフォルトの挙動である**ことが読み取れる。
+1. https://go.dev/cmd/go/ を開き、`go build` のドキュメントにある `-work` フラグの説明を探す。
+2. `go run -x main.go` で表示された `WORK=...` のパスを、コマンド終了後に `ls` してみる → ディレクトリごと消えている。
+3. `go help build` を読むと `-work` フラグの説明に「print the name of the temporary work directory and do not delete it when exiting」とあり、"delete it when exiting" が **デフォルトの挙動である**ことが読み取れる。
 
 **答え**
 
@@ -82,20 +88,20 @@ hello, gotan v2
 `-work` フラグを付けて実行すると削除されずに残るので、実際に確認できます。
 
 ```
-$ go run -work main2.go
-WORK=/var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-build1851907018
-hello, gotan v2
-$ find /var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-build1851907018 -maxdepth 3
-.../go-build1851907018
-.../go-build1851907018/b001
-.../go-build1851907018/b001/importcfg
-.../go-build1851907018/b001/importcfg.link
-.../go-build1851907018/b001/exe
-.../go-build1851907018/b001/_pkg_.a
-.../go-build1851907018/b001/exe/main2
+$ go run -work main.go
+WORK=/var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX
+hello, gotan
+$ find /var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX -maxdepth 3
+.../go-buildXXXXXXXXXX
+.../go-buildXXXXXXXXXX/b001
+.../go-buildXXXXXXXXXX/b001/importcfg
+.../go-buildXXXXXXXXXX/b001/importcfg.link
+.../go-buildXXXXXXXXXX/b001/exe
+.../go-buildXXXXXXXXXX/b001/_pkg_.a
+.../go-buildXXXXXXXXXX/b001/exe/main
 ```
 
-`b001/exe/main2` が、実際に実行された実行ファイルの実体です。`-work` フラグを付けなければ、この一時ディレクトリごと自動的に削除されます。
+`b001/exe/main` が、実際に実行された実行ファイルの実体です。`-work` フラグを付けなければ、この一時ディレクトリごと自動的に削除されます。
 
 </details>
 
@@ -140,11 +146,12 @@ $ find /var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-build1851907018 -maxdepth 3
 
 **調査ルート**
 
-1. https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go の `runRun` 関数（73 行目〜）を読む。
-2. `work.NewBuilder` の実体（https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/action.go の 281 行目〜）を読み、一時ディレクトリの作成箇所を確認する。
-3. `LinkAction`（同ファイル 922 行目〜）と `CompileAction`（633 行目〜）で、パッケージごとのサブディレクトリ（`Objdir`）と実行ファイルのパス（`Target`）がどう決まるかを確認する。
-4. https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/exec.go の `Builder.build`（723 行目〜、コンパイル担当）と `Builder.link`（1591 行目〜、リンク担当）を読み、実際にコンパイラ・リンカを呼び出している場所を確認する。
-5. `Builder.Close`（action.go 340 行目〜）を読み、後片付けの実装を確認する。
+1. https://go.dev/cmd/go/ を開き、`go run` が `cmd/go` の一部として実装されていることを確認する。
+2. https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go の `runRun` 関数（73 行目〜）を読む。
+3. `work.NewBuilder` の実体（https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/action.go の 281 行目〜）を読み、一時ディレクトリの作成箇所を確認する。
+4. `LinkAction`（同ファイル 922 行目〜）と `CompileAction`（633 行目〜）で、パッケージごとのサブディレクトリ（`Objdir`）と実行ファイルのパス（`Target`）がどう決まるかを確認する。
+5. https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/exec.go の `Builder.build`（723 行目〜、コンパイル担当）と `Builder.link`（1591 行目〜、リンク担当）を読み、実際にコンパイラ・リンカを呼び出している場所を確認する。
+6. `Builder.Close`（action.go 340 行目〜）を読み、後片付けの実装を確認する。
 
 **答え**
 
@@ -228,6 +235,7 @@ if !cfg.BuildWork {
 
 ## 調査の入り口
 
+- https://go.dev/cmd/go/
 - https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program
 - https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go
 - https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/action.go
