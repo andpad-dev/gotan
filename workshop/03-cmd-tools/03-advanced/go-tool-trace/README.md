@@ -1,10 +1,12 @@
 [03-cmd-tools の調べ方に戻る](../../README.md)
 
-# 夜勤管制室の 100ms を逃すな: `go tool trace`
+# 注文処理の 100ms を追え: `go tool trace`
 
-月面シャトルの夜勤管制室に、妙な記録が届きました。4 人の係員が、各 25ms の乗車確認を並行して行うはずなのに、発車まで約 100ms かかっています。CPU 使用率は低く、CPU profile を開いても「誰が待たせたか」ははっきりしません。
+注文処理サービスのテストで、4 つの注文検証処理が各 25ms かかります。並行して実行するはずなのに、処理完了まで約 100ms かかっています。CPU 使用率は低く、CPU profile を開いても「何が待たせたか」ははっきりしません。
 
-さらに、翌週からは「遅い便が出た**後**にだけ、直前の状況を持ち帰りたい」と運用チームが言い出しました。短い再現だけでなく、execution trace がなぜ今の形になったのかまで調べ、次の夜勤に持ち込める調査手順を作りましょう。
+さらに、運用チームは「遅いリクエストが発生した**後**に、直前の状況を持ち帰りたい」と考えています。短い再現だけでなく、execution trace がなぜ今の形になったのかまで調べ、次の障害対応に使える調査手順を作りましょう。
+
+この仕組みはなんでこうなってるの？背景を調べよう。
 
 **`main.go`**
 
@@ -19,17 +21,17 @@ import (
 	"time"
 )
 
-func departureGate(ctx context.Context) {
-	var gate sync.Mutex
+func processOrders(ctx context.Context) {
+	var orderLock sync.Mutex
 	var wg sync.WaitGroup
 
 	for range 4 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			trace.WithRegion(ctx, "check-ticket", func() {
-				gate.Lock()
-				defer gate.Unlock()
+			trace.WithRegion(ctx, "validate-order", func() {
+				orderLock.Lock()
+				defer orderLock.Unlock()
 				time.Sleep(25 * time.Millisecond)
 			})
 		}()
@@ -38,19 +40,19 @@ func departureGate(ctx context.Context) {
 }
 
 func main() {
-	departureGate(context.Background())
-	fmt.Println("all aboard")
+	processOrders(context.Background())
+	fmt.Println("orders processed")
 }
 ```
 
-（[Go Playground で動かす](https://go.dev/play/p/Ub2lOkWmxUA)）
+（[Go Playground で動かす](https://go.dev/play/p/8Afw0ygPRUL)）
 
 ```console
 $ go run main.go
-all aboard
+orders processed
 ```
 
-このテストでは、さらに 4 人の係員を同じ「departure-gate」タスクに結びます。
+このテストでは、さらに 4 つの注文検証処理を同じ「order-processing」タスクに結びます。
 
 **`main_test.go`**
 
@@ -63,18 +65,18 @@ import (
 	"testing"
 )
 
-func TestDepartureGate(t *testing.T) {
-	ctx, task := trace.NewTask(context.Background(), "departure-gate")
+func TestProcessOrders(t *testing.T) {
+	ctx, task := trace.NewTask(context.Background(), "order-processing")
 	defer task.End()
 
-	departureGate(ctx)
+	processOrders(ctx)
 }
 ```
 
-Go 1.26.4 / macOS で `go test -trace` を実行すると、テストは成功しますが、発車が並列化されているとは限りません。
+Go 1.26.4 / macOS で `go test -trace` を実行すると、テストは成功しますが、注文検証が並列化されているとは限りません。
 
 ```console
-$ go test -run '^TestDepartureGate$' -trace=departure.trace
+$ go test -run '^TestProcessOrders$' -trace=order.trace
 PASS
 ok  	example.com/trace-demo	0.469s
 ```
@@ -83,9 +85,9 @@ ok  	example.com/trace-demo	0.469s
 
 ## 設問 1: CPU が暇そうなのに、なぜ trace を採る？
 
-係員は `go` 文で 4 人起動しています。ならば 25ms 前後で終わりそうなのに、テストは約 100ms です。
+注文検証処理は `go` 文で 4 つ起動しています。ならば 25ms 前後で終わりそうなのに、テストは約 100ms です。
 
-この現象を最初に CPU profile だけで調べるのが不十分な理由と、`go test -trace=departure.trace` が観測できる事実を、一次情報から説明してください。
+この現象を最初に CPU profile だけで調べるのが不十分な理由と、`go test -trace=order.trace` が観測できる事実を、一次情報から説明してください。
 
 <details>
 <summary>ヒント</summary>
@@ -107,9 +109,9 @@ ok  	example.com/trace-demo	0.469s
 
 **答え**
 
-- CPU profile は、CPU サイクルを使った場所を見つけるのに向いています。しかし今回の遅さは、CPU で計算している時間より「係員が鍵を待っている時間」かもしれません。待機時間は CPU profile だけでは主役になりません。
+- CPU profile は、CPU サイクルを使った場所を見つけるのに向いています。しかし今回の遅さは、CPU で計算している時間より「処理がロックを待っている時間」かもしれません。待機時間は CPU profile だけでは主役になりません。
 - execution trace は goroutine の生成・ブロック・解除、スケジューリング、syscall、GC、ヒープサイズなどの runtime event を時系列で記録します。そのため「4 人がいつ走れ、いつ止まり、どれだけ直列化されたか」を観測できます。
-- `go test -trace=departure.trace` は、再現テストを走らせながらその時系列の記録を残します。ここでは「100ms だからロック競合だ」と決めつけず、まず trace を採ることが次の検索の手がかりになります。
+- `go test -trace=order.trace` は、再現テストを走らせながらその時系列の記録を残します。ここでは「100ms だからロック競合だ」と決めつけず、まず trace を採ることが次の検索の手がかりになります。
 
 </details>
 
@@ -117,9 +119,9 @@ ok  	example.com/trace-demo	0.469s
 
 ## 設問 2: trace を「待ち時間の証拠」に変えよう
 
-`departure.trace` をブラウザで開く前に、同期待ちだけを pprof 形式へ取り出せます。どのコマンドをつなげればよいでしょうか。
+`order.trace` をブラウザで開く前に、同期待ちだけを pprof 形式へ取り出せます。どのコマンドをつなげればよいでしょうか。
 
-実測出力から、どの行で係員が待っているかを特定してください。さらに、`trace.NewTask` と `trace.WithRegion` が、4 本の goroutine をただの匿名な棒グラフにしないために、どのような手がかりを足しているか説明してください。
+実測出力から、どの行で処理が待っているかを特定してください。さらに、`trace.NewTask` と `trace.WithRegion` が、4 本の goroutine をただの匿名な棒グラフにしないために、どのような手がかりを足しているか説明してください。
 
 <details>
 <summary>ヒント</summary>
@@ -139,9 +141,9 @@ ok  	example.com/trace-demo	0.469s
 2. 次を実行する。
 
     ```console
-    go tool trace -pprof=sync departure.trace > sync.pprof
+    go tool trace -pprof=sync order.trace > sync.pprof
     go tool pprof -top sync.pprof
-    go tool pprof -list='departureGate.func1.1' sync.pprof
+    go tool pprof -list='processOrders.func1.1' sync.pprof
     ```
 
 3. `go doc runtime/trace` を読み、[Go 1.26.4 の `runtime/trace` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/runtime/trace/annotation.go) で `NewTask` と `WithRegion` の説明・制約を確認する。
@@ -163,16 +165,16 @@ Showing nodes accounting for 466.64ms, 100% of 466.64ms total
 `-list` で該当箇所まで降りると、待ち時間は鍵を取る行に対応します。
 
 ```console
-$ go tool pprof -list='departureGate.func1.1' sync.pprof
-ROUTINE ======================== example.com/trace-demo.departureGate.func1.1
-         .   156.72ms     19:	trace.WithRegion(ctx, "check-ticket", func() {
-         .   156.72ms     20:		gate.Lock()
-         .          .     21:		defer gate.Unlock()
+$ go tool pprof -list='processOrders.func1.1' sync.pprof
+ROUTINE ======================== example.com/trace-demo.processOrders.func1.1
+         .   156.72ms     19:	trace.WithRegion(ctx, "validate-order", func() {
+         .   156.72ms     20:		orderLock.Lock()
+         .          .     21:		defer orderLock.Unlock()
 ```
 
-- `sync.(*Mutex).Lock` の待ち時間と、4 回の 25ms がほぼ直列に積み上がる観測から、発車まで約 100ms かかった主因は共有 `gate` の競合です。`go` 文が 4 本あることは、同時に鍵を持てることを意味しません。
-- `trace.NewTask` は `departure-gate` という論理的な仕事を `context.Context` に載せます。`trace.WithRegion` は各 goroutine 内の `check-ticket` 区間を、その task に結び付けます。実際、`go tool trace -d=parsed departure.trace` には `TaskBegin Type="departure-gate"` と 4 回の `RegionBegin Type="check-ticket"` が出ます。
-- task / region の型は無制限に増やす名前ではなく、分析で分類するための少数の種類に保つのが API の意図です。ここでは、runtime の待ち時間を「どの便の、どの作業か」と対応付けられるため、ロックを分割するか、確認処理を鍵の外へ出すかという次の設計判断に進めます。
+- `sync.(*Mutex).Lock` の待ち時間と、4 回の 25ms がほぼ直列に積み上がる観測から、処理完了まで約 100ms かかった主因は共有 `orderLock` の競合です。`go` 文が 4 本あることは、同時にロックを取得できることを意味しません。
+- `trace.NewTask` は `order-processing` という論理的な仕事を `context.Context` に載せます。`trace.WithRegion` は各 goroutine 内の `validate-order` 区間を、その task に結び付けます。実際、`go tool trace -d=parsed order.trace` には `TaskBegin Type="order-processing"` と 4 回の `RegionBegin Type="validate-order"` が出ます。
+- task / region の型は無制限に増やす名前ではなく、分析で分類するための少数の種類に保つのが API の意図です。ここでは、runtime の待ち時間を「どの注文処理の、どの作業か」と対応付けられるため、ロックを分割するか、検証処理をロックの外へ出すかという次の設計判断に進めます。
 
 </details>
 
@@ -180,7 +182,7 @@ ROUTINE ======================== example.com/trace-demo.departureGate.func1.1
 
 ## 設問 3: なぜ「遅くなってから trace を採る」では手遅れなのか？
 
-運用チームは、遅い便を検知してから trace を取り始める案を出しました。しかし、検知した時点では、原因となった待ち時間はすでに過去です。
+運用チームは、遅いリクエストを検知してから trace を取り始める案を出しました。しかし、検知した時点では、原因となった待ち時間はすでに過去です。
 
 execution tracer が Go 1.21〜1.22 でどう変わったかを追い、flight recording がこの運用課題にどう答えるかを説明してください。あわせて、「新しい trace なら `go tool trace` が巨大なファイルを一切メモリに載せない」と言えない理由も答えてください。
 
@@ -205,7 +207,7 @@ execution tracer が Go 1.21〜1.22 でどう変わったかを追い、flight r
 
 **答え**
 
-- 遅い便を検知してから trace を開始しても、`gate.Lock` の競合が起きた時間帯は既に記録されていません。だから「発生後に採る」だけでは原因へ遡れません。
+- 遅いリクエストを検知してから trace を開始しても、`orderLock.Lock` の競合が起きた時間帯は既に記録されていません。だから「発生後に採る」だけでは原因へ遡れません。
 - Go 1.21 では execution trace の採取コストが amd64 / arm64 で大幅に下がり、Go 1.22 では trace 実装が全面的に作り直されました。trace は自己完結した partition に分かれ、開始・終了の影響も減り、ストリームとして処理できる土台ができました。設計文書が目標に置いたのは、解析メモリの削減、ストリーミング、古い実装上の問題の解消です。
 - Issue #63185 では、この partition を少なくとも 1 つ保持すれば、直近の時間窓を snapshot できると提案されました。これが flight recording です。低い採取コストと partition が揃ったため、異常を検知した**後**でも直前の証拠を保存できるようになりました。
 - ただし「trace 形式が streamable になった」ことと「`go tool trace` がすでに巨大 trace を全く読み込まない」ことは別です。公式ブログは、Go 1.22+ の trace ではその改善が可能になった一方、`go tool trace` 自体はまだ trace 全体をメモリに載せると明記しています。よって運用では、保存する時間窓・ファイルサイズ・解析環境を設計し、無制限な常時採取にはしません。
@@ -216,7 +218,7 @@ execution tracer が Go 1.21〜1.22 でどう変わったかを追い、flight r
 
 ## 設問 4: trace viewer を誰に見せるか決めよう
 
-trace には goroutine 名、タスク名、ソース位置などの調査情報が入ります。夜勤ノート PC で viewer を開くとき、意図せず同じネットワークの誰かに見せないには、どの `-http` 指定を選ぶべきでしょうか。
+trace には goroutine 名、タスク名、ソース位置などの調査情報が入ります。開発用ノート PC で viewer を開くとき、意図せず同じネットワークの誰かに見せないには、どの `-http` 指定を選ぶべきでしょうか。
 
 Go 1.27 で変わった `go tool trace -http=:6060` の扱いと、全アドレスで明示的に公開したい場合の指定を、一次情報で確認してください。なお、この問題のコマンド実測は Go 1.26.4 で行っているため、Go 1.27 の listen-address 変更そのものはリリースノートで確認します。
 
@@ -236,13 +238,13 @@ Go 1.27 で変わった `go tool trace -http=:6060` の扱いと、全アドレ�
 
 1. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) の Trace 節を読み、`-http=:6060` の listen address の変更を確認する。
 2. 手元で `go tool trace -h` を実行して `-http=addr` の役割を確認する。
-3. `go tool trace -http=localhost:0 departure.trace` を使い、ローカル専用かつ空いているポートで viewer を起動する。共有が本当に必要なときだけ、ネットワーク到達性・認証・trace の取り扱いを別途確認する。
+3. `go tool trace -http=localhost:0 order.trace` を使い、ローカル専用かつ空いているポートで viewer を起動する。共有が本当に必要なときだけ、ネットワーク到達性・認証・trace の取り扱いを別途確認する。
 
 **答え**
 
 - Go 1.27 では、ポートだけを指定する `-http=:6060` は localhost に制限されます。`go tool pprof -http` と同じ安全寄りの挙動です。
 - 全アドレスで待ち受ける必要がある場合は、`-http=0.0.0.0:6060` のようにアドレスまで明示します。これは単なる書式の違いではなく、trace viewer の公開範囲を選ぶ操作です。
-- 夜勤ノート PC での通常の調査は `-http=localhost:0` を選びます。冒頭の `departure-gate` や `check-ticket` のような運用上の名前も trace に載るため、「表示できる」ことと「同じネットワークに公開してよい」ことを混同しません。
+- 開発用ノート PC での通常の調査は `-http=localhost:0` を選びます。冒頭の `order-processing` や `validate-order` のような運用上の名前も trace に載るため、「表示できる」ことと「同じネットワークに公開してよい」ことを混同しません。
 
 </details>
 
