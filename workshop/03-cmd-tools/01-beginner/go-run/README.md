@@ -1,5 +1,7 @@
 # `go run` の裏側を覗いてみよう
 
+`go run` を見かけました。どんなものか調べてみましょう。
+
 先輩から「動作確認は `go run main.go` でいいよ」と言われました。
 Python や Ruby の経験がある同僚は「`go run` ってスクリプト感覚でサクッと動くね。Go ってインタプリタでも動かせるんだ」と言っています。
 
@@ -37,17 +39,19 @@ Go はコンパイル言語のはずですが、この理解で合っている�
 インタプリタではありません。実際に `-x` フラグを付けて実行すると、次のような出力になります（実際に `go run -x main.go` を実行した出力の抜粋）。
 
 ```
-WORK=/var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-build1851907018
+WORK=/var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX
 ...
 mkdir -p $WORK/b001/exe/
 .../compile ... # ソースをコンパイル
-.../link -o $WORK/b001/exe/main2 ... # 実行ファイルにリンク
-$WORK/b001/exe/main2 # できた実行ファイルを実行
-hello, gotan v2
+.../link -o $WORK/b001/exe/main ... # 実行ファイルにリンク
+$WORK/b001/exe/main # できた実行ファイルを実行
+hello, gotan
 ```
 
 `$WORK` という一時ディレクトリを作り、その中でコンパイル・リンクして実行ファイルを組み立て、最後にその実行ファイルを実行しているだけです。
 `main.go` の中身を 1 行ずつ読みながら評価するような処理はどこにもなく、`go build` して一時ファイルとして出力 → その一時ファイルを実行、という 2 段階の処理を 1 コマンドにまとめたものだと分かります。
+
+`WORK` のパスやビルドIDは実行環境ごとに変わるため、上の出力では環境依存部分を `X` と `...` で省略しています。
 
 </details>
 
@@ -82,20 +86,20 @@ hello, gotan v2
 `-work` フラグを付けて実行すると削除されずに残るので、実際に確認できます。
 
 ```
-$ go run -work main2.go
-WORK=/var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-build1851907018
-hello, gotan v2
-$ find /var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-build1851907018 -maxdepth 3
-.../go-build1851907018
-.../go-build1851907018/b001
-.../go-build1851907018/b001/importcfg
-.../go-build1851907018/b001/importcfg.link
-.../go-build1851907018/b001/exe
-.../go-build1851907018/b001/_pkg_.a
-.../go-build1851907018/b001/exe/main2
+$ go run -work main.go
+WORK=/var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX
+hello, gotan
+$ find /var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX -maxdepth 3
+.../go-buildXXXXXXXXXX
+.../go-buildXXXXXXXXXX/b001
+.../go-buildXXXXXXXXXX/b001/importcfg
+.../go-buildXXXXXXXXXX/b001/importcfg.link
+.../go-buildXXXXXXXXXX/b001/exe
+.../go-buildXXXXXXXXXX/b001/_pkg_.a
+.../go-buildXXXXXXXXXX/b001/exe/main
 ```
 
-`b001/exe/main2` が、実際に実行された実行ファイルの実体です。`-work` フラグを付けなければ、この一時ディレクトリごと自動的に削除されます。
+`b001/exe/main` が、実際に実行された実行ファイルの実体です。`-work` フラグを付けなければ、この一時ディレクトリごと自動的に削除されます。
 
 </details>
 
