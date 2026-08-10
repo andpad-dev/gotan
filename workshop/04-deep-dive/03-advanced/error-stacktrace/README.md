@@ -145,7 +145,7 @@ Proposal ドキュメントの議論を読み解き、なぜスタックトレ�
 <summary>答え</summary>
 
 最初のプロポーザル時点では以下の議題がありました。
-- Wrapping (`fmt.Errorf("... %w", err)`, `errors.IS`, `errors.As`)
+- Wrapping (`fmt.Errorf("... %w", err)`, `errors.Is`, `errors.As`)
 - Stack Frames (`errors.Frame`)
 - Formatting (`errors.Printer`, `errors.Formatter`)
 
