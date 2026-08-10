@@ -52,3 +52,19 @@
 ### 依存パッケージ一覧
 - ページ上部の `Imports: n` をクリックすると依存しているパッケージの一覧が表示されます。
 - ページ上部の `Imported by: n` をクリックすると 逆にそのパッケージに依存しているパッケージの一覧が表示されます。
+
+## 各問題の調査の入り口
+
+問題 README の「調査の入り口」にあるリンクは、ここから問題文とヒントに沿って辿るための一次情報です。答え欄のリンクを先に開かず、まず該当する問題の入口から調べ始めてください。
+
+### [`fmt` パッケージのドキュメントを読もう](01-beginner/fmt-printf/README.md)
+
+- https://pkg.go.dev/fmt
+
+### [プログラミング言語仕様を読もう](01-beginner/lang-spec-basics/README.md)
+
+- https://go.dev/ref/spec
+
+### [`slog.Handler` インタフェースを実装しよう](02-intermediate/slog-handler/README.md)
+
+- https://pkg.go.dev/log/slog
