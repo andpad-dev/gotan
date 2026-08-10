@@ -1,8 +1,8 @@
-# 月面港のゲート札を読み解こう
+# 連携設定のキーと値を読み分けよう
 
-月面港の搭乗口では、古い端末から `gate=G-7` のような札が届きます。表示担当は、区切り記号が欠けた札を「搭乗口が空」と誤認しないよう、まず札を安全に分けたいと考えました。コードに `strings.Cut` を見かけました。どんなものか調べてみましょう。
+外部 SaaS との連携設定では、管理画面から `region=asia-east1` のような `key=value` 形式の項目が届きます。実装担当は、区切り記号が欠けた入力を「値が空」と誤認しないよう、まず設定を安全に分けたいと考えました。コードに `strings.Cut` を見かけました。どんなものか調べてみましょう。
 
-次の観測ログを [Go Playground で動かす](https://go.dev/play/p/hPFJdhzqpXW) と、区切り記号がある札とない札で結果が変わります。
+次の観測ログを [Go Playground で動かす](https://go.dev/play/p/qzzfmNtViQU) と、区切り記号がある設定とない設定で結果が変わります。
 
 ```go
 package main
@@ -13,9 +13,9 @@ import (
 )
 
 func main() {
-	for _, badge := range []string{"gate=G-7", "gate"} {
-		key, value, found := strings.Cut(badge, "=")
-		fmt.Printf("%q -> key=%q value=%q found=%t\n", badge, key, value, found)
+	for _, setting := range []string{"region=asia-east1", "region"} {
+		key, value, found := strings.Cut(setting, "=")
+		fmt.Printf("%q -> key=%q value=%q found=%t\n", setting, key, value, found)
 	}
 }
 ```
@@ -23,15 +23,15 @@ func main() {
 実行結果:
 
 ```text
-"gate=G-7" -> key="gate" value="G-7" found=true
-"gate" -> key="gate" value="" found=false
+"region=asia-east1" -> key="region" value="asia-east1" found=true
+"region" -> key="region" value="" found=false
 ```
 
 ---
 
 ## 設問 1: 3 つの戻り値は何を伝える？
 
-`strings.Cut` の 3 つの戻り値はそれぞれ何でしょうか。`"gate"` の場合に `value == ""` だけでは「値が空なのか、そもそも `=` がなかったのか」を判定できない理由も説明してください。
+`strings.Cut` の 3 つの戻り値はそれぞれ何でしょうか。`"region"` の場合に `value == ""` だけでは「値が空なのか、そもそも `=` がなかったのか」を判定できない理由も説明してください。
 
 <details>
 <summary>ヒント</summary>
@@ -54,7 +54,7 @@ func main() {
 
 戻り値は順に、最初の区切り記号より前の文字列 `before`、後ろの文字列 `after`、区切り記号を見つけたかを示す `found` です。
 
-`"gate"` を `"="` で切ると `before` は元の `"gate"`、`after` は `""`、`found` は `false` になります。`after == ""` は `"gate="` のように値が本当に空の場合にも起こるため、札の形式を検証するには `found` を確認します。
+`"region"` を `"="` で切ると `before` は元の `"region"`、`after` は `""`、`found` は `false` になります。`after == ""` は `"region="` のように値が本当に空の場合にも起こるため、設定形式を検証するには `found` を確認します。
 
 </details>
 
@@ -62,7 +62,7 @@ func main() {
 
 ## 設問 2: どこで切れる？
 
-整備班から `route=G-7=priority` が届きました。`strings.Cut(route, "=")` はどこで切れるでしょうか。最初の `=` だけを意味のある境界とする今回の形式で、なぜこの性質が役立つか考えてください。
+連携先から `callback=https://example.com/a=b` が届きました。`strings.Cut(setting, "=")` はどこで切れるでしょうか。最初の `=` だけを意味のある境界とする今回の形式で、なぜこの性質が役立つか考えてください。
 
 <details>
 <summary>ヒント</summary>
@@ -82,9 +82,9 @@ func main() {
 
 **答え**
 
-結果は `before == "route"`、`after == "G-7=priority"`、`found == true` です。`Cut` は最初の一致だけで切ります。
+結果は `before == "callback"`、`after == "https://example.com/a=b"`、`found == true` です。`Cut` は最初の一致だけで切ります。
 
-キーと残りの本文を一度に分けたい形式なら、本文に `=` が含まれていても失われないため便利です。本文もさらに構造化されているなら、`after` に対してもう一度 `Cut` する、と段階的に読み取れます。
+キーと残りの値を一度に分けたい形式なら、値に `=` が含まれていても失われないため便利です。値もさらに構造化されているなら、`after` に対してもう一度 `Cut` する、と段階的に読み取れます。
 
 </details>
 
