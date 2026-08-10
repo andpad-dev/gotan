@@ -81,9 +81,9 @@ Go 1.23 以降の新しい挙動では、タイマーチャンネルは容量 0 
 
 **調査ルート**
 
-1. [time.NewTimer](https://pkg.go.dev/time#NewTimer) の `Stop` / `Reset` に関する説明を読む。
-2. [Go 1.23 Release Notes](https://go.dev/doc/go1.23) の容量 0 と stale value の説明を確認する。
-3. 背景の [Issue #37196](https://github.com/golang/go/issues/37196) と [time パッケージの実装コメント](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=133) を読む。
+1. [Go 1.23 Release Notes](https://go.dev/doc/go1.23) の Timer changes を読み直す。
+2. [time.NewTimer](https://pkg.go.dev/time#NewTimer) の `Stop` / `Reset` に関する説明を読む。
+3. 容量 0 と stale value の背景を、[Issue #37196](https://github.com/golang/go/issues/37196) と [time パッケージの実装コメント](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=133) で確認する。
 
 **答え**
 
