@@ -143,9 +143,9 @@ Go 1.27 ではこの設定は恒久的に削除され、`time` のタイマー�
 
 **調査ルート**
 
-1. [Issue #37196](https://github.com/golang/go/issues/37196) の問題提起と議論を読む。
-2. [Go 1.23 Release Notes](https://go.dev/doc/go1.23) で最終的な保証を確認する。
-3. [sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=133) の実装コメントを読む。
+1. [Go 1.23 Release Notes](https://go.dev/doc/go1.23) でタイマー変更の概要を確認する。
+2. [Issue #37196](https://github.com/golang/go/issues/37196) の問題提起と議論を読む。
+3. 最終的な保証を [sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=133) の実装コメントで確認する。
 
 **答え**
 
