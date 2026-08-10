@@ -92,9 +92,9 @@ API 担当者が `GET /reports/{id}` と `/reports/latest` を登録しようと
 
 **調査ルート**
 
-1. [http.ServeMux](https://pkg.go.dev/net/http#ServeMux) の Precedence と conflict の説明を読む。
-2. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) で「neither is more specific」の規則を確認する。
-3. [pattern.go の `conflictsWith`](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/net/http/pattern.go;l=219) を読む。
+1. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) の enhanced routing patterns を読み直す。
+2. [http.ServeMux](https://pkg.go.dev/net/http#ServeMux) の Precedence と conflict の説明を読む。
+3. 「neither is more specific」の規則を確認し、[pattern.go の `conflictsWith`](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/net/http/pattern.go;l=219) を読む。
 
 **答え**
 
@@ -154,9 +154,10 @@ Go 1.22 から、メソッド付きパターンと `{name}` / `{name...}` のワ
 
 **調査ルート**
 
-1. [ServeMux 拡張の提案 Issue #61410](https://github.com/golang/go/issues/61410) の Precedence、Backwards Compatibility、Performance を読む。
-2. [Go Blog: Routing Enhancements for Go 1.22](https://go.dev/blog/routing-enhancements) を読む。
-3. [routing_tree.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/net/http/routing_tree.go;l=169) と [pattern.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/net/http/pattern.go;l=223) を読む。
+1. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) の enhanced routing patterns を読み直す。
+2. [ServeMux 拡張の提案 Issue #61410](https://github.com/golang/go/issues/61410) の Precedence、Backwards Compatibility、Performance を読む。
+3. [Go Blog: Routing Enhancements for Go 1.22](https://go.dev/blog/routing-enhancements) を読む。
+4. [routing_tree.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/net/http/routing_tree.go;l=169) と [pattern.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/net/http/pattern.go;l=223) を読む。
 
 **答え**
 
