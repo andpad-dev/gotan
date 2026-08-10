@@ -1,5 +1,7 @@
 # 自作の型にジェネリックメソッドで汎用ヘルパを生やそう
 
+自作の型にジェネリックメソッドを生やしたいです。どういうふうにやればいいか調べよう。
+
 社内ユーティリティに、独自コンテナ型 `Slice[T]` があります。
 値を別の型に写す変換ヘルパを、コンテナに **メソッドとして** 生やしたいです。
 
@@ -12,13 +14,13 @@ type Slice[T any] struct {
 func (s Slice[T]) Map[F any](f func(T) F) Slice[F] { ... }
 ```
 
-いま使っている Go 1.26 でこのコードをコンパイルしようとすると、次のように怒られます。
+いま安定版として使っている Go 1.26.4 でこのコードをコンパイルしようとすると、次のように怒られます。
 
 ```
-./main.go:7:21: generic method requires go1.27 or later (-lang was set to go1.26; check go.mod)
+syntax error: method must have no type parameters
 ```
 
-どうやら Go 1.27 で「ジェネリックメソッド」が入るらしいのですが、
+Go 1.27 のリリースノートには「ジェネリックメソッド」が記載されていますが、現時点ではリリースノート自体が Draft です。ここでは安定版 Go 1.26 の仕様と、`gotip` / Playground の `?v=gotip` で試せる将来仕様を混同しないように調べます。
 
 - 仕様書のどこがどう変わったのか
 - なぜ Go 1.26 までは書けなかったのか
@@ -30,7 +32,7 @@ func (s Slice[T]) Map[F any](f func(T) F) Slice[F] { ... }
 
 ## 設問 1: 仕様書のどこが変わったのか調べよう
 
-Go 1.27 で「method に何が書けるようになったか」を、リリースノートと [The Go Programming Language Specification](https://go.dev/ref/spec) から特定しましょう。仕様書の該当セクションの EBNF がどう変わったかまで見てみます。
+Go 1.27 の Draft リリースノートと proposal から、「method に何が書けるようになる予定か」を特定しましょう。現行仕様書の EBNF と、提案されている EBNF の違いまで見てみます。
 
 <details>
 <summary>ヒント</summary>
@@ -49,31 +51,31 @@ Go 1.27 で「method に何が書けるようになったか」を、リリー�
 
 1. [Go 1.27 リリースノート の Changes to the language 節](https://go.dev/doc/go1.27#language) を開き、`generic methods` の段落を読む。
 2. その段落に埋め込まれた `go.dev/issue/77273` を開いて [proposal #77273 "spec: generic methods for Go"](https://go.dev/issue/77273) の Proposal 節に飛ぶ。旧新の EBNF が並記されている。
-3. [仕様書の Method declarations](https://go.dev/ref/spec#Method_declarations) セクションで、実際に採用された EBNF を確認する。
+3. [現行仕様書の Method declarations](https://go.dev/ref/spec#Method_declarations) セクションを読み、Draft リリースノート・proposal に書かれた将来仕様と区別する。
 
 **答え**
 
-リリースノートには次のように書かれています。
+Draft のリリースノートには次のように書かれています。
 
 > Go 1.27 now supports generic methods: a method declaration may declare its own type parameters. This widely anticipated change allows adding generic functions within the namespace of a particular data type where before one had to declare such functions with a scope of the entire package. Note that methods of interfaces may not declare type parameters nor can interface methods be implemented by generic methods.
 
-仕様書 [Method declarations](https://go.dev/ref/spec#Method_declarations) の EBNF がこう変わりました（proposal #77273 の Proposal 節で対比されているとおり）。
+現行の安定版仕様書 [Method declarations](https://go.dev/ref/spec#Method_declarations) は、まだ次の Go 1.26 の EBNF です。
 
-- **旧 (Go 1.26 まで)**
+- **現行 (Go 1.26)**
   ```
   MethodDecl = "func" Receiver MethodName Signature [ FunctionBody ] .
   ```
-- **新 (Go 1.27 以降)**
+- proposal #77273 が示す **将来仕様 (Go 1.27 の Draft)**
   ```
   MethodDecl = "func" Receiver MethodName [ TypeParameters ] Signature [ FunctionBody ] .
   ```
 
-`MethodName` と `Signature` の間に `[ TypeParameters ]` が挿入されただけです。関数宣言 (`FunctionDecl`) の型パラメータ位置と揃った形になっています。
+proposal では `MethodName` と `Signature` の間に `[ TypeParameters ]` を挿入する案になっています。関数宣言 (`FunctionDecl`) の型パラメータ位置と揃った形です。ただし、これは現行の安定版仕様書に反映された仕様ではありません。
 
-コンパイラも language version をチェックしていて、`go.mod` に `go 1.26` と書いてあるモジュールでジェネリックメソッドを書くと次のように断られます。
+Go 1.26.4 でこの宣言を実行すると、実際には次の構文エラーになります。ジェネリックメソッドを試す場合は、`gotip` または Playground の `?v=gotip` を使います。
 
 ```
-./main.go:7:21: generic method requires go1.27 or later (-lang was set to go1.26; check go.mod)
+syntax error: method must have no type parameters
 ```
 
 </details>
@@ -82,11 +84,11 @@ Go 1.27 で「method に何が書けるようになったか」を、リリー�
 
 ## 設問 2: なぜインタフェースメソッドでは依然として書けないか、そして generic method はインタフェースを実装するか
 
-リリースノートには含みのある一文があります。
+Draft のリリースノートには含みのある一文があります。
 
 > methods of interfaces may not declare type parameters **nor can interface methods be implemented by generic methods**.
 
-つまり Go 1.27 でも「インタフェースメソッドに型パラメータは書けない」うえに、「ジェネリックメソッドでインタフェースを実装することもできない」。なぜこういう線引きになったのでしょうか。次のコードを Playground で試して、コンパイラの言い分も一緒に確認しましょう。
+つまり Draft で示される Go 1.27 の案でも「インタフェースメソッドに型パラメータは書けない」うえに、「ジェネリックメソッドでインタフェースを実装することもできない」。なぜこういう線引きになったのでしょうか。次のコードを Playground で試して、コンパイラの言い分も一緒に確認しましょう。
 
 ```go
 package main
@@ -174,7 +176,7 @@ proposal Examples 節にそのままの答えがあります。
 
 - 手元で試すなら `go install golang.org/dl/gotip@latest && gotip download` してから `gotip run .`
 - Playground は URL に `?v=gotip` を付けるか、Playground 画面の Go version セレクタから "Dev branch" を選ぶ
-- go.mod は `go 1.27` にする（`go 1.26` のままだと設問 1 で見たエラーが出る）
+- 安定版 Go 1.26 のままでは実行できない。`gotip` または Playground の `?v=gotip` を使い、モジュールを作る場合はそのツールチェーンが受け付ける言語バージョンを設定する
 - 呼び出し側は `s.Map(func(n int) string { ... })` のように書ける（型引数 `F` は関数リテラルから推論される）
 
 </details>
@@ -270,7 +272,7 @@ int32: 76 (type int32)
 uint : 616 (type uint)
 ```
 
-Go 1.27 リリースノートの [math/rand/v2 節](https://go.dev/doc/go1.27#minor_library_changes) に「`Rand` now supports a generic method `N`, matching the behavior of the top-level `N` function.」と明記されています。「なぜ 1.27 でようやくこれが入ったのか」を知りたいときは、そのまま proposal #77273 のスレッドを追うのが早いです。
+Go 1.27 の Draft リリースノートの [math/rand/v2 節](https://go.dev/doc/go1.27#minor_library_changes) に「`Rand` now supports a generic method `N`, matching the behavior of the top-level `N` function.」と明記されています。「なぜ 1.27 でようやくこれが入る予定なのか」を知りたいときは、そのまま proposal #77273 のスレッドを追うのが早いです。
 
 </details>
 
