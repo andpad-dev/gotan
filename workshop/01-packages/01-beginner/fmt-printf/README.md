@@ -1,6 +1,6 @@
-# fmt パッケージのドキュメントを読もう
+# fmt.Printf の書式指定子を調べよう
 
-先輩のコードで、次の 1 行を見かけました。
+先輩のコードで、`fmt.Printf` の書式指定子を見かけました。どんなものか調べてみましょう。
 
 ```go
 fmt.Printf("%#[1]v %[1]T\n", value)
@@ -27,9 +27,10 @@ fmt.Printf("%#[1]v %[1]T\n", value)
 
 **調査ルート**
 
-1. https://pkg.go.dev/fmt を開き、Overview 冒頭の「Printing」セクションを読む。
-2. `%v` や `%T` のような書式指定子を、fmt のドキュメントでは **verb** と呼ぶ。verb の一覧表から `%v` と `%T` を探す。
-3. 少し下の「Other flags」で `#` フラグの説明を探す。
+1. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `fmt` パッケージを開く。
+2. https://pkg.go.dev/fmt の Overview 冒頭の「Printing」セクションを読む。
+3. `%v` や `%T` のような書式指定子を、fmt のドキュメントでは **verb** と呼ぶ。verb の一覧表から `%v` と `%T` を探す。
+4. 少し下の「Other flags」で `#` フラグの説明を探す。
 
 **答え**
 
@@ -68,8 +69,9 @@ fmt.Printf("%#[1]v %[1]T\n", value)
 
 **調査ルート**
 
-1. https://pkg.go.dev/fmt の Overview で `[` を検索する。
-2. 「Explicit argument indexes」セクションにたどり着く。
+1. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `fmt` パッケージを開く。
+2. https://pkg.go.dev/fmt の Overview で `[` を検索する。
+3. 「Explicit argument indexes」セクションにたどり着く。
 
 **答え**
 
