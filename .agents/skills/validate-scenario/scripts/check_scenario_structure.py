@@ -16,6 +16,7 @@ SCENARIO_PATH_RE = re.compile(
 QUESTION_RE = re.compile(r"(?m)^## 設問\s+(\d+)(?::|：|\s)")
 URL_RE = re.compile(r"https?://[^\s<>\]})]+")
 DETAIL_RE = re.compile(r"<details\b[^>]*>(.*?)</details>", re.IGNORECASE | re.DOTALL)
+FENCE_RE = re.compile(r"^\s*(?:>\s*)?(```|~~~)")
 REQUIRED_DIFFICULTY_WORDING = {
     "01-beginner": "見かけました。どんなものか調べてみましょう",
     "02-intermediate": "やりたいです。どういうふうにやればいいか調べよう",
@@ -54,6 +55,22 @@ def first_route_url(block: str) -> str | None:
     return match.group(0).rstrip(".,;:!?。 、」』）)]}") if match else None
 
 
+def first_url(text: str) -> str | None:
+    match = URL_RE.search(text)
+    return match.group(0).rstrip(".,;:!?。 、」』）)]}\"'`") if match else None
+
+
+def contains_markdown_heading(content: str) -> bool:
+    in_fence = False
+    for line in content.splitlines():
+        if FENCE_RE.match(line):
+            in_fence = not in_fence
+            continue
+        if not in_fence and re.match(r"^#{1,6}\s", line):
+            return True
+    return False
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("scenario", type=Path, help="scenario README under workshop/")
@@ -77,6 +94,16 @@ def main() -> int:
         failures += emit("FAIL", f"category README is missing: {category_readme}")
     else:
         emit("PASS", f"category README exists: {category_readme}")
+        category_text = category_readme.read_text(encoding="utf-8")
+        category_url = first_url(category_text)
+        if category_url is None:
+            failures += emit("FAIL", "category README has no external starting URL")
+        elif urllib.parse.urlsplit(category_url).hostname != "go.dev":
+            failures += emit("FAIL", f"category README starts at {category_url}; first URL must be go.dev")
+        else:
+            emit("PASS", f"category README starts at go.dev: {category_url}")
+        if "逆引き" not in category_text or not re.search(r"検索|ページ内|\bf\b", category_text):
+            failures += emit("FAIL", "category README lacks a usable reverse-search procedure")
 
     text = path.read_text(encoding="utf-8")
     if not re.search(r"(?m)^#\s+\S", text):
@@ -103,7 +130,7 @@ def main() -> int:
     for number, line, block in question_blocks(text):
         if not re.search(r"<summary>答え</summary>|\*\*答え\*\*", block):
             failures += emit("FAIL", f"question {number} has no answer section", line)
-        if not re.search(r"調査ルート", block):
+        if not re.search(r"\*\*調査ルート\*\*", block):
             failures += emit("FAIL", f"question {number} has no 調査ルート", line)
         route_url = first_route_url(block)
         if route_url is None:
@@ -115,8 +142,18 @@ def main() -> int:
             else:
                 emit("PASS", f"question {number} route starts at go.dev: {route_url}", line)
 
+    entry_start = text.find("## 調査の入り口")
+    if entry_start >= 0:
+        entry_end = text.find("\n## ", entry_start + 3)
+        entry = text[entry_start:] if entry_end < 0 else text[entry_start:entry_end]
+        entry_url = first_url(entry)
+        if entry_url is None:
+            failures += emit("FAIL", "## 調査の入り口 has no external starting URL")
+        elif urllib.parse.urlsplit(entry_url).hostname != "go.dev":
+            failures += emit("FAIL", f"## 調査の入り口 starts at {entry_url}; first URL must be go.dev")
+
     for detail in DETAIL_RE.finditer(text):
-        if re.search(r"(?m)^#{1,6}\s", detail.group(1)):
+        if contains_markdown_heading(detail.group(1)):
             failures += emit("FAIL", "Markdown heading found inside <details>", line_number(text, detail.start()))
 
     if re.search(r"```go\b", text) and "https://go.dev/play/p/" not in text:

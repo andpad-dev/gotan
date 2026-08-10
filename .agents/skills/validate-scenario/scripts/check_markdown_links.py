@@ -23,7 +23,9 @@ MARKDOWN_LINK_RE = re.compile(r"(?<!!)\[[^\]]*\]\(\s*<?([^\s>)]*)>?")
 AUTOLINK_RE = re.compile(r"<((?:https?://)[^>]+)>")
 HTML_HREF_RE = re.compile(r"\bhref\s*=\s*[\"']([^\"']+)[\"']", re.IGNORECASE)
 BARE_URL_RE = re.compile(r"https?://[^\s<>\]})]+")
-TRAILING_PUNCTUATION = ".,;:!?。 、」』）)]}"
+INLINE_CODE_RE = re.compile(r"`+[^`]*`+")
+FENCE_RE = re.compile(r"^\s*(?:>\s*)?(```|~~~)")
+TRAILING_PUNCTUATION = ".,;:!?。 、」』）)]}\"'`"
 INCONCLUSIVE_STATUSES = {403, 429}
 
 
@@ -40,13 +42,23 @@ def strip_trailing_punctuation(url: str) -> str:
     return url
 
 
+def mask_inline_code(line: str) -> str:
+    return INLINE_CODE_RE.sub(lambda match: " " * len(match.group(0)), line)
+
+
 def extract_links(path: Path) -> list[Link]:
     links: list[Link] = []
+    in_fence = False
     for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if FENCE_RE.match(line):
+            in_fence = not in_fence
+            continue
+
+        syntax_line = "" if in_fence else mask_inline_code(line)
         candidates: list[tuple[str, str]] = []
-        candidates.extend((match.group(1), "markdown") for match in MARKDOWN_LINK_RE.finditer(line))
-        candidates.extend((match.group(1), "autolink") for match in AUTOLINK_RE.finditer(line))
-        candidates.extend((match.group(1), "html") for match in HTML_HREF_RE.finditer(line))
+        candidates.extend((match.group(1), "markdown") for match in MARKDOWN_LINK_RE.finditer(syntax_line))
+        candidates.extend((match.group(1), "autolink") for match in AUTOLINK_RE.finditer(syntax_line))
+        candidates.extend((match.group(1), "html") for match in HTML_HREF_RE.finditer(syntax_line))
         candidates.extend((strip_trailing_punctuation(match.group(0)), "bare") for match in BARE_URL_RE.finditer(line))
         links.extend(Link(value, line_number, kind) for value, kind in candidates if value)
 
