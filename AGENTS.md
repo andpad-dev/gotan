@@ -13,11 +13,11 @@ This repository contains the Go Conference 2026 workshop materials for Go探無�
 
 The directory and the PR label must express the same difficulty: `初級`, `中級`, or `上級`.
 
-| Level | Directory | Required wording | Questions |
+| Level | Directory | Story guidance | Questions |
 | --- | --- | --- | --- |
-| 初級 | `01-beginner` | 「◯◯を見かけました。どんなものか調べてみましょう」 | About 2 |
-| 中級 | `02-intermediate` | 「◯◯をやりたいです。どういうふうにやればいいか調べよう」 | 3 |
-| 上級 | `03-advanced` | 「なんでこうなってるの？背景を調べよう」 | No fixed limit |
+| 初級 | `01-beginner` | 目の前のコードや出力から用語・基本仕様を調べる | About 2 |
+| 中級 | `02-intermediate` | 実現したいことと制約から具体的な方法を調べる | 3 |
+| 上級 | `03-advanced` | 現象の背景にある仕様・設計・歴史を調べる | No fixed limit |
 
 Examples: [beginner #2](https://github.com/andpad-dev/gotan/pull/2), [intermediate #3](https://github.com/andpad-dev/gotan/pull/3), [advanced #4](https://github.com/andpad-dev/gotan/pull/4).
 
@@ -26,7 +26,7 @@ Examples: [beginner #2](https://github.com/andpad-dev/gotan/pull/2), [intermedia
 Use this structure:
 
 1. `# <title>`.
-2. An introduction framed as a workplace problem, using the required difficulty wording. Link every runnable Go example to Go Playground.
+2. An introduction framed as a workplace problem. The observation, purpose, and investigation should connect naturally without requiring a fixed sentence. Link every runnable Go example to Go Playground.
 3. `## 設問 N: <heading>` sections, using the question count for the difficulty. Each section contains the problem, an optional `<details><summary>ヒント</summary>` hint, and an `<details><summary>答え</summary>` explanation with **調査ルート** (primary sources and order) and **答え**.
 4. An optional `<details><summary>こぼれ話</summary>` section for interesting but nonessential findings.
 5. `## 調査の入り口` with primary-source starting links.
