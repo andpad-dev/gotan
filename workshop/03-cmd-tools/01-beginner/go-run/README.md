@@ -31,8 +31,9 @@ Go はコンパイル言語のはずですが、この理解で合っている�
 
 **調査ルート**
 
-1. `go help run`（= https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program ）を読む。「Run compiles and runs the named main Go package.」とあり、動詞は "compiles"（コンパイルする）。インタプリタなら "interprets" や "evaluates" のような動詞になるはずで、この時点で疑わしい。
-2. `go run -x main.go` を実行し、出力を「生成している行」と「実行している行」に仕分ける。
+1. https://go.dev/cmd/go/ を開き、`go` コマンドの公式ドキュメントから `go run` の説明を探す。
+2. `go help run`（= https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program ）を読む。「Run compiles and runs the named main Go package.」とあり、動詞は "compiles"（コンパイルする）。インタプリタなら "interprets" や "evaluates" のような動詞になるはずで、この時点で疑わしい。
+3. `go run -x main.go` を実行し、出力を「生成している行」と「実行している行」に仕分ける。
 
 **答え**
 
@@ -76,8 +77,9 @@ hello, gotan
 
 **調査ルート**
 
-1. `go run -x main.go` で表示された `WORK=...` のパスを、コマンド終了後に `ls` してみる → ディレクトリごと消えている。
-2. `go help build` を読むと `-work` フラグの説明に「print the name of the temporary work directory and do not delete it when exiting」とあり、"delete it when exiting" が **デフォルトの挙動である**ことが読み取れる。
+1. https://go.dev/cmd/go/ を開き、`go build` のドキュメントにある `-work` フラグの説明を探す。
+2. `go run -x main.go` で表示された `WORK=...` のパスを、コマンド終了後に `ls` してみる → ディレクトリごと消えている。
+3. `go help build` を読むと `-work` フラグの説明に「print the name of the temporary work directory and do not delete it when exiting」とあり、"delete it when exiting" が **デフォルトの挙動である**ことが読み取れる。
 
 **答え**
 
@@ -144,11 +146,12 @@ $ find /var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX -maxdepth 3
 
 **調査ルート**
 
-1. https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go の `runRun` 関数（73 行目〜）を読む。
-2. `work.NewBuilder` の実体（https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/action.go の 281 行目〜）を読み、一時ディレクトリの作成箇所を確認する。
-3. `LinkAction`（同ファイル 922 行目〜）と `CompileAction`（633 行目〜）で、パッケージごとのサブディレクトリ（`Objdir`）と実行ファイルのパス（`Target`）がどう決まるかを確認する。
-4. https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/exec.go の `Builder.build`（723 行目〜、コンパイル担当）と `Builder.link`（1591 行目〜、リンク担当）を読み、実際にコンパイラ・リンカを呼び出している場所を確認する。
-5. `Builder.Close`（action.go 340 行目〜）を読み、後片付けの実装を確認する。
+1. https://go.dev/cmd/go/ を開き、`go run` が `cmd/go` の一部として実装されていることを確認する。
+2. https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go の `runRun` 関数（73 行目〜）を読む。
+3. `work.NewBuilder` の実体（https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/action.go の 281 行目〜）を読み、一時ディレクトリの作成箇所を確認する。
+4. `LinkAction`（同ファイル 922 行目〜）と `CompileAction`（633 行目〜）で、パッケージごとのサブディレクトリ（`Objdir`）と実行ファイルのパス（`Target`）がどう決まるかを確認する。
+5. https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/exec.go の `Builder.build`（723 行目〜、コンパイル担当）と `Builder.link`（1591 行目〜、リンク担当）を読み、実際にコンパイラ・リンカを呼び出している場所を確認する。
+6. `Builder.Close`（action.go 340 行目〜）を読み、後片付けの実装を確認する。
 
 **答え**
 
@@ -232,6 +235,7 @@ if !cfg.BuildWork {
 
 ## 調査の入り口
 
+- https://go.dev/cmd/go/
 - https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program
 - https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go
 - https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/action.go
