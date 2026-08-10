@@ -6,6 +6,8 @@
 スクレイピングも検討しましたが、[2026年6月にベータ公開された](https://opensource.googleblog.com/2026/06/a-new-pkggodev-api-for-go.html) **pkg.go.dev API** を使えば、構造化された JSON データを直接取得できます。
 なぜこの API はこのような設計になっているのか、背景を調べましょう。
 
+この設計はなんでこうなってるの？背景を調べよう。
+
 ## 設問 1: 検索結果をソート・フィルタリングしたい
 
 検索 API (`/v1beta/search`) で `router` を検索すると、デフォルトではマッチ度順にソートされます。
@@ -31,9 +33,10 @@
 
 **調査ルート**
 
-1. https://pkg.go.dev/v1beta/api の「Routes」セクションで `/v1beta/search` のレスポンス型を確認する。
-2. レスポンス型のリンク(`SearchResult`)をたどり、どんなフィールドが返されるか確認する。
-3. pkg.go.dev のソースコード(https://cs.opensource.google/go/x/pkgsite)で SearchResult の定義を見る。
+1. [Go Documentation](https://go.dev/doc/) を入口に、pkg.go.dev API の公式ドキュメントを探す。
+2. https://pkg.go.dev/v1beta/api の「Routes」セクションで `/v1beta/search` のレスポンス型を確認する。
+3. レスポンス型のリンク(`SearchResult`)をたどり、どんなフィールドが返されるか確認する。
+4. pkg.go.dev のソースコード(https://cs.opensource.google/go/x/pkgsite)で SearchResult の定義を見る。
 
 **答え**
 
@@ -105,9 +108,10 @@ curl -L "https://pkg.go.dev/v1beta/package/golang.org/x/time/rate" | jq .
 
 **調査ルート**
 
-- curl -s "https://pkg.go.dev/v1beta/package/golang.org/x/time/rate" | jq . を実行して、実際の挙動を確認する。
-- API ドキュメントの「Requests」セクションでパッケージパスの曖昧性について読む。
-- Go のモジュールシステムのドキュメント(https://go.dev/ref/mod)で、モジュールパスとパッケージパスの関係を確認する。
+1. [Go Documentation](https://go.dev/doc/) を入口に、Go Modules の公式リファレンスを探す。
+2. `curl -s "https://pkg.go.dev/v1beta/package/golang.org/x/time/rate" | jq .` を実行して、実際の挙動を確認する。
+3. API ドキュメントの「Requests」セクションでパッケージパスの曖昧性について読む。
+4. Go のモジュールシステムのドキュメント(https://go.dev/ref/mod)で、モジュールパスとパッケージパスの関係を確認する。
 
 **答え**
 
@@ -184,9 +188,10 @@ API には 45 QPS(queries per second)per IP block というレート制限があ
 
 **調査ルート**
 
-- API ドキュメントの「Rate Limiting」と「Pagination」セクションを読む。
-- 実際に検索結果を取得し、nextPageToken がどのような値になっているか確認する。
-- pkgsite のソースコード(https://cs.opensource.google/go/x/pkgsite)で、ページネーションの実装を確認する。
+1. [Go Documentation](https://go.dev/doc/) を入口に、pkg.go.dev API の公式ドキュメントを探す。
+2. API ドキュメントの「Rate Limiting」と「Pagination」セクションを読む。
+3. 実際に検索結果を取得し、nextPageToken がどのような値になっているか確認する。
+4. pkgsite のソースコード(https://cs.opensource.google/go/x/pkgsite)で、ページネーションの実装を確認する。
 
 **答え**
 
@@ -238,9 +243,10 @@ pkg.go.dev は Google が無料で提供する公開サービスです。
 
 **調査ルート**
 
-- API ドキュメントの `/v1beta/imported-by/{path}` の説明を読む。
-- pkgsite のソースコード(https://cs.opensource.google/go/x/pkgsite)で、imported-by の実装を確認する。
-- Go のモジュールシステムのドキュメント(https://go.dev/ref/mod)で、モジュールの境界について確認する。
+1. [Go Documentation](https://go.dev/doc/) を入口に、Go Modules の公式リファレンスを探す。
+2. API ドキュメントの `/v1beta/imported-by/{path}` の説明を読む。
+3. pkgsite のソースコード(https://cs.opensource.google/go/x/pkgsite)で、imported-by の実装を確認する。
+4. Go のモジュールシステムのドキュメント(https://go.dev/ref/mod)で、モジュールの境界について確認する。
 
 **答え**
 
@@ -261,6 +267,7 @@ imported-by の典型的な用途は:
 ---
 
 ## 調査の入り口
+- https://go.dev/doc/
 - https://pkg.go.dev/v1beta/api
 - https://pkg.go.dev/golang.org/x/pkgsite/internal/api (レスポンス型の定義)
 - https://cs.opensource.google/go/x/pkgsite (pkgsite のソースコード)
