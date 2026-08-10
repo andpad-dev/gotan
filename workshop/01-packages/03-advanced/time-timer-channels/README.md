@@ -1,4 +1,4 @@
-# 再試行タイマーの古い通知を追え
+# time.Timer の Stop/Reset と古い通知を追え
 
 決済連携の再試行ジョブでは、タイマーを停止して設定し直した直後に、以前の期限の通知を受け取ったという古い障害報告が残っています。現行の観測ではチャンネル容量が 0 です。なんでこうなってるの？背景を調べよう。
 
@@ -81,9 +81,9 @@ Go 1.23 以降の新しい挙動では、タイマーチャンネルは容量 0 
 
 **調査ルート**
 
-1. [time.NewTimer](https://pkg.go.dev/time#NewTimer) の `Stop` / `Reset` に関する説明を読む。
-2. [Go 1.23 Release Notes](https://go.dev/doc/go1.23) の容量 0 と stale value の説明を確認する。
-3. 背景の [Issue #37196](https://github.com/golang/go/issues/37196) と [time パッケージの実装コメント](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=133) を読む。
+1. [Go 1.23 Release Notes](https://go.dev/doc/go1.23) の Timer changes を読み直す。
+2. [time.NewTimer](https://pkg.go.dev/time#NewTimer) の `Stop` / `Reset` に関する説明を読む。
+3. 容量 0 と stale value の背景を、[Issue #37196](https://github.com/golang/go/issues/37196) と [time パッケージの実装コメント](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=133) で確認する。
 
 **答え**
 
@@ -143,9 +143,9 @@ Go 1.27 ではこの設定は恒久的に削除され、`time` のタイマー�
 
 **調査ルート**
 
-1. [Issue #37196](https://github.com/golang/go/issues/37196) の問題提起と議論を読む。
-2. [Go 1.23 Release Notes](https://go.dev/doc/go1.23) で最終的な保証を確認する。
-3. [sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=133) の実装コメントを読む。
+1. [Go 1.23 Release Notes](https://go.dev/doc/go1.23) でタイマー変更の概要を確認する。
+2. [Issue #37196](https://github.com/golang/go/issues/37196) の問題提起と議論を読む。
+3. 最終的な保証を [sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=133) の実装コメントで確認する。
 
 **答え**
 
