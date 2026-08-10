@@ -14,7 +14,7 @@ type Slice[T any] struct {
 func (s Slice[T]) Map[F any](f func(T) F) Slice[F] { ... }
 ```
 
-いま安定版として使っている Go 1.26.4 でこのコードをコンパイルしようとすると、次のように怒られます。
+いま安定版として使っている Go 1.26.5 でこのコードをコンパイルしようとすると、次のように怒られます。
 
 ```
 syntax error: method must have no type parameters
@@ -72,7 +72,7 @@ Draft のリリースノートには次のように書かれています。
 
 proposal では `MethodName` と `Signature` の間に `[ TypeParameters ]` を挿入する案になっています。関数宣言 (`FunctionDecl`) の型パラメータ位置と揃った形です。ただし、これは現行の安定版仕様書に反映された仕様ではありません。
 
-Go 1.26.4 でこの宣言を実行すると、実際には次の構文エラーになります。ジェネリックメソッドを試す場合は、`gotip` または Playground の `?v=gotip` を使います。
+Go 1.26.5 でこの宣言を実行すると、実際には次の構文エラーになります。ジェネリックメソッドを試す場合は、`gotip` または Playground の `?v=gotip` を使います。
 
 ```
 syntax error: method must have no type parameters
