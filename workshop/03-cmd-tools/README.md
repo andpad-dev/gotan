@@ -6,7 +6,7 @@
 ## 1. サブコマンドが何をするコマンドか知りたい（公式ヘルプを読む）
 
 1. 手元で `go help <サブコマンド>` を実行する（例: `go help run`, `go help generate`, `go help vet`）。`go` 本体に同梱されているサブコマンドは、これだけで概要と主要フラグが読める。
-2. 同じ内容を Web で読むなら `https://pkg.go.dev/cmd/go` のページで `f` キーを押し、サブコマンド名を検索してその節（`#hdr-...` で終わる URL）に直接ジャンプできる。
+2. 同じ内容を Web で読むなら [`pkg.go.dev/cmd/go`](https://pkg.go.dev/cmd/go) のページで `f` キーを押し、サブコマンド名を検索してその節（`#hdr-...` で終わる URL）に直接ジャンプできる。
 3. `go tool <サブコマンド>` として提供されるツール（`vet`、`pprof`、`trace`、`cover` など）は `go tool <サブコマンド> -h` や `go tool <サブコマンド> help` で使い方を確認できる。
 
 ## 2. コマンドの詳しい仕様やフラグを知りたい
@@ -29,8 +29,53 @@
 
 ## 5. いつ・なぜ追加された機能か知りたい
 
-- 対象の Go バージョンが分かっている場合、まず `https://go.dev/doc/go1.xx` のリリースノートを見る。特に **Tools** セクション（[Go 1.26](https://go.dev/doc/go1.26#tools) / [Go 1.27](https://go.dev/doc/go1.27#tools)）に、`go` コマンドとツール群の変更点がまとまっている。
+- 対象の Go バージョンが分かっている場合、まず `go.dev/doc/go1.<version>` のリリースノートを見る。特に **Tools** セクション（[Go 1.26](https://go.dev/doc/go1.26#tools) / [Go 1.27](https://go.dev/doc/go1.27#tools)）に、`go` コマンドとツール群の変更点がまとまっている。
 - リリースノートに Issue 番号やプロポーザルへのリンクがあれば、必ず該当 Issue を開き、議論と関連リンクまで含めて読む（`github.com/golang/go` の Issue、`go.googlesource.com/proposal`）。要約だけから挙動を推測しない。
+
+## 各問題の調査の入り口
+
+問題 README の「調査の入り口」にあるリンクは、ここから問題文の観測とヒントに沿って辿るための一次情報です。答え欄のリンクを先に開かず、まず該当する問題の入口から調べ始めてください。
+
+### [`go run` の裏側を覗いてみよう](01-beginner/go-run/README.md)
+
+- https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program
+- https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go
+- https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/action.go
+- https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/exec.go
+
+### [`go vet` コマンドを読もう](01-beginner/go-vet-basics/README.md)
+
+- https://pkg.go.dev/cmd/vet
+- https://pkg.go.dev/cmd/go#hdr-Report_likely_mistakes_in_packages
+- https://pkg.go.dev/cmd/go#hdr-Test_packages
+- https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf
+- https://go.dev/doc/go1.27#go-test
+
+### [`go fix` のモダナイザで既存コードを最新イディオムに寄せよう](02-intermediate/go-fix-modernize/README.md)
+
+- https://go.dev/doc/go1.26#go-command
+- https://pkg.go.dev/cmd/fix
+- https://pkg.go.dev/cmd/vet
+- https://pkg.go.dev/cmd/go#hdr-Apply_fixes_suggested_by_static_checkers
+- https://pkg.go.dev/golang.org/x/tools/gopls/internal/analysis/modernize
+- https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/inline
+- https://pkg.go.dev/golang.org/x/tools/go/analysis
+- https://go.dev/blog/gofix
+
+### [`go generate` で何ができ、何をやるべきなのか調べよう](02-intermediate/go-generate/README.md)
+
+- https://pkg.go.dev/cmd/go#hdr-Generate_Go_files_by_processing_source
+- https://go.dev/blog/generate
+- https://go.googlesource.com/proposal/+/refs/heads/master/design/go-generate.md
+- https://cs.opensource.google/go/go/+/refs/tags/go1.26.5:src/cmd/go/internal/generate/generate.go
+- https://go.dev/ref/mod
+
+### [`pkg.go.dev API(v1beta)を活用する`](03-advanced/pkg-go-dev-api-v1beta/README.md)
+
+- https://pkg.go.dev/v1beta/api
+- https://pkg.go.dev/golang.org/x/pkgsite/internal/api
+- https://cs.opensource.google/go/x/pkgsite
+- https://go.dev/ref/mod
 
 ## 6. 挙動を手元で確かめる
 
