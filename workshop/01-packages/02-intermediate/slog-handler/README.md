@@ -14,7 +14,9 @@ slog.Handler インタフェースにはメソッドがいくつあり、それ�
 <summary>ヒント</summary>
 
 - まずメソッド名と説明の最初の 1 文で雑に予想を立てる（英語が難しければ翻訳する。詳しくはまだ調べなくてよい）
-- [Example](https://pkg.go.dev/log/slog#pkg-examples) の LevelHandler はラッパーなので簡単に読める。今回の用途はこの方法（ラッパー）でよいか考えてみよう
+- [Handler のインタフェース定義](https://pkg.go.dev/log/slog#Handler) と各メソッドのコメントを、呼び出し側の `Logger` がどの順で使うかという観点で読む。
+- [Example](https://pkg.go.dev/log/slog#pkg-examples) の LevelHandler はラッパーなので簡単に読める。今回の用途はこの方法（ラッパー）でよいか考えてみよう。
+- 標準の実装を列挙するときは、`TextHandler` / `JSONHandler` / `MultiHandler` が型なのか、`DiscardHandler` が値なのかも区別する。
 
 </details>
 
@@ -36,7 +38,7 @@ slog.Handler インタフェースにはメソッドがいくつあり、それ�
 - `WithAttrs([]Attr) Handler`: 属性を追加した新しいハンドラーを返す。
 - `WithGroup(string) Handler`: グループ名を付けた新しいハンドラーを返す。
 
-標準で実装している型には `TextHandler` / `JSONHandler` / `DiscardHandler` / `MultiHandler` があります。
+標準には `TextHandler` / `JSONHandler` / `MultiHandler` という `Handler` 実装型があります。また、すべてのログを捨てる `DiscardHandler` は `Handler` 型のパッケージ変数です。
 
 Example の [Wrapping](https://pkg.go.dev/log/slog#example-package-Wrapping) にある LevelHandler は、既存ハンドラーを包んでレベル判定だけ差し替えるラッパーです。
 出力の一部だけ変えたいならこの方法で十分ですが、今回は出力形式そのものを YAML にしたいので、`Handle` を自分で書く必要があり、ラッパーでは足りません。
@@ -59,9 +61,8 @@ Example の [Wrapping](https://pkg.go.dev/log/slog#example-package-Wrapping) に
 - slog のドキュメントの Overview に「[Writing a handler](https://pkg.go.dev/log/slog#hdr-Writing_a_handler)」という節がある
 - Example も参考になる: [DiscardHandler](https://pkg.go.dev/log/slog#example-package-DiscardHandler) / [Wrapping](https://pkg.go.dev/log/slog#example-package-Wrapping)
 - さらに詳しいガイドが https://golang.org/s/slog-handler-guide にある
-  - ガイドの IndentHandler の `mu` フィールドが、なぜ `sync.Mutex` ではなく `*sync.Mutex`（ポインタ）なのかにも注目
-- ガイドにはこんな一文がある
-  > A brief aside before we start: it is tempting to embed slog.Handler in your custom handler and implement only the methods that you need. Loggers and handlers are too tightly coupled for that to work. You should implement all four handler methods.
+  - ガイドの IndentHandler の `mu` フィールドが、なぜ `sync.Mutex` ではなく `*sync.Mutex`（ポインタ）なのかにも注目する。
+- ガイド冒頭の「埋め込み」を読んだら、Logger が `Enabled`、`WithAttrs`、`WithGroup`、`Handle` をどのように組み合わせて呼ぶかを、メソッドの委譲とコピーの観点から整理する。結論を先に決めず、4 メソッドそれぞれの契約と照合する。
 
 </details>
 
