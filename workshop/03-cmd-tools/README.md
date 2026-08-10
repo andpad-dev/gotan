@@ -6,7 +6,7 @@
 ## 1. サブコマンドが何をするコマンドか知りたい（公式ヘルプを読む）
 
 1. 手元で `go help <サブコマンド>` を実行する（例: `go help run`, `go help generate`, `go help vet`）。`go` 本体に同梱されているサブコマンドは、これだけで概要と主要フラグが読める。
-2. 同じ内容を Web で読むなら `https://pkg.go.dev/cmd/go` のページで `f` キーを押し、サブコマンド名を検索してその節（`#hdr-...` で終わる URL）に直接ジャンプできる。
+2. 同じ内容を Web で読むなら [`pkg.go.dev/cmd/go`](https://pkg.go.dev/cmd/go) のページで `f` キーを押し、サブコマンド名を検索してその節（`#hdr-...` で終わる URL）に直接ジャンプできる。
 3. `go tool <サブコマンド>` として提供されるツール（`vet`、`pprof`、`trace`、`cover` など）は `go tool <サブコマンド> -h` や `go tool <サブコマンド> help` で使い方を確認できる。
 
 ## 2. コマンドの詳しい仕様やフラグを知りたい
@@ -29,7 +29,7 @@
 
 ## 5. いつ・なぜ追加された機能か知りたい
 
-- 対象の Go バージョンが分かっている場合、まず `https://go.dev/doc/go1.xx` のリリースノートを見る。特に **Tools** セクション（[Go 1.26](https://go.dev/doc/go1.26#tools) / [Go 1.27](https://go.dev/doc/go1.27#tools)）に、`go` コマンドとツール群の変更点がまとまっている。
+- 対象の Go バージョンが分かっている場合、まず `go.dev/doc/go1.<version>` のリリースノートを見る。特に **Tools** セクション（[Go 1.26](https://go.dev/doc/go1.26#tools) / [Go 1.27](https://go.dev/doc/go1.27#tools)）に、`go` コマンドとツール群の変更点がまとまっている。
 - リリースノートに Issue 番号やプロポーザルへのリンクがあれば、必ず該当 Issue を開き、議論と関連リンクまで含めて読む（`github.com/golang/go` の Issue、`go.googlesource.com/proposal`）。要約だけから挙動を推測しない。
 
 ## 6. 挙動を手元で確かめる
