@@ -17,13 +17,6 @@ QUESTION_RE = re.compile(r"(?m)^## 設問\s+(\d+)(?::|：|\s)")
 URL_RE = re.compile(r"https?://[^\s<>\]})]+")
 DETAIL_RE = re.compile(r"<details\b[^>]*>(.*?)</details>", re.IGNORECASE | re.DOTALL)
 FENCE_RE = re.compile(r"^\s*(?:>\s*)?(```|~~~)")
-REQUIRED_DIFFICULTY_WORDING = {
-    "01-beginner": "見かけました。どんなものか調べてみましょう",
-    "02-intermediate": "やりたいです。どういうふうにやればいいか調べよう",
-    "03-advanced": "なんでこうなってるの？背景を調べよう",
-}
-
-
 def emit(level: str, message: str, line: int | None = None) -> bool:
     location = f"line {line}: " if line is not None else ""
     print(f"{level}\t{location}{message}")
@@ -121,11 +114,12 @@ def main() -> int:
     else:
         failures += emit("FAIL", "no ## 設問 N section found")
 
-    required_wording = REQUIRED_DIFFICULTY_WORDING[difficulty]
-    if required_wording not in text:
-        failures += emit("FAIL", f"required {difficulty} wording is missing: {required_wording}")
+    introduction_end = question_matches[0].start() if question_matches else len(text)
+    introduction = re.sub(r"(?m)^#\s+\S.*$", "", text[:introduction_end]).strip()
+    if not introduction:
+        failures += emit("FAIL", "scenario introduction is missing")
     else:
-        emit("PASS", f"required {difficulty} wording is present")
+        emit("PASS", "scenario introduction is present; review its natural context manually")
 
     for number, line, block in question_blocks(text):
         if not re.search(r"<summary>答え</summary>|\*\*答え\*\*", block):
