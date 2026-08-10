@@ -21,10 +21,12 @@ func main() {}
 
 手元で `go generate main.go` を実行すると、以下のように出力されました（`go1.26.4` / macOS）。
 
+日付の行は実行日によって変わるため、ここでは `YYYY-MM-DD（実行日）` と表記します。
+
 ```
 $ go generate main.go
 hello from go generate
-2026-07-22
+YYYY-MM-DD（実行日）
 GOFILE=main.go GOLINE=5 GOPACKAGE=main
 -command による別名も使える
 ```
@@ -75,7 +77,7 @@ $ go generate -x main.go
 echo hello from go generate
 hello from go generate
 date +%Y-%m-%d
-2026-07-22
+YYYY-MM-DD（実行日）
 sh -c echo GOFILE=main.go GOLINE=5 GOPACKAGE=main
 GOFILE=main.go GOLINE=5 GOPACKAGE=main
 echo -command による別名も使える
