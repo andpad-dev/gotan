@@ -7,13 +7,13 @@ Java や Python などの言語では例外（Exception）に標準でスタッ�
 なぜ Go はこのような設計判断をしているのでしょうか？また、エラーをWrapする仕組みはどのような議論を経て導入されたのでしょうか？
 背景にある設計思想や歴史的経緯をたどってみましょう。
 
+なんでこうなってるの？背景を調べよう。
+
 ## 設問 1: Go のエラー処理の哲学を調べよう
 
 そもそも Go では、JavaやPythonのようにエラーを「例外(Exception)」のような特別なものとして扱っていません。
 
 Go の公式ブログなどからエラーハンドリングに関する記事を探し、Go におけるエラーの基本的な設計思想を調べましょう。
-
-### ヒント
 
 <details>
 <summary>ヒント</summary>
@@ -23,15 +23,16 @@ Go の公式ブログなどからエラーハンドリングに関する記事�
 
 </details>
 
-### 答え
-
 <details>
 <summary>答え</summary>
 
-#### 1. https://go.dev/blog/all を開き、検索窓で "error" と検索する。
-#### 2. 最新から過去に向かって検索するのではなく、一番過去から最新の順に検索する
-#### 3. 以下のような記事が見つかります
-   - [Errors are values](https://go.dev/blog/errors-are-values), 12 January 2015 Rob Pike
+**調査ルート**
+
+1. https://go.dev/blog/all を開き、検索窓で "error" と検索する。
+2. 最新から過去に向かって検索するのではなく、一番過去から最新の順に検索する。
+3. [Errors are values](https://go.dev/blog/errors-are-values)（2015年1月12日、Rob Pike）を開く。
+
+**答え**
 
 Go では、エラーは「特別な制御フロー（例外）」ではなく、単なる「値（Value）」として扱われます。
 
@@ -53,8 +54,6 @@ Go 1.13 で、`fmt.Errorf("%w", err)` などによるError Wrappingが標準ラ�
 
 機能追加の背景が書かれた公式情報を探してみましょう。
 
-### ヒント
-
 <details>
 <summary>ヒント</summary>
 
@@ -63,15 +62,18 @@ Go 1.13 で、`fmt.Errorf("%w", err)` などによるError Wrappingが標準ラ�
 
 </details>
 
-### 答え
-
 <details>
 <summary>答え</summary>
 
-#### 1. https://go.dev/doc/go1.13 を開き Error Wrapping の項目を見つけます。
-#### 2. 以下のようなプロポーザルへのリンクが見つかります。
+**調査ルート**
+
+1. https://go.dev/doc/go1.13 を開き、Error Wrapping の項目を見つける。
+2. そこから次の proposal と Issue を開く。
 - [Error Values proposal](https://go.googlesource.com/proposal/+/master/design/29934-error-values.md)
 - [the associated issue](https://go.dev/issues/29934)
+3. [Working with Errors in Go 1.13](https://go.dev/blog/go1.13-errors) で標準 API の説明を確認する。
+
+**答え**
 
 Go 2 に向けた「エラー値の検査とフォーマット」に関するドラフトデザインに基づきGo 1.13 での実装とフィードバック収集を目的にプロポーザルが記述されました。
 
@@ -90,9 +92,7 @@ Go 2 とは後方互換性の破壊的変更を含む次のGoバージョンと�
 
 などなど、数々の議題で議論が繰り広げられています。
 
-#### 3. 更にリリースノート中にある [errors package documentation](https://pkg.go.dev/errors) から https://pkg.go.dev/errors へのリンクが見つかります。
-#### 4. Wrappingの議論の詳細は https://go.dev/blog/go1.13-errors を見てくださいという記載が見つかると思います。見てみましょう。
-#### 5. https://go.dev/blog/go1.13-errors というブログが見つかりました。今までのプロポーザルの議論のサマリーがブログに記載されていることが分かります。
+リリースノート中の [errors package documentation](https://pkg.go.dev/errors) と [Working with Errors in Go 1.13](https://go.dev/blog/go1.13-errors) には、標準 API と議論の要約が記載されています。
 
 Go 1.13 以前では error を `==` 演算子で比較していました。
 
@@ -123,8 +123,6 @@ Go 1.13 からは Wrapされたエラーでもエラーを検査するための�
 
 Proposal ドキュメントの議論を読み解き、なぜスタックトレースの自動付与が見送られたのか、考察してみましょう。
 
-### ヒント
-
 <details>
 <summary>ヒント</summary>
 
@@ -139,13 +137,19 @@ Proposal ドキュメントの議論を読み解き、なぜスタックトレ�
 
 </details>
 
-### 答え
-
 <details>
 <summary>答え</summary>
 
+**調査ルート**
+
+1. https://go.dev/doc/go1.13 を開き、Error Wrapping の項目から proposal と Issue #29934 をたどる。
+2. [Proposal: Go 2 Error Inspection](https://go.googlesource.com/proposal/+/master/design/29934-error-values.md) で `Frame`、`StackTrace`、`Formatting` を検索する。
+3. Issue の採否決定と [Working with Errors in Go 1.13](https://go.dev/blog/go1.13-errors) を照合する。
+
+**答え**
+
 最初のプロポーザル時点では以下の議題がありました。
-- Wrapping (`fmt.Errorf("... %w", err)`, `errors.IS`, `errors.As`)
+- Wrapping (`fmt.Errorf("... %w", err)`, `errors.Is`, `errors.As`)
 - Stack Frames (`errors.Frame`)
 - Formatting (`errors.Printer`, `errors.Formatter`)
 
@@ -170,3 +174,11 @@ Russ Cox(rsc) の発言 を遡っていくと [The accept/decline decision here 
 様々な要因が見つかります。気になる人は更に深堀りしてみるとよいでしょう。
 
 </details>
+
+---
+
+## 調査の入り口
+
+- https://go.dev/blog/all
+- https://go.dev/doc/go1.13
+- https://go.dev/blog/go1.13-errors
