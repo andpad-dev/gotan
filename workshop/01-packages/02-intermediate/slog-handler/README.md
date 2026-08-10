@@ -1,5 +1,7 @@
 # slog.Handler インタフェースを実装しよう
 
+YAML 形式でログを出力したいです。どういうふうにやればいいか調べよう。
+
 ログの出力を YAML 形式で行うという意思決定がされました。
 そのためには slog のログハンドラーを自作する必要があります。
 一次情報のみを辿って、実装や単体テストに必要な情報を集めましょう。
@@ -60,8 +62,7 @@ Example の [Wrapping](https://pkg.go.dev/log/slog#example-package-Wrapping) に
 - Example も参考になる: [DiscardHandler](https://pkg.go.dev/log/slog#example-package-DiscardHandler) / [Wrapping](https://pkg.go.dev/log/slog#example-package-Wrapping)
 - さらに詳しいガイドが https://golang.org/s/slog-handler-guide にある
   - ガイドの IndentHandler の `mu` フィールドが、なぜ `sync.Mutex` ではなく `*sync.Mutex`（ポインタ）なのかにも注目
-- ガイドにはこんな一文がある
-  > A brief aside before we start: it is tempting to embed slog.Handler in your custom handler and implement only the methods that you need. Loggers and handlers are too tightly coupled for that to work. You should implement all four handler methods.
+- ガイドの冒頭に、ハンドラーを埋め込んで一部のメソッドだけ実装する方法への注意書きがある
 
 </details>
 
@@ -105,7 +106,7 @@ Example の [Wrapping](https://pkg.go.dev/log/slog#example-package-Wrapping) に
 <summary>ヒント</summary>
 
 - https://golang.org/s/slog-handler-guide にテストについて書かれた部分がある
-- 標準パッケージに slog.Handler のテスト専用パッケージがある
+- 標準ライブラリに、slog.Handler の契約をまとめて検査するテスト用パッケージがある
 
 </details>
 
