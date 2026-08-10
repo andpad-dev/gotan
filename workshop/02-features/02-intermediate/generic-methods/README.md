@@ -1,5 +1,7 @@
 # 自作の型にジェネリックメソッドで汎用ヘルパを生やそう
 
+自作の型にジェネリックメソッドを生やすことをやりたいです。どういうふうにやればいいか調べよう。
+
 社内ユーティリティに、独自コンテナ型 `Slice[T]` があります。
 値を別の型に写す変換ヘルパを、コンテナに **メソッドとして** 生やしたいです。
 
@@ -12,10 +14,10 @@ type Slice[T any] struct {
 func (s Slice[T]) Map[F any](f func(T) F) Slice[F] { ... }
 ```
 
-いま使っている Go 1.26 でこのコードをコンパイルしようとすると、次のように怒られます。
+いま使っている Go 1.26.4 でこのコードをコンパイルしようとすると、次のように怒られます。
 
 ```
-./main.go:7:21: generic method requires go1.27 or later (-lang was set to go1.26; check go.mod)
+syntax error: method must have no type parameters
 ```
 
 どうやら Go 1.27 で「ジェネリックメソッド」が入るらしいのですが、
@@ -70,10 +72,10 @@ Go 1.27 で「method に何が書けるようになったか」を、リリー�
 
 `MethodName` と `Signature` の間に `[ TypeParameters ]` が挿入されただけです。関数宣言 (`FunctionDecl`) の型パラメータ位置と揃った形になっています。
 
-コンパイラも language version をチェックしていて、`go.mod` に `go 1.26` と書いてあるモジュールでジェネリックメソッドを書くと次のように断られます。
+Go 1.26.4 のコンパイラはジェネリックメソッドの構文を受け付けないため、次のように断られます。
 
 ```
-./main.go:7:21: generic method requires go1.27 or later (-lang was set to go1.26; check go.mod)
+syntax error: method must have no type parameters
 ```
 
 </details>
