@@ -17,15 +17,20 @@ const (
 `fmt.Println(Red, Green, Blue)` すると `0 1 2` と出ます。
 `iota` とはどんなもので、なぜ 2 行目以降を省略しても値が変わっていくのでしょうか。調べてみましょう。
 
+設問1では、まず `iota` が何者か（関数・キーワード・定数として使える識別子のどれか）に絞ります。`Green` と `Blue` の式を省略できる理由は設問2で扱います。
+
 ## 設問 1: `iota` とは何？
 
 最初の `Red` にだけ書かれている `iota` の正体を、言語仕様書で調べてみましょう。
+
+`const` ブロック内の各行が、`iota` の値を決める「位置」になると考えて、1行目と3行目で値がどう変わるかを予想してみてください。
 
 <details>
 <summary>ヒント</summary>
 
 - Go 言語仕様書は 1 枚 HTML なので、`f` キー（ブラウザのページ内検索）で `iota` を探すのが早いです。
 - `Constant declarations` セクションの中に、`Iota` という見出しがあります。
+- 仕様書の [Iota](https://go.dev/ref/spec#Iota) と [Predeclared identifiers](https://go.dev/ref/spec#Predeclared_identifiers) を順に読み、`iota` がキーワード一覧にあるかも確認します。
 
 </details>
 
@@ -39,7 +44,7 @@ const (
 
 **答え**
 
-`iota` は **定数宣言 (`ConstDecl`) の中でだけ使える、あらかじめ宣言された定数（predeclared identifier）** です。
+`iota` は **定数宣言 (`ConstDecl`) の中でだけ使える、あらかじめ宣言された定数（predeclared identifier）** です。関数でも、予約語であるキーワードでもありません。
 仕様書 [Iota](https://go.dev/ref/spec#Iota) には次のように書かれています。
 
 > Within a constant declaration, the predeclared identifier `iota` represents successive untyped integer constants. Its value is the index of the respective ConstSpec in that constant declaration, starting at zero.
@@ -47,7 +52,7 @@ const (
 要点は 2 つです。
 
 - 値は **untyped integer**（型なし整数定数）。
-- 値は、その `const ( ... )` ブロック内の **ConstSpec のインデックス**（0 始まり）。1 行目が 0、2 行目が 1、3 行目が 2 ……となる。
+- 値は、その `const ( ... )` ブロック内の **ConstSpec（ここでは各定数宣言の行）のインデックス**（0 始まり）。1 行目が 0、2 行目が 1、3 行目が 2 ……となる。
 
 つまり `Red Color = iota` の時点で `Red = 0` が確定し、`Color` 型として定義されます。
 
