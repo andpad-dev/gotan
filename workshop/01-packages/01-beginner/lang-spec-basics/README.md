@@ -12,7 +12,7 @@
 <details>
 <summary>ヒント</summary>
 
-- 特に無し
+- まず `values := []string{"a", "b"}` を用意し、`for value in values` と `for _, value := range values` をそれぞれ試してみましょう。エラーになる方と動く方を比べてから、仕様書の「For statements」を開きます。
 
 </details>
 
@@ -47,7 +47,7 @@ Go の switch 文は、C 言語の switch 文と違って、break が不要な�
 <details>
 <summary>ヒント</summary>
 
-- 特に無し
+- `x := 1` とし、`case 1` で `one`、`case 2` で `two` を表示する短い switch を作ります。`x` が 1 のとき `two` も表示したい場合に、仕様書で必要な構文を探してみましょう。
 
 </details>
 

@@ -85,6 +85,7 @@ API 担当者が `GET /reports/{id}` と `/reports/latest` を登録しようと
 <summary>ヒント</summary>
 
 - 一方はメソッドが狭くパスが広い、もう一方はメソッドが広くパスが狭い。
+- 比較する集合を「メソッドとパスの組」として考える。メソッド省略は全メソッドに一致し、`GET` は `HEAD` にも一致することを確認する。
 - `ServeMux` の conflict の定義を確認する。
 
 </details>
