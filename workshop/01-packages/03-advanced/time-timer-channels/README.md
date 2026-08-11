@@ -139,11 +139,14 @@ Go 1.27 ではこの設定は恒久的に削除され、`time` のタイマー�
 
 古い通知を受信してしまう問題は、単なる API の見た目ではなく、`Stop` / `Reset` を正しく使う不変条件に関わります。提案 Issue と実装コメントを読んで、Go チームがどのような困難を減らそうとしたのか、1 分でチームへ説明してください。
 
+例えば「タイマーを止める → 古い通知を空にする → 期限を設定し直す」という処理の途中で、別の goroutine が `timer.C` を受信すると何が起きるかを考えます。古い通知と新しい通知を取り違えないために、利用側が何を覚えておく必要があったのかを、現在のAPI保証と比べてください。
+
 <details>
 <summary>ヒント</summary>
 
 - Issue の冒頭にある、`Stop` 後に値があるかもしれないという従来の説明を読む。
 - 実装コメントにある `stale time values` を探す。
+- [Issue #37196](https://github.com/golang/go/issues/37196) の冒頭にある従来のドレイン例と、[Go 1.26.4のsleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=105) の `Stop` / `NewTimer` のコメントを並べて読む。
 
 </details>
 
