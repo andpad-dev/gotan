@@ -65,11 +65,14 @@ const (
 `Green` と `Blue` には `= iota` すら書かれていないのに、なぜ `1`・`2` という値が入るのでしょうか。
 `iota` の性質だけでは説明しきれません。もう 1 つ、定数宣言のルールがあります。
 
+`Red = iota / Green / Blue` の省略を、`Red = iota / Green = iota / Blue = iota` と書き直した場合と比べてみましょう。省略が値を直接増やしているのか、式を繰り返しているだけなのかを切り分けます。
+
 <details>
 <summary>ヒント</summary>
 
 - 仕様書の `Constant declarations` セクション本文に、「式リストが省略されたときの挙動」の説明があります。
 - 「同じ式リストを繰り返す」ようなイメージのルールです。
+- `A = 10 / B / C` と `Red = iota / Green / Blue` を並べ、前の式を繰り返した結果がそれぞれどうなるか予想します。
 
 </details>
 
@@ -82,6 +85,8 @@ const (
 2. 「Within a parenthesized `const` declaration list ...」で始まる段落を読む。
 
 **答え**
+
+省略は「値を1つ増やす」記法ではありません。前の行の式リストを繰り返し、その繰り返された式の中で `iota` が現在の位置の値になります。
 
 仕様書 [Constant declarations](https://go.dev/ref/spec#Constant_declarations) には次のルールがあります。
 
