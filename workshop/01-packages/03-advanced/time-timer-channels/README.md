@@ -104,11 +104,14 @@ Go 1.23 以降の新しい挙動では、タイマーチャンネルは容量 0 
 
 Go 1.23 では、新挙動の有効化にモジュールの `go` 行が関係していました。その後 Go 1.27 では `asynctimerchan` がどう変化したでしょうか。移行調査で一時的な互換設定を恒久策にしない理由を説明してください。
 
+この設問でいう「新挙動」は、まず `time.NewTimer(0)` のチャンネルの `cap` / `len` として観察します。「互換設定」は、環境変数の `GODEBUG`、`go.mod` の `godebug`、ソース中の `//go:debug` を混同せず、それぞれがどの実行条件に効くかを整理してください。
+
 <details>
 <summary>ヒント</summary>
 
 - Go 1.23 のリリースノートで、新挙動が有効になる条件を探す。
 - Go 1.26 と Go 1.27 のリリースノートで `asynctimerchan` を検索する。
+- [既定値の実験](https://go.dev/play/p/zAkeGmN14Q7)、[旧挙動を指定した実験](https://go.dev/play/p/o-pDN23HyaX)、[新挙動を指定した実験](https://go.dev/play/p/V8esF3Hmib8) を順に実行し、`cap=0` と `cap=1` の違いを確認する。Go 1.27が未リリースまたはPlaygroundで選べない場合は、リリースノートを「予定仕様」として扱い、実行結果と混ぜない。
 
 </details>
 

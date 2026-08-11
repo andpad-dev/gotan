@@ -3,12 +3,15 @@
 先輩のコードで、`fmt.Printf` の書式指定子を見かけました。どんなものか調べてみましょう。
 
 ```go
+value := "gopher"
 fmt.Printf("%#[1]v %[1]T\n", value)
 ```
 
 （Go Playground で動かす: https://go.dev/play/p/RTNSvn_p2Ai ）
 
 何をやっているコードか調べてみましょう。
+
+この例では、同じ `value` を「Go のリテラルらしい表示」と「型名」の2通りで確認しています。まず `"gopher"` と `string` がどの位置に出るかを予想してから実行すると、書式の役割を追いやすくなります。
 
 ## 設問 1: `%v` と `%T`、そして `#` は、それぞれ何を意味する？
 
@@ -61,6 +64,7 @@ fmt.Printf("%#[1]v %[1]T\n", value)
 <summary>ヒント</summary>
 
 - ドキュメントの Overview で `[` を検索してみよう
+- 例えば `fmt.Printf("%[1]s / %[1]s\n", "gopher")` は、1つの引数を何回使うでしょうか。
 
 </details>
 

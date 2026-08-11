@@ -10,6 +10,8 @@ slog.Handler インタフェースにはメソッドがいくつあり、それ�
 どのメソッドがハンドラーの中心になるか考えてみましょう。
 また、標準でこのインタフェースを実装している型も探してみましょう。
 
+例えば `logger.Info("login", "user", "alice")` を呼ぶと、ログを受け取って出力する役割と、出力前に共通属性を付ける役割は同じでしょうか。ログがハンドラーへ届く流れを想像してから、4つのメソッドを分類してみましょう。
+
 <details>
 <summary>ヒント</summary>
 
@@ -17,6 +19,7 @@ slog.Handler インタフェースにはメソッドがいくつあり、それ�
 - [Handler のインタフェース定義](https://pkg.go.dev/log/slog#Handler) と各メソッドのコメントを、呼び出し側の `Logger` がどの順で使うかという観点で読む。
 - [Example](https://pkg.go.dev/log/slog#pkg-examples) の LevelHandler はラッパーなので簡単に読める。今回の用途はこの方法（ラッパー）でよいか考えてみよう。
 - 標準の実装を列挙するときは、`TextHandler` / `JSONHandler` / `MultiHandler` が型なのか、`DiscardHandler` が値なのかも区別する。
+- `Enabled` は「このログを通すか」、`Handle` は「通したログをどう出力するか」、`WithAttrs` / `WithGroup` は「後続のログに共通情報をどう持たせるか」と仮置きして、コメントで確かめる。
 
 </details>
 
@@ -63,6 +66,7 @@ Example の [Wrapping](https://pkg.go.dev/log/slog#example-package-Wrapping) に
 - さらに詳しいガイドが https://golang.org/s/slog-handler-guide にある
   - ガイドの IndentHandler の `mu` フィールドが、なぜ `sync.Mutex` ではなく `*sync.Mutex`（ポインタ）なのかにも注目する。
 - ガイド冒頭の「埋め込み」を読んだら、Logger が `Enabled`、`WithAttrs`、`WithGroup`、`Handle` をどのように組み合わせて呼ぶかを、メソッドの委譲とコピーの観点から整理する。結論を先に決めず、4 メソッドそれぞれの契約と照合する。
+- `LogValuer` の例として、パスワード型が `LogValue` で `slog.String("password", "REDACTED")` を返すケースを考える。`Resolve` を呼ばずに値をそのまま文字列化すると何が失われるか、実際の出力を想像してから確認する。
 
 </details>
 
