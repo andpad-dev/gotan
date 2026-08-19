@@ -1,4 +1,4 @@
-# `go vet` コマンドを読もう
+# `go vet` の検査内容を調べよう
 
 先輩が出した PR で、CI のジョブに `go vet ./...` が追加されているのを見かけました。どんなものか調べてみましょう。
 
@@ -49,9 +49,10 @@ hello, %!d(string=gopher)
 
 **調査ルート**
 
-1. 手元で `go help vet` を実行し、CLI 版のヘルプ全文を読む。
-2. 同じ内容を [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) の Overview で確認する。「Analyzers may use heuristics that do not guarantee all reports are genuine problems, but can find mistakes not caught by the compiler.」というくだりが今回の核心。
-3. `go` コマンド側の位置づけは [`pkg.go.dev/cmd/go` の「Report likely mistakes in packages」節](https://pkg.go.dev/cmd/go#hdr-Report_likely_mistakes_in_packages) にある（`go help vet` と同じ文面）。
+1. [Go Documentation](https://go.dev/doc/) を入口に、`go vet` の公式ドキュメントを探す。
+2. 手元で `go help vet` を実行し、CLI 版のヘルプ全文を読む。
+3. 同じ内容を [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) の Overview で確認する。「Analyzers may use heuristics that do not guarantee all reports are genuine problems, but can find mistakes not caught by the compiler.」というくだりが今回の核心。
+4. `go` コマンド側の位置づけは [`pkg.go.dev/cmd/go` の「Report likely mistakes in packages」節](https://pkg.go.dev/cmd/go#hdr-Report_likely_mistakes_in_packages) にある（`go help vet` と同じ文面）。
 
 **答え**
 
@@ -81,9 +82,10 @@ hello, %!d(string=gopher)
 
 **調査ルート**
 
-1. [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) の Overview を下にスクロールし、Registered analyzers の一覧表を読む（`appends`、`printf`、`slog`、`stdversion`、`waitgroup` など約 30 個）。
-2. 手元で `go tool vet help` を実行して同じ一覧を確認する。`go tool vet help printf` のようにアナライザ名を続けると、そのアナライザ専用のドキュメントとフラグが表示される。
-3. `printf` アナライザの実装ドキュメントは [`pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf) にある。`fmt.Printf` / `fmt.Sprintf` などの書式文字列と引数の整合性を検査する、ということが仕様レベルで書かれている。
+1. [Go Documentation](https://go.dev/doc/) を入口に、`vet` の公式ドキュメントを探す。
+2. [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) の Overview を下にスクロールし、Registered analyzers の一覧表を読む（`appends`、`printf`、`slog`、`stdversion`、`waitgroup` など約 30 個）。
+3. 手元で `go tool vet help` を実行して同じ一覧を確認する。`go tool vet help printf` のようにアナライザ名を続けると、そのアナライザ専用のドキュメントとフラグが表示される。
+4. `printf` アナライザの実装ドキュメントは [`pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf) にある。`fmt.Printf` / `fmt.Sprintf` などの書式文字列と引数の整合性を検査する、ということが仕様レベルで書かれている。
 
 **答え**
 
@@ -102,11 +104,9 @@ hello, %!d(string=gopher)
 
 実際、冒頭のコードを `go test ./...` にかけると次のように「ビルドがそもそも失敗した」扱いになります。
 
-```
-# example.com/vet-demo
-./main.go:7:21: fmt.Printf format %d has arg name of wrong type string
-FAIL    example.com/vet-demo [build failed]
-```
+    # example.com/vet-demo
+    ./main.go:7:21: fmt.Printf format %d has arg name of wrong type string
+    FAIL    example.com/vet-demo [build failed]
 
 さらに [Go 1.27 のリリースノート](https://go.dev/doc/go1.27#go-test) には次の 1 行が入っています。
 

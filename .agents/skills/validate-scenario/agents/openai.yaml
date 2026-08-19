@@ -1,0 +1,4 @@
+interface:
+  display_name: "Validate Workshop Scenarios"
+  short_description: "Validate Go workshop paths, sources, and facts"
+  default_prompt: "Use $validate-scenario to audit this Go workshop scenario and prepare any required per-scenario fix PR."

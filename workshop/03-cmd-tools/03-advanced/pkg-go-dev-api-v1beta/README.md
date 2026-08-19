@@ -140,8 +140,14 @@ Go のモジュールシステムでは、モジュールパスとパッケー�
 {
   "modulePath": "golang.org/x/time",
   "version": "v0.15.0",
+  "isLatest": true,
+  "isStandardLibrary": false,
+  "goos": "all",
+  "goarch": "all",
   "path": "golang.org/x/time/rate",
-  "name": "rate"
+  "name": "rate",
+  "synopsis": "Package rate provides a rate limiter.",
+  "isRedistributable": true
 }
 ```
 
