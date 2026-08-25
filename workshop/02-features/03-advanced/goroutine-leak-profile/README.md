@@ -1,8 +1,10 @@
 # Go 1.27 の `goroutineleak` プロファイルは、なぜ「絶対に起きない goroutine」だけを教えてくれるのか
 
-運用しているサービスで、`/debug/pprof/goroutine` を眺めていると goroutine の数が時間経過とともにじりじり増えています。スタックを開くと、`chan send` で止まっているものが少しずつ積み上がっているようです。ただ、既存の `goroutine` プロファイルには「今この瞬間に存在している goroutine 全部」が並ぶので、「本当に永遠に起きられないやつ」と「単に長生きしているだけのやつ」の区別がつきません。
+運用しているサービスで、`/debug/pprof/goroutine` を眺めていると goroutine の数が時間経過とともにじりじり増えています。  
+スタックを開くと、`chan send` で止まっているものが少しずつ積み上がっているようです。  
+ただ、既存の `goroutine` プロファイルには「今この瞬間に存在している goroutine 全部」が並ぶので、「本当に永遠に起きられないやつ」と「単に長生きしているだけのやつ」の区別がつきません。
 
-同僚が「Go 1.27 に上げてみたら `/debug/pprof/goroutineleak` というエンドポイントが増えていた」と教えてくれました。試しに、原因調査のために社内で見つけたリークパターンをそのまま切り出し、`goroutine` と `goroutineleak` の両方を並べて出してみます。
+先輩が「Go 1.27 に上げてみたら `/debug/pprof/goroutineleak` というエンドポイントが増えていた」と教えてくれました。試しに、原因調査のために社内で見つけたリークパターンをそのまま切り出し、`goroutine` と `goroutineleak` の両方を並べて出してみます。
 
 ```go
 // main.go
@@ -85,7 +87,8 @@ goroutineleak profile: total 4
 #	0x...	main.processWorkItems.func1+0x9b	./main.go:29
 ```
 
-同じ瞬間のスナップショットのはずなのに、`goroutine` は total 5、`goroutineleak` は total 4。この 1 個の差は何を意味していて、そもそもランタイムはどうやって「これは絶対に起きない」「これは違う」を判別しているのでしょうか？
+同じ瞬間のスナップショットのはずなのに、`goroutine` は total 5、`goroutineleak` は total 4。  
+この 1 個の差は何を意味していて、そもそもランタイムはどうやって「これは絶対に起きない」「これは違う」を判別しているのでしょうか？
 
 ---
 
@@ -127,7 +130,9 @@ goroutineleak profile: total 4
 1. 同期プリミティブ（channel、`sync.Mutex`、`sync.Cond` など）でブロックしている
 2. **もう二度と起きられない**
 
-冒頭の実測を当てはめると、`goroutine` プロファイル total 5 のうち 4 個は `chan send`（`./main.go:29`）でブロックしていて、残りの 1 個はプロファイルを書き出している最中の `main` goroutine です。`goroutineleak` プロファイルはそこから 4 個だけ抽出しました。差の 1 個は「まだ生きて動いている main は leak ではない」という当たり前の話です。
+冒頭の実測を当てはめると、`goroutine` プロファイル total 5 のうち 4 個は `chan send`（`./main.go:29`）でブロックしていて、残りの 1 個はプロファイルを書き出している最中の `main` goroutine です。  
+`goroutineleak` プロファイルはそこから 4 個だけ抽出しました。  
+差の 1 個は「まだ生きて動いている main は leak ではない」という当たり前の話です。
 
 問題はここからで、条件 2 の「二度と起きられない」を、ランタイムはどう判定しているのでしょうか。
 
@@ -137,7 +142,9 @@ goroutineleak profile: total 4
 
 ## 設問 2: ランタイムはどうやって「二度と起きられない」ことを判定しているのか？
 
-「blocked on primitive」はランタイムから見て自明な状態です（各 goroutine の `waitreason` などで分かる）。難しいのは「二度と起きられない」の判定です。誰かがまだ channel の送信を握っているかもしれない、mutex を解放するかもしれない――そういう「未来の可能性」を、`goroutineleak` プロファイルはどう見分けているのでしょう？
+「blocked on primitive」はランタイムから見て自明な状態です（各 goroutine の `waitreason` などで分かる）。  
+難しいのは「二度と起きられない」の判定です。  
+誰かがまだ channel の送信を握っているかもしれない、mutex を解放するかもしれない――そういう「未来の可能性」を、`goroutineleak` プロファイルはどう見分けているのでしょう？
 
 <details>
 <summary>ヒント</summary>
