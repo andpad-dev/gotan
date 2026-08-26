@@ -1,16 +1,16 @@
 [進行ガイド・シナリオ一覧](../../../README.md) | [03-cmd-tools の調べ方](../../README.md)
 
-# pkg.go.dev API(v1beta)を活用する
+# pkg.go.dev API(v1)を活用する
 
 チームで使う HTTP ルーターライブラリを選定することになりました。
 「インポート数」や「メンテナンス状況」で比較・ソートしたいのですが、pkg.go.dev のブラウザ UI にはそうした機能がありません。
 
 スクレイピングも検討しましたが、[2026年6月にベータ公開された](https://opensource.googleblog.com/2026/06/a-new-pkggodev-api-for-go.html) **pkg.go.dev API** を使えば、構造化された JSON データを直接取得できます。
-なぜこの API はこのような設計になっているのか、背景を調べましょう。
+この API は公開初期に `/v1beta` というパスで案内されましたが、現在の API の入口は `/v1` です。実際に `/v1beta` を開くと `/v1` にリダイレクトされます。なぜこの API はこのような設計になっているのか、背景を調べましょう。
 
 ## 設問 1: 検索結果をソート・フィルタリングしたい
 
-検索 API (`/v1beta/search`) で `router` を検索すると、デフォルトではマッチ度順にソートされます。
+検索 API (`/v1/search`) で `router` を検索すると、デフォルトではマッチ度順にソートされます。
 しかし、インポート数や更新日時でソートするパラメータは見当たりません。
 なぜソート機能が提供されていないのでしょうか？
 
@@ -18,10 +18,23 @@
 このフィルター式は SQL や正規表現ではなく、「Go 式のサブセット」という独特な仕様になっています。
 なぜこのような設計になっているのか、調べてみましょう。
 
+次のリクエストを実行し、`filter` を適用した結果に `github.com/` 以外のパッケージが含まれていないことを確認してください。結果件数は将来変わる可能性があるため、ここでは条件を満たすかどうかだけを表示します。
+
+```bash
+curl -L "https://pkg.go.dev/v1/search?q=xyzzy&filter=hasPrefix%28packagePath%2C%20%22github.com%22%29" \
+  | jq -c '{allGithub: ([.items[].packagePath] | all(startswith("github.com/")))}'
+```
+
+実行結果:
+
+```text
+{"allGithub":true}
+```
+
 <details>
 <summary>ヒント</summary>
 
-- [API ドキュメント](https://pkg.go.dev/v1beta/api) の「Requests」セクションに filter の説明がある
+- [API ドキュメント](https://pkg.go.dev/v1/api) の「Requests」セクションに filter の説明がある
 - filter で使える変数は、各エンドポイントのレスポンス型(JSON フィールド)によって決まる
 - SearchResult 型にどんなフィールドがあるか確認してみよう
 - インポート数のような人気度指標が含まれているか見てみよう
@@ -33,19 +46,19 @@
 
 **調査ルート**
 
-1. https://pkg.go.dev/v1beta/api の「Routes」セクションで `/v1beta/search` のレスポンス型を確認する。
-2. レスポンス型のリンク(`SearchResult`)をたどり、どんなフィールドが返されるか確認する。
-3. pkg.go.dev のソースコード(https://cs.opensource.google/go/x/pkgsite)で SearchResult の定義を見る。
+1. [Go Documentation](https://go.dev/doc/) から [pkg.go.dev API ドキュメント](https://pkg.go.dev/v1/api) の「Routes」セクションを開き、`/v1/search` のレスポンス型を確認する。
+2. レスポンス型のリンク（`SearchResult`）をたどり、どんなフィールドが返されるか確認する。
+3. pkg.go.dev のソースコードで [SearchResult の定義](https://cs.opensource.google/go/x/pkgsite/+/v0.4.0:internal/api/types.go;l=121) を確認する。
 
 **答え**
 
 **ソート機能がない理由:**
 
-API の `/v1beta/search` レスポンスには、`packagePath`, `modulePath`, `version`, `synopsis` といった基本情報しか含まれておらず、**インポート数や更新日時などのメタデータは返されません**。
+API の `/v1/search` レスポンスには、`packagePath`, `modulePath`, `version`, `synopsis` といった基本情報しか含まれておらず、**インポート数や更新日時などのメタデータは返されません**。
 
-SearchResult の定義は以下の通りです(https://cs.opensource.google/go/x/pkgsite/+/refs/tags/v0.3.0:internal/api/types.go;l=115-121):
+SearchResult の定義は以下の通りです（[pkgsite v0.4.0 のソース](https://cs.opensource.google/go/x/pkgsite/+/v0.4.0:internal/api/types.go;l=121)）。
 
-```go
+```text
 type SearchResult struct {
     PackagePath string `json:"packagePath"`
     ModulePath  string `json:"modulePath"`
@@ -55,13 +68,14 @@ type SearchResult struct {
 ```
 
 インポート数や更新日時といった情報がレスポンスに含まれていないため、クライアント側でソートすることができません。
-また、API 側でソートパラメータを提供していないのは、検索結果が関連度順で返される設計だからです。
-関連度以外でソートしたい場合は、検索結果の各パッケージに対して /v1beta/package/{path} や /v1beta/imported-by/{path} を個別に叩いて情報を集める必要があります。
+また、API ドキュメントで検索結果について定義されている順序は、クエリへの一致度が高い順です。インポート数や更新日時を指定する別のソートパラメータは定義されていません。
+関連度以外でソートしたい場合は、検索結果の各パッケージに対して `/v1/package/{path}` や `/v1/imported-by/{path}` を個別に叩いて情報を集める必要があります。
 
 **フィルターが Go 式のサブセットである理由:**
 
-[フィルターは API ドキュメントで「Go 式のサブセット」として定義されており](https://pkg.go.dev/v1beta/api)、サーバー側で解釈できる演算子・関数を限定することで安全に評価できるようにしています。  
-そのため、SQL のような自由形式のクエリや任意の正規表現を受け付ける設計にはなっていません。  
+[API ドキュメント](https://pkg.go.dev/v1/api) では、filter は boolean を返す「Go 式のサブセット」として定義されています。利用できる演算子・関数と各 route のフィールドを限定することで、サーバー側で検証・評価できる入力形式にしています。
+これは SQL や正規表現全体のような自由形式を受け付けない設計ですが、API ドキュメントはその目的を「安全のため」とまでは説明していません。
+そのため、SQL のような自由形式のクエリや任意の正規表現を受け付ける設計にはなっていません。
 また、filter は主に絞り込み用途で、並び替え（例: インポート数降順）の指定はできません。  
 
 ***例：特定のドメインのみに絞り込む***
@@ -72,7 +86,7 @@ hasPrefix 関数を使って、packagePath が github.com から始まるもの�
 - エンコード後: `hasPrefix%28packagePath%2C%20%22github.com%22%29`
 
 ```bash
-curl -L "https://pkg.go.dev/v1beta/search?q=xyzzy&filter=hasPrefix%28packagePath%2C%20%22github.com%22%29" | jq .
+curl -L "https://pkg.go.dev/v1/search?q=xyzzy&filter=hasPrefix%28packagePath%2C%20%22github.com%22%29" | jq .
 ```
 
 </details>
@@ -89,7 +103,14 @@ API ドキュメントには、次のような記述があります。
 そして、ブラウザ UI と API で挙動がどう異なるのでしょうか？
 
 ```bash
-curl -L "https://pkg.go.dev/v1beta/package/golang.org/x/time/rate" | jq .
+curl -L "https://pkg.go.dev/v1/package/golang.org/x/time/rate" \
+  | jq -c '{modulePath, path, name}'
+```
+
+実行結果:
+
+```text
+{"modulePath":"golang.org/x/time","path":"golang.org/x/time/rate","name":"rate"}
 ```
 
 <details> 
@@ -107,9 +128,9 @@ curl -L "https://pkg.go.dev/v1beta/package/golang.org/x/time/rate" | jq .
 
 **調査ルート**
 
-- curl -s "https://pkg.go.dev/v1beta/package/golang.org/x/time/rate" | jq . を実行して、実際の挙動を確認する。
-- API ドキュメントの「Requests」セクションでパッケージパスの曖昧性について読む。
-- Go のモジュールシステムのドキュメント(https://go.dev/ref/mod)で、モジュールパスとパッケージパスの関係を確認する。
+- [Go Documentation](https://go.dev/doc/) から [Go Modules Reference](https://go.dev/ref/mod) を開き、モジュールパスとパッケージパスの関係を確認する。
+- [pkg.go.dev API ドキュメント](https://pkg.go.dev/v1/api) の「Requests」セクションでパッケージパスの曖昧性について読む。
+- `curl -L "https://pkg.go.dev/v1/package/golang.org/x/time/rate" | jq .` を実行して、実際の挙動を確認する。
 
 **答え**
 
@@ -122,38 +143,15 @@ Go のモジュールシステムでは、モジュールパスとパッケー�
 - モジュール a の中のパッケージ b/c → パッケージパス a/b/c
 - どちらも同じパッケージパス a/b/c を持ちますが、所属するモジュールが異なります。
 
-***実際には稀な理由:***
-
-実際のGoエコシステムでは、このような曖昧性はほとんど発生しません。なぜなら：
-
-- 1つのリポジトリに複数のモジュールを配置することは推奨されていない
-- サブディレクトリに別モジュールを配置する場合、パスが重複しないよう設計される
-- Go Modulesの慣習として、モジュールはリポジトリのルートに配置されることが一般的
-
 ***ブラウザ UI と API の挙動の違い:***
 
 - ブラウザ UI: 最長一致するモジュールパスを自動で選ぶ(ユーザーフレンドリー)
-- API: 曖昧な場合はエラーを返し、module クエリパラメータで明示することを要求する(明示的で安全)
-- API の設計は、「暗黙の推測でクライアントに予期しない結果を返すより、明示的にエラーを返して再試行を促す」方針です。
+- API: 曖昧な場合はエラーを返し、`module` クエリパラメータで明示することを要求する
+- API ドキュメントが明記しているのはこの挙動であり、「明示的で安全」という設計意図はそこからの解釈です。
 
 ***実際に golang.org/x/time/rate を叩くと：***
 
-```json
-{
-  "modulePath": "golang.org/x/time",
-  "version": "v0.15.0",
-  "isLatest": true,
-  "isStandardLibrary": false,
-  "goos": "all",
-  "goarch": "all",
-  "path": "golang.org/x/time/rate",
-  "name": "rate",
-  "synopsis": "Package rate provides a rate limiter.",
-  "isRedistributable": true
-}
-```
-
-エラーは返らず正常なレスポンスが返ります。これは golang.org/x/time というモジュールの rate パッケージだと一意に識別できるためです。
+上の実行結果のようにエラーは返らず、`golang.org/x/time` モジュールの `rate` パッケージとして解決されます。これは、この入力では所属モジュールを一意に識別できるためです。
 
 曖昧なケースに遭遇した場合、APIは次のようなエラーレスポンスを返します.
 
@@ -176,8 +174,21 @@ Go のモジュールシステムでは、モジュールパスとパッケー�
 API には 45 QPS(queries per second)per IP block というレート制限があります。  
 また、結果が多い場合は ページネーション で分割して返されます。
 
-なぜこのような制限・設計になっているのか、背景を考えてみましょう。  
+なぜこのような制限・設計になっているのか、背景を考えてみましょう。
 また、ページネーションの nextPageToken は何を表しているのか調べてみましょう。
+
+次のコマンドでは、1件に制限した検索結果と、次のページが存在するかを確認できます。検索対象の件数は変わり得るため、出力にはページ内の件数と `nextPageToken` の有無だけを表示します。
+
+```bash
+curl -L "https://pkg.go.dev/v1/search?q=xyzzy&limit=1" \
+  | jq -c '{items: (.items | length), hasNext: (.nextPageToken != null and .nextPageToken != "")}'
+```
+
+実行結果:
+
+```text
+{"items":1,"hasNext":true}
+```
 
 <details> 
 <summary>ヒント</summary>
@@ -192,33 +203,32 @@ API には 45 QPS(queries per second)per IP block というレート制限があ
 
 **調査ルート**
 
-- API ドキュメントの「Rate Limiting」と「Pagination」セクションを読む。
-- 実際に検索結果を取得し、nextPageToken がどのような値になっているか確認する。
-- pkgsite のソースコード(https://cs.opensource.google/go/x/pkgsite)で、ページネーションの実装を確認する。
+- [Go Documentation](https://go.dev/doc/) から [pkg.go.dev API ドキュメント](https://pkg.go.dev/v1/api) の「Rate Limiting」と「Pagination」セクションを読む。
+- 上のコマンドを実行し、`nextPageToken` がある場合に次のページへ進めることを確認する。
+- pkgsite のソースコードでページネーションの実装を確認する。
 
 **答え**
 
 ***レート制限の理由:***
 
-pkg.go.dev は Google が無料で提供する公開サービスです。  
-レート制限(45 QPS per IP block)は、以下を防ぐために設定されています。
+pkg.go.dev は公開サービスであり、API ドキュメントには 45 QPS per IP block のレート制限と、超過時に `429 Too Many Requests` を返すことが記載されています。
+
+この制限の目的として、次のようなことが考えられます。
 
 - DoS 攻撃や過負荷によるサービス停止
 - 特定のユーザーが大量のリクエストでリソースを独占すること
 - スクレイピングボット等による過度な利用
 - 45 QPS は、通常の利用には十分な値ですが、大規模なバッチ処理には制約となります。
-- 超過すると 429 Too Many Requests が返されます。
 
 ***ページネーションの設計:***
 
-- nextPageToken は**不透明なトークン(opaque token)**で、内部的にはページ位置を示す情報がエンコードされています。
-- 実際の値を見ると、長い16進数文字列(例: b689a63f15295533e6320e94470fbf1548acd25c327dff2a858024431056ffe4756658644ee6e2855482af42eb0bd15721a84772854ffd926b97db49479958d4d181f283)になっており、クライアントが解釈することは想定されていません。
+- `nextPageToken` は**不透明なトークン（opaque token）**で、クライアントが内容を解釈することは想定されていません。
 
 ドキュメントには次のように書かれています.
 
 > Changing the request in any way other than providing a token may result in an error.
 
-これは、「ソート順やフィルターを途中で変更すると、トークンが無効になる」ことを意味します。
+これは、「ソート順やフィルターを途中で変更すると、トークンが無効になる可能性がある」ことを意味します。
 クライアントは、トークンをそのまま渡すだけで次ページを取得できる設計です。
 
 </details>
@@ -227,12 +237,25 @@ pkg.go.dev は Google が無料で提供する公開サービスです。
 
 ## 設問 4: imported-by が同一モジュール内を除外する理由を調べよう
 
-/v1beta/imported-by/{path} は、指定したパッケージをインポートしているパッケージの一覧を返します。  
+`/v1/imported-by/{path}` は、指定したパッケージをインポートしているパッケージの一覧を返します。
 しかし、ドキュメントには次のように書かれています:
 
 > Paths of packages importing the package at {path}, not including packages in the same module.
 
 なぜ同一モジュール内のパッケージを除外するのでしょうか？
+
+次のコマンドで、`golang.org/x/time/rate` のインポート元のうち、最初のページに `golang.org/x/time/` で始まるパッケージが何件あるかを確認できます。
+
+```bash
+curl -L "https://pkg.go.dev/v1/imported-by/golang.org/x/time/rate" \
+  | jq -c --arg modulePath "golang.org/x/time" '{pageSize: (.importedBy.items | length), sameModuleItems: ([.importedBy.items[] | select(startswith($modulePath + "/"))] | length), hasNext: (.importedBy.nextPageToken != null and .importedBy.nextPageToken != "")}'
+```
+
+実行結果:
+
+```text
+{"pageSize":100,"sameModuleItems":0,"hasNext":true}
+```
 
 <details> 
 <summary>ヒント</summary>
@@ -246,13 +269,13 @@ pkg.go.dev は Google が無料で提供する公開サービスです。
 
 **調査ルート**
 
-- API ドキュメントの `/v1beta/imported-by/{path}` の説明を読む。
-- pkgsite のソースコード(https://cs.opensource.google/go/x/pkgsite)で、imported-by の実装を確認する。
-- Go のモジュールシステムのドキュメント(https://go.dev/ref/mod)で、モジュールの境界について確認する。
+- [Go Documentation](https://go.dev/doc/) から [Go Modules Reference](https://go.dev/ref/mod) を開き、モジュールの境界について確認する。
+- [pkg.go.dev API ドキュメント](https://pkg.go.dev/v1/api) の `/v1/imported-by/{path}` の説明を読む。
+- 上のコマンドを実行し、少なくとも取得したページでは同一モジュールのパッケージが除外されていることを確認する。
 
 **答え**
 
-同一モジュール内のパッケージを除外する理由は、「外部への影響範囲」を知りたいユースケースが主だからです。
+API ドキュメントが明示している事実は、`imported-by` の結果に同一モジュール内のパッケージを含めないことです。これは、モジュールをまたいだ外部への影響範囲を調べる用途に焦点を当てた設計だと考えられます。
 
 - モジュール内の依存: 同じリポジトリ・チームで管理されており、一緒にリリースされる。内部実装の依存関係。
 - モジュール間の依存: 異なるチーム・プロジェクトが依存している。破壊的変更の影響が広範囲に及ぶ。
@@ -262,14 +285,15 @@ imported-by の典型的な用途は:
 - 「このパッケージを変更したら、どのプロジェクトに影響するか？」
 - 「このパッケージの人気度(外部からの利用度)はどのくらいか？」
 - 同一モジュール内のパッケージは、変更時に一緒に修正できるため、外部への影響とは性質が異なります。
-- API は「外部への影響範囲」に焦点を当てた設計になっています。
+- したがって API は「外部への影響範囲」に焦点を当てた設計だと解釈できます。
 
 </details>
 
 ---
 
 ## 調査の入り口
-- https://pkg.go.dev/v1beta/api
-- https://pkg.go.dev/golang.org/x/pkgsite/internal/api (レスポンス型の定義)
-- https://cs.opensource.google/go/x/pkgsite (pkgsite のソースコード)
-- https://go.dev/ref/mod (Go Modules リファレンス)
+- [Go Documentation](https://go.dev/doc/)
+- [pkg.go.dev API](https://pkg.go.dev/v1/api)
+- [pkgsite internal/api](https://pkg.go.dev/golang.org/x/pkgsite/internal/api)（レスポンス型の定義）
+- [pkgsite のソースコード](https://cs.opensource.google/go/x/pkgsite)
+- [Go Modules Reference](https://go.dev/ref/mod)
