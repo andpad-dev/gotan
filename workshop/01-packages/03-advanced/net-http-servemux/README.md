@@ -4,7 +4,7 @@
 
 次のコードを [Go Playground で動かす](https://go.dev/play/p/fbR5kWMHL2Z) と、リテラルな `latest`、ワイルドカード、メソッド不一致の振る舞いを観測できます。
 
-このシナリオには、Go 1.22 以降のルーティング規則を有効にする `go.mod` を同梱しています。ローカルで試すときは、このディレクトリでコードを実行してください。
+このシナリオには、Go 1.22 以降のルーティング規則を有効にする `go.mod` を同梱しています。ローカルで試すときは、このディレクトリでコードを実行してください。実行前に `go version`、`go env GOMOD`、`go env GODEBUG` も確認しましょう。
 
 ```go
 package main
@@ -77,9 +77,11 @@ POST /reports/2026-08 -> 405
 
 ---
 
-## 設問 2: なぜこの 2 つは登録時に衝突する？
+## 設問 2: どの条件でこの 2 つは登録時に衝突する？
 
-API 担当者が `GET /reports/{id}` と `/reports/latest` を登録しようとしています。両方とも一部の GET リクエストに一致しますが、なぜどちらも「常により具体的」とは言えず、`HandleFunc` が panic するのでしょうか。
+このシナリオの `go.mod`（`go 1.22`）で、`httpmuxgo121` を設定していない通常の挙動を前提にします。API 担当者が `GET /reports/{id}` と `/reports/latest` を登録しようとしています。両方とも一部の GET リクエストに一致しますが、なぜどちらも「常により具体的」とは言えず、`HandleFunc` が panic するのでしょうか。
+
+手元で panic しない場合は、`go version`、`go env GOMOD`、`go env GODEBUG` を確認し、どの互換モードで実行しているかも説明してください。
 
 <details>
 <summary>ヒント</summary>
@@ -87,6 +89,7 @@ API 担当者が `GET /reports/{id}` と `/reports/latest` を登録しようと
 - 一方はメソッドが狭くパスが広い、もう一方はメソッドが広くパスが狭い。
 - 比較する集合を「メソッドとパスの組」として考える。メソッド省略は全メソッドに一致し、`GET` は `HEAD` にも一致することを確認する。
 - `ServeMux` の conflict の定義を確認する。
+- `GODEBUG` がルーティング規則を切り替える条件も確認する。
 
 </details>
 
@@ -95,15 +98,18 @@ API 担当者が `GET /reports/{id}` と `/reports/latest` を登録しようと
 
 **調査ルート**
 
-1. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) の enhanced routing patterns を読み直す。
+1. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) の enhanced routing patterns を読み直し、重なるパターンの扱いを確認する。
 2. [http.ServeMux](https://pkg.go.dev/net/http#ServeMux) の Precedence と conflict の説明を読む。
-3. 「neither is more specific」の規則を確認し、[pattern.go の `conflictsWith`](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/net/http/pattern.go;l=219) を読む。
+3. [Go, Backwards Compatibility, and GODEBUG](https://go.dev/doc/godebug) の `httpmuxgo121` を確認する。
+4. 「neither is more specific」の規則を確認し、[Go 1.27.0 の pattern.go にある `conflictsWith`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/pattern.go;l=219) を読む。
 
 **答え**
 
-`GET /reports/{id}` は GET に限る代わりに任意の ID を受け、`/reports/latest` は任意のメソッドを受ける代わりに `latest` だけを受けます。`GET /reports/latest` は両方に一致しますが、片方はメソッド、もう片方はパスの方向でしか狭くありません。
+このシナリオの `go.mod` で `httpmuxgo121` を設定していない場合、`GET /reports/{id}` は GET に限る代わりに任意の ID を受け、`/reports/latest` は任意のメソッドを受ける代わりに `latest` だけを受けます。`GET /reports/latest` は両方に一致しますが、片方はメソッド、もう片方はパスの方向でしか狭くありません。
 
 片方の一致集合がもう片方の厳密な部分集合ではないため、優先順位を決められません。登録時に panic して曖昧さを早く発見させる設計です。両方を使いたいなら、メソッドまたはパスをそろえて一方を明確に狭くします。
+
+ただし、`GODEBUG=httpmuxgo121=1` を設定していると panic しません。Go 1.22 の互換設定が旧来の `ServeMux` の挙動を復元し、メソッドとワイルドカードを含む新しいパターン規則を使わなくなるためです。したがって、panic の有無を再現するときは、Go のバージョンだけでなく、メインモジュールの `go` 行と `GODEBUG` もそろえる必要があります。
 
 </details>
 
