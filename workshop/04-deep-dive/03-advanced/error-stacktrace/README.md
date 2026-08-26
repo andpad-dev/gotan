@@ -7,13 +7,46 @@ Java や Python などの言語では例外（Exception）に標準でスタッ�
 なぜ Go はこのような設計判断をしているのでしょうか？また、エラーをWrapする仕組みはどのような議論を経て導入されたのでしょうか？
 背景にある設計思想や歴史的経緯をたどってみましょう。
 
+まず、次のコードを実行して、エラーへの文脈追加・原因の検査・詳細表示を観測してください。[Go Playground で動かす](https://go.dev/play/p/m3PMRBAE_rq) と、`%+v` でも標準のエラーにスタックトレースが自動表示されないことを確認できます。
+
+```go
+package main
+
+import (
+	"errors"
+	"fmt"
+)
+
+var errNotFound = errors.New("not found")
+
+func loadConfig() error {
+	return errNotFound
+}
+
+func handleRequest() error {
+	return fmt.Errorf("load config: %w", loadConfig())
+}
+
+func main() {
+	err := handleRequest()
+	fmt.Println("error:", err)
+	fmt.Println("is not found:", errors.Is(err, errNotFound))
+	fmt.Printf("detailed format: %+v\n", err)
+}
+```
+
+実行結果:
+
+```text
+error: load config: not found
+is not found: true
+detailed format: load config: not found
+```
+
 ## 設問 1: Go のエラー処理の哲学を調べよう
 
-そもそも Go では、JavaやPythonのようにエラーを「例外(Exception)」のような特別なものとして扱っていません。
-
-Go の公式ブログなどからエラーハンドリングに関する記事を探し、Go におけるエラーの基本的な設計思想を調べましょう。
-
-### ヒント
+上のコードでは、`err` に文脈を付けても `errors.Is` で元のエラーを検査でき、`%+v` の出力にもスタックトレースは現れません。
+この観測を手がかりに、Go のエラーは例外とどのように違う値として設計されているのか、公式情報から調べましょう。
 
 <details>
 <summary>ヒント</summary>
@@ -23,15 +56,16 @@ Go の公式ブログなどからエラーハンドリングに関する記事�
 
 </details>
 
-### 答え
-
 <details>
 <summary>答え</summary>
 
-#### 1. https://go.dev/blog/all を開き、検索窓で "error" と検索する。
-#### 2. 最新から過去に向かって検索するのではなく、一番過去から最新の順に検索する
-#### 3. 以下のような記事が見つかります
-   - [Errors are values](https://go.dev/blog/errors-are-values), 12 January 2015 Rob Pike
+**調査ルート**
+
+1. [Go Playground の共有コード](https://go.dev/play/p/m3PMRBAE_rq) を実行し、エラーの表示と `errors.Is` の結果を観測する。
+2. [Go Blog の一覧](https://go.dev/blog/all) から error に関する記事を探す。
+3. [Errors are values](https://go.dev/blog/errors-are-values) を読み、エラーを値として扱う例を確認する。
+
+**答え**
 
 Go では、エラーは「特別な制御フロー（例外）」ではなく、単なる「値（Value）」として扱われます。
 
@@ -53,7 +87,7 @@ Go 1.13 で、`fmt.Errorf("%w", err)` などによるError Wrappingが標準ラ�
 
 機能追加の背景が書かれた公式情報を探してみましょう。
 
-### ヒント
+上のコードでは、`fmt.Errorf` がエラーに文脈を追加し、`errors.Is` が元のエラーを見つけています。この2つの観測を出発点に、Wrapping が標準化された背景を調べましょう。
 
 <details>
 <summary>ヒント</summary>
@@ -63,25 +97,24 @@ Go 1.13 で、`fmt.Errorf("%w", err)` などによるError Wrappingが標準ラ�
 
 </details>
 
-### 答え
-
 <details>
 <summary>答え</summary>
 
-#### 1. https://go.dev/doc/go1.13 を開き Error Wrapping の項目を見つけます。
-#### 2. 以下のようなプロポーザルへのリンクが見つかります。
-- [Error Values proposal](https://go.googlesource.com/proposal/+/master/design/29934-error-values.md)
-- [the associated issue](https://go.dev/issues/29934)
+**調査ルート**
 
-Go 2 に向けた「エラー値の検査とフォーマット」に関するドラフトデザインに基づきGo 1.13 での実装とフィードバック収集を目的にプロポーザルが記述されました。
+1. [Go 1.13 Release Notes](https://go.dev/doc/go1.13) の Error wrapping の項目を読む。
+2. リリースノートから次の設計資料と issue をたどる。
+   - [Error Values proposal](https://go.googlesource.com/proposal/+/master/design/29934-error-values.md)
+   - [the associated issue](https://go.dev/issues/29934)
+3. [Working with Errors in Go 1.13](https://go.dev/blog/go1.13-errors) で、提案された API の使い方と背景を確認する。
 
-Go 2 とは後方互換性の破壊的変更を含む次のGoバージョンという意味合いでの過去の議論で出てくるワードです。
-今のところ後方互換性を破壊するGo 2が実装される予定はありません。
+**答え**
 
-提案の内容は以下の通り
-- エラーをWrapしてチェーン（連鎖）させる仕組み
-- スタックトレースの保持
-- およびそれらを展開・検査する標準的なAPIの導入
+当初の提案には、次の内容が含まれていました。
+
+- エラーを Wrap してチェーン（連鎖）させる仕組み
+- エラーチェーンを検査する `errors.Is` と `errors.As`
+- エラーの詳細な表示や位置情報を扱う仕組み（`errors.Frame` など）
 
 プロポーザルの issue では
 - Genericsの導入後に設計し直す必要が出ないか？ Genericsを使わなくてもインターフェースの活用で十分だ
@@ -90,18 +123,10 @@ Go 2 とは後方互換性の破壊的変更を含む次のGoバージョンと�
 
 などなど、数々の議題で議論が繰り広げられています。
 
-#### 3. 更にリリースノート中にある [errors package documentation](https://pkg.go.dev/errors) から https://pkg.go.dev/errors へのリンクが見つかります。
-#### 4. Wrappingの議論の詳細は https://go.dev/blog/go1.13-errors を見てくださいという記載が見つかると思います。見てみましょう。
-#### 5. https://go.dev/blog/go1.13-errors というブログが見つかりました。今までのプロポーザルの議論のサマリーがブログに記載されていることが分かります。
+リリースノートとブログによると、Go 1.13 以前はエラーを `==` 演算子で比較することがありました。
+Go 1.13 では、Wrap されたエラーを検査する新しい API として `errors.Is` と `errors.As` が導入されました。
 
-Go 1.13 以前では error を `==` 演算子で比較していました。
-
-Go 1.13 からは Wrapされたエラーでもエラーを検査するための新しいAPIとして `errors.Is` と `errors.As` が導入されています。
-
-エラーのカスタマイズについても触れられているため非常に参考になるドキュメントになっています。
-
----
-ここまでの調査のサマリーとしてエラーの Wrappingの導入について、 以下のようような経緯があったことが分かります。
+ここまでの調査のサマリーとしてエラーの Wrapping の導入について、以下のような経緯があったことが分かります。
 
 プログラムが複雑になると、下層で発生したエラー（例: io.EOF）を上層に返す際、単にそのまま返すと「どこで起きた EOF なのか」文脈が失われてしまいます。
 
@@ -115,58 +140,52 @@ Go 1.13 からは Wrapされたエラーでもエラーを検査するための�
 
 ## 設問 3: スタックトレースの自動付与が見送られた理由を調べよう
 
-ここまでの調査の中で気づいた方もいらっしゃると思いますが、実は Go 1.13 のエラー拡張の設計段階では
-
-「標準のエラーにスタックトレース（フレーム情報）を持たせる」という案も真剣に検討されていました。
+ここまでの調査の中で気づいた方もいらっしゃると思いますが、実は Go 1.13 のエラー拡張の設計段階では、「標準のエラーにスタックトレース（フレーム情報）を持たせる」という案も真剣に検討されていました。
 
 しかし、最終的にそれは標準パッケージには採用されませんでした。
 
-Proposal ドキュメントの議論を読み解き、なぜスタックトレースの自動付与が見送られたのか、考察してみましょう。
-
-### ヒント
+上の調査で、提案の一部が採用されなかったことが分かりました。どの仕様が残り、どの仕様が見送られたのかを、実際の出力と一次資料から切り分けましょう。
 
 <details>
 <summary>ヒント</summary>
 
-- 最初のプロポーザルである [Proposal: Go 2 Error Inspection](https://go.googlesource.com/proposal/+/master/design/29934-error-values.md) を読んでみよう。
-- "Frame", "StackTrace", "Formatting" というキーワードで探します。
-- 次に [プロポーザルを議論しているissue](https://go.dev/issues/29934) を眺めてみましょう。
-- 全ての会話を眺めるのは効率が悪いため、まずは "Load more" で 全ての会話情報を取得してから検索するのが良いでしょう。
-- issueの下から探すと結論を探しやすいです。
-- 当時のGoチームのリーダーである Russ Cox(rsc) の発言を追っていくのが手っ取り早いでしょう。
-- もしくはプロポーザルが実際にAcceptedされたタイミングである "Proposal-Accepted" で検索すると前後に決定事項が書かれていることが多いです。
-
+- [Proposal: Go 2 Error Inspection](https://go.googlesource.com/proposal/+/master/design/29934-error-values.md) で `Frame`、`StackTrace`、`Formatting` を検索します。
+- 次に [プロポーザルを議論している issue](https://go.dev/issues/29934) の終盤にある決定事項を確認します。
+- [Proposal-Accepted](https://github.com/golang/go/issues/29934#issuecomment-489682919) と最終決定のコメントを比較すると、採用された仕様と見送られた仕様を切り分けやすくなります。
 
 </details>
-
-### 答え
 
 <details>
 <summary>答え</summary>
 
-最初のプロポーザル時点では以下の議題がありました。
-- Wrapping (`fmt.Errorf("... %w", err)`, `errors.Is`, `errors.As`)
-- Stack Frames (`errors.Frame`)
-- Formatting (`errors.Printer`, `errors.Formatter`)
+**調査ルート**
 
+1. [Go Playground の共有コード](https://go.dev/play/p/m3PMRBAE_rq) を実行し、`%+v` の出力にスタックトレースが含まれないことをもう一度確認する。
+2. [Error Values proposal](https://go.googlesource.com/proposal/+/master/design/29934-error-values.md) の Stack Frames と Formatting の項目を読む。
+3. issue の [Proposal-Accepted のコメント](https://github.com/golang/go/issues/29934#issuecomment-489682919) と [最終決定のコメント](https://github.com/golang/go/issues/29934#issuecomment-521245013) を比較する。
+4. [Working with Errors in Go 1.13](https://go.dev/blog/go1.13-errors) で、最終的に導入された Wrapping と検査 API を確認する。
 
-Russ Cox(rsc) の発言 を遡っていくと [The accept/decline decision here (also linked in the top comment) is #29934 (comment).](https://github.com/golang/go/issues/29934#issuecomment-521245013) という発言があります。
+**答え**
 
-つまりGo 1.13 で Acceptedされた内容とDeclineされた内容は [#29934 (comment)](https://github.com/golang/go/issues/29934#issuecomment-489682919) にまとまっています。
+最初の提案には、エラーを連鎖させて検査する Wrapping (`fmt.Errorf("... %w", err)`, `errors.Is`, `errors.As`) と、スタックフレームや詳細なフォーマットを扱う案 (`errors.Frame`, `errors.Printer`, `errors.Formatter`) が含まれていました。
 
-この中で、Error Wrapping の議論については比較的反対意見もなくすんなりと決まっていますが
-`Formatting and Location` の議論について落としどころが付かなかったため延期する旨が記載されています。
+Go 1.13 の採否を決める議論で残ったのは、`Unwrap`、`errors.Is`、`errors.As`、`%w` によるエラーの Wrapping と検査です。一方、`Formatting and Location` に関する議論は合意に至らず、`errors.Printer`、`errors.Formatter`、`errors.Frame` は見送られました。
 
-`errors.Printer`, `errors.Formatter`, `errors.Frame` がここで削除される決定をされています。
+提案書の Stack Frames は、フレーム情報を保存するだけでなく、Formatting と組み合わせて表示する設計として検討されていました。そのため、Formatting の案が見送られたことと Frame の案が見送られたことは切り離せません。
 
-では、 Formatter の機能削除で、何故 Frame も削除されたのか？
+issue の議論には、スタックトレースを付与した場合のパフォーマンスや API の複雑さを懸念する意見もあります。ただし、これらは議論中に出た懸念であり、最終決定の主な根拠として断定せず、一次資料の採否結果と分けて読み取る必要があります。
 
-[Proposal: Go 2 Error Inspection](https://go.googlesource.com/proposal/+/master/design/29934-error-values.md) の Stack Frames の項を見れば分かる通り、Frameは最初からFormattingありきで検討されていたことが分かります。
-
-他にも探せば [Stack Traceを付与することでのパフォーマンスの悪化を懸念する声](https://github.com/golang/go/issues/29934#issuecomment-486503822) や
-
-[Working with Errors in Go 1.13](https://go.dev/blog/go1.13-errors) のブログに書かれている通り "errorは値" なのだからGoプログラマーは自由にカスタムエラーが作れる旨など
-
-様々な要因が見つかります。気になる人は更に深堀りしてみるとよいでしょう。
+したがって、Go の標準エラーは自動的にスタックトレースを保持・表示しません。必要な場合は、独自のエラー型やライブラリが詳細情報を保持・表示する設計を選べます。
 
 </details>
+
+---
+
+## 調査の入り口
+
+- [Go Documentation](https://go.dev/doc/)
+- [Go 1.13 Release Notes](https://go.dev/doc/go1.13)
+- [Errors are values](https://go.dev/blog/errors-are-values)
+- [Working with Errors in Go 1.13](https://go.dev/blog/go1.13-errors)
+- [Error Values proposal](https://go.googlesource.com/proposal/+/master/design/29934-error-values.md)
+- [Proposal issue #29934](https://go.dev/issues/29934)
