@@ -3,13 +3,28 @@
 次のコードはコンパイルできません。
 
 ```go
-v1 := slog.StringValue("gopher")
-v2 := slog.StringValue("gopher")
-fmt.Println(v1 == v2)
-// invalid operation: v1 == v2 (struct containing [0]func() cannot be compared)
+package main
+
+import (
+	"fmt"
+	"log/slog"
+)
+
+func main() {
+	v1 := slog.StringValue("gopher")
+	v2 := slog.StringValue("gopher")
+	fmt.Println(v1 == v2) // コンパイルエラー.
+	// fmt.Println(v1.Equal(v2)) // こちらは true.
+}
 ```
 
-（Go Playground で確かめる: https://go.dev/play/p/MPeWX_kJChR ）
+（[Go Playground で確かめる](https://go.dev/play/p/MPeWX_kJChR)）
+
+コンパイルエラー:
+
+```
+invalid operation: v1 == v2 (struct containing [0]func() cannot be compared)
+```
 
 なんでこうなってるの？背景を調べて、その仕組みを言語仕様から説明しなさい。
 
@@ -17,15 +32,16 @@ fmt.Println(v1 == v2)
 
 slog.Value の型定義を読み、`==` を禁止している仕掛けを見つけましょう。
 
-- https://cs.opensource.google/go/go/+/refs/tags/go1.26.5:src/log/slog/value.go;l=22
+- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/log/slog/value.go;l=21
 
 <details>
 <summary>答え</summary>
 
 **調査ルート**
 
-1. [go1.26.5 の src/log/slog/value.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.5:src/log/slog/value.go;l=22) を開く。
-2. `type Value struct` の定義を読む。
+1. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `log/slog` パッケージを開く。
+2. [go1.27.0 の src/log/slog/value.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/log/slog/value.go;l=21) を開く。
+3. `type Value struct` の定義を読む。
 
 **答え**
 
@@ -98,6 +114,47 @@ invalid operation: v1 == v2 (struct containing [0]func() cannot be compared)
 この仕掛けのフィールドが slog.Value のメモリ消費を増やさないことを、仕様を根拠に説明しましょう。
 `unsafe.Sizeof` を使って実測でも確かめてみましょう。
 
+次のコードを実行し、ゼロ長配列と `slog.Value` のサイズを確認してください。
+
+```go
+package main
+
+import (
+	"fmt"
+	"log/slog"
+	"unsafe"
+)
+
+type withArray struct {
+	_   [0]func()
+	num uint64
+	any any
+}
+
+type withoutArray struct {
+	num uint64
+	any any
+}
+
+func main() {
+	fmt.Println(unsafe.Sizeof([0]func(){}))    // 0
+	fmt.Println(unsafe.Sizeof(withArray{}))    // withoutArray と同じ
+	fmt.Println(unsafe.Sizeof(withoutArray{}))
+	fmt.Println(unsafe.Sizeof(slog.Value{}))
+}
+```
+
+（[Go Playground で動かす](https://go.dev/play/p/SVs4LjlKXGo)）
+
+実行結果:
+
+```text
+0
+24
+24
+24
+```
+
 <details>
 <summary>ヒント</summary>
 
@@ -110,8 +167,9 @@ invalid operation: v1 == v2 (struct containing [0]func() cannot be compared)
 
 **調査ルート**
 
-1. 仕様の「[Size and alignment guarantees](https://go.dev/ref/spec#Size_and_alignment_guarantees)」を読む。
-2. `unsafe.Sizeof` で実測する。
+1. [Go Playground の共有コード](https://go.dev/play/p/SVs4LjlKXGo) を実行し、サイズの出力を観測する。
+2. 仕様の「[Size and alignment guarantees](https://go.dev/ref/spec#Size_and_alignment_guarantees)」を読む。
+3. `unsafe.Sizeof` で、仕様の説明と実測値を照合する。
 
 **答え**
 
@@ -120,13 +178,7 @@ invalid operation: v1 == v2 (struct containing [0]func() cannot be compared)
 > A struct or array type has size zero if it contains no fields (or elements, respectively) that have a size greater than zero.
 
 つまり `[0]func()` は「比較不可能」という型の性質だけを持ち込み、メモリは 1 バイトも消費しません。
-実測でも、このフィールドの有無で構造体のサイズは変わりません: https://go.dev/play/p/SVs4LjlKXGo
-
-```go
-fmt.Println(unsafe.Sizeof([0]func(){})) // 0
-fmt.Println(unsafe.Sizeof(withArray{})) // 24 (フィールドあり)
-fmt.Println(unsafe.Sizeof(withoutArray{})) // 24 (フィールドなし)
-```
+実測でも、このフィールドの有無で構造体のサイズは変わりません。
 
 </details>
 
@@ -137,6 +189,40 @@ fmt.Println(unsafe.Sizeof(withoutArray{})) // 24 (フィールドなし)
 仮に `==` が使えたとして、slog.Value の比較は期待どおりに動くのでしょうか。
 型定義の各フィールドのコメントを読んで、禁止したい理由を考えましょう。
 また、slog.Value 同士を比較したいときはどうすればよいかも調べましょう。
+
+次のコードで、文字列の比較と、比較不可能な値を含む `AnyValue` の比較をそれぞれ試してください。
+
+```go
+package main
+
+import (
+	"fmt"
+	"log/slog"
+)
+
+func main() {
+	stringValue1 := slog.StringValue("gopher")
+	stringValue2 := slog.StringValue("gopher")
+	fmt.Println("Value.Equal string:", stringValue1.Equal(stringValue2))
+
+	sliceValue := slog.AnyValue([]int{1})
+	func() {
+		defer func() {
+			fmt.Println("Value.Equal slice panicked:", recover() != nil)
+		}()
+		fmt.Println(sliceValue.Equal(sliceValue))
+	}()
+}
+```
+
+（[Go Playground で動かす](https://go.dev/play/p/YtBeHvmXlzY)）
+
+実行結果:
+
+```text
+Value.Equal string: true
+Value.Equal slice panicked: true
+```
 
 <details>
 <summary>ヒント</summary>
@@ -151,9 +237,10 @@ fmt.Println(unsafe.Sizeof(withoutArray{})) // 24 (フィールドなし)
 
 **調査ルート**
 
-1. value.go の `num` / `any` フィールドのコメントを読む。
-2. 仕様の「Comparison operators」の interface の項を読む。
-3. pkg.go.dev/log/slog で Value のメソッド一覧から比較用のメソッドを探す。
+1. [Go Playground の共有コード](https://go.dev/play/p/YtBeHvmXlzY) を実行し、`Value.Equal` の通常の結果と panic を観測する。
+2. [go1.27.0 の `Value` 定義](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/log/slog/value.go;l=21) の `num` / `any` フィールドのコメントを読む。
+3. 仕様の「[Comparison operators](https://go.dev/ref/spec#Comparison_operators)」の interface の項を読む。
+4. [Value.Equal](https://pkg.go.dev/log/slog#Value.Equal) の説明と Go 本体の実装を確認する。
 
 **答え**
 
@@ -172,7 +259,7 @@ fmt.Println(unsafe.Sizeof(withoutArray{})) // 24 (フィールドなし)
 比較不可能な値（スライスなど）を持つ Value 同士を `==` すると、コンパイルは通っても実行時に panic します。
 
 このように「コンパイルは通るが結果が信頼できない・panic し得る」比較を、型レベルで禁止するのが `_ [0]func()` の役割です。
-代わりに、内容を正しく比較する [`Value.Equal`](https://pkg.go.dev/log/slog#Value.Equal) メソッドが用意されています。
+内容を比較するには [`Value.Equal`](https://pkg.go.dev/log/slog#Value.Equal) を使えますが、`KindAny` や `KindLogValuer` で比較不可能な値を保持している場合は `Value.Equal` 自体も panic し得ます。安全に扱うには、比較可能な値だけを `AnyValue` に渡すなど、値の型に応じた設計が必要です。
 
 </details>
 
@@ -190,5 +277,6 @@ fmt.Println(unsafe.Sizeof(withoutArray{})) // 24 (フィールドなし)
 
 ## 調査の入り口
 
-- https://cs.opensource.google/go/go/+/refs/tags/go1.26.5:src/log/slog/value.go;l=22
+- [Go Documentation](https://go.dev/doc/)
 - https://go.dev/ref/spec
+- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/log/slog/value.go;l=21
