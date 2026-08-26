@@ -58,6 +58,53 @@ Example の [Wrapping](https://pkg.go.dev/log/slog#example-package-Wrapping) に
 - slog.Handler を埋め込んで、必要なメソッドだけ実装するのはなぜダメなのでしょうか？
 - slog.Value の Resolve メソッドを呼ばないと、どんなログがうまく出力されなくなるのでしょうか？
 
+次のコードで、2つの注意点を同じ入力から観測してください。[Go Playground で実行する](https://go.dev/play/p/wXj_QdVwc19) と、埋め込みだけのハンドラーで panic が起きることと、`Resolve` の有無でパスワードの表示が変わることを確認できます。
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+)
+
+type badHandler struct {
+	slog.Handler
+}
+
+func (badHandler) Handle(context.Context, slog.Record) error {
+	return nil
+}
+
+type password string
+
+func (password) LogValue() slog.Value {
+	return slog.StringValue("REDACTED")
+}
+
+func main() {
+	func() {
+		defer func() {
+			fmt.Println("embedded handler panicked:", recover() != nil)
+		}()
+		slog.New(badHandler{}).Info("login")
+	}()
+
+	attr := slog.Any("password", password("secret"))
+	fmt.Printf("without Resolve: %v\n", attr.Value.Any())
+	fmt.Printf("with Resolve: %v\n", attr.Value.Resolve().Any())
+}
+```
+
+実行結果:
+
+```text
+embedded handler panicked: true
+without Resolve: secret
+with Resolve: REDACTED
+```
+
 <details>
 <summary>ヒント</summary>
 
@@ -75,8 +122,9 @@ Example の [Wrapping](https://pkg.go.dev/log/slog#example-package-Wrapping) に
 
 **調査ルート**
 
-1. slog のドキュメントの Overview にある「[Writing a handler](https://pkg.go.dev/log/slog#hdr-Writing_a_handler)」節を読む。
-2. そこからリンクされている詳細ガイド https://golang.org/s/slog-handler-guide （[golang/example の slog-handler-guide](https://github.com/golang/example/blob/master/slog-handler-guide/README.md)）を読む。
+1. [Go Playground の共有コード](https://go.dev/play/p/wXj_QdVwc19) を実行し、panic の有無と `Resolve` 前後の出力を観測する。
+2. slog のドキュメントの Overview にある「[Writing a handler](https://pkg.go.dev/log/slog#hdr-Writing_a_handler)」節を読む。
+3. そこからリンクされている詳細ガイド https://golang.org/s/slog-handler-guide （[golang/example の slog-handler-guide](https://github.com/golang/example/blob/master/slog-handler-guide/README.md)）を読む。
 
 **答え**
 
