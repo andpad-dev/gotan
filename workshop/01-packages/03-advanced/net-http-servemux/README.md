@@ -81,7 +81,25 @@ POST /reports/2026-08 -> 405
 
 このシナリオの `go.mod`（`go 1.22`）で、`httpmuxgo121` を設定していない通常の挙動を前提にします。API 担当者が `GET /reports/{id}` と `/reports/latest` を登録しようとしています。両方とも一部の GET リクエストに一致しますが、なぜどちらも「常により具体的」とは言えず、`HandleFunc` が panic するのでしょうか。
 
-手元で panic しない場合は、`go version`、`go env GOMOD`、`go env GODEBUG` を確認し、どの互換モードで実行しているかも説明してください。
+まず、実際の登録処理を次のコードで確認してください。[Go Playground でこのコードを実行する](https://go.dev/play/p/iMHQSYKMgpE) と、Go 1.22 以降の標準設定では 2 つ目の `HandleFunc` の登録時に panic し、`registered` は出力されません。
+
+```go
+package main
+
+import (
+	"fmt"
+	"net/http"
+)
+
+func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /reports/{id}", func(http.ResponseWriter, *http.Request) {})
+	mux.HandleFunc("/reports/latest", func(http.ResponseWriter, *http.Request) {})
+	fmt.Println("registered")
+}
+```
+
+ローカルで panic しない場合は、`go version`、`go env GOMOD`、`go env GODEBUG` を確認し、標準設定と `GODEBUG=httpmuxgo121=1` を付けた場合の結果を比較して、その差が生じる条件も説明してください。
 
 <details>
 <summary>ヒント</summary>
@@ -98,10 +116,11 @@ POST /reports/2026-08 -> 405
 
 **調査ルート**
 
-1. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) の enhanced routing patterns を読み直し、重なるパターンの扱いを確認する。
-2. [http.ServeMux](https://pkg.go.dev/net/http#ServeMux) の Precedence と conflict の説明を読む。
-3. [Go, Backwards Compatibility, and GODEBUG](https://go.dev/doc/godebug) の `httpmuxgo121` を確認する。
-4. 「neither is more specific」の規則を確認し、[Go 1.27.0 の pattern.go にある `conflictsWith`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/pattern.go;l=219) を読む。
+1. [Go Playground の共有コード](https://go.dev/play/p/iMHQSYKMgpE) を標準設定で実行し、2つ目の登録時の panic と `registered` が出力されないことを観測する。
+2. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) の enhanced routing patterns を読み直し、重なるパターンの扱いを確認する。
+3. [http.ServeMux](https://pkg.go.dev/net/http#ServeMux) の Precedence と conflict の説明を読む。
+4. [Go, Backwards Compatibility, and GODEBUG](https://go.dev/doc/godebug) の `httpmuxgo121` を確認する。
+5. 「neither is more specific」の規則を確認し、[Go 1.27.0 の pattern.go にある `conflictsWith`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/pattern.go;l=219) を読む。
 
 **答え**
 
