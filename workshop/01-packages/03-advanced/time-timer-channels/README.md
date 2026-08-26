@@ -70,6 +70,37 @@ Go 1.23 以降の新しい挙動では、タイマーチャンネルは容量 0 
 
 以前は `Stop` が `false` のときに `timer.C` を無条件で受信して空にする、いわゆるドレイン処理がよく書かれました。Go 1.23 以降の新しい意味論で、なぜその受信を無条件に残してはいけないのでしょうか。古い Go も動作対象にするライブラリでは、どんな前提を明確にすべきでしょうか。
 
+次の最小実験は、タイマーの通知を一度受信してから `Stop` し、その後に古い値をドレインしようとします。[Go Playground で実行する](https://go.dev/play/p/X_a-_2PuQoV) と、`Stop=false` でも受信できる値が残っているとは限らないことを観測できます。
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	timer := time.NewTimer(0)
+	<-timer.C
+	stopped := timer.Stop()
+	fmt.Printf("stop=%v cap=%d\n", stopped, cap(timer.C))
+	select {
+	case <-timer.C:
+		fmt.Println("drain received")
+	case <-time.After(20 * time.Millisecond):
+		fmt.Println("unconditional drain would block")
+	}
+}
+```
+
+実行結果:
+
+```text
+stop=false cap=0
+unconditional drain would block
+```
+
 比較実験をするときは、導入の Go Playground の結果を基準にし、手元では `go version`、`go env GOMOD`、`go env GODEBUG` も記録してください。特に `go.mod` がない実行や、`go 1.23` 未満のモジュールでは、同じ Go コンパイラでも旧いタイマーチャンネルの挙動になることがあります。
 
 <details>
@@ -88,9 +119,10 @@ Go 1.23 以降の新しい挙動では、タイマーチャンネルは容量 0 
 
 **調査ルート**
 
-1. [Go 1.23 Release Notes](https://go.dev/doc/go1.23) の Timer changes を読み直す。
-2. [time.NewTimer](https://pkg.go.dev/time#NewTimer) の `Stop` / `Reset` に関する説明を読む。
-3. 容量 0 と stale value の背景を、[Issue #37196](https://github.com/golang/go/issues/37196) と [time パッケージの実装コメント](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=133) で確認する。
+1. [Go Playground の共有コード](https://go.dev/play/p/X_a-_2PuQoV) を実行し、`Stop=false` の後の受信がタイムアウトすることを観測する。
+2. [Go 1.23 Release Notes](https://go.dev/doc/go1.23) の Timer changes を読み直す。
+3. [time.NewTimer](https://pkg.go.dev/time#NewTimer) の `Stop` / `Reset` に関する説明を読む。
+4. 容量 0 と stale value の背景を、[Issue #37196](https://github.com/golang/go/issues/37196) と [time パッケージの実装コメント](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=133) で確認する。
 
 **答え**
 
