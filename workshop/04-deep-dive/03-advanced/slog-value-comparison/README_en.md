@@ -1,15 +1,27 @@
 # Why Can't `slog.Value` Be Compared with `==`?
 
-The following code does not compile:
+The following complete program does not compile:
 
 ```go
-v1 := slog.StringValue("gopher")
-v2 := slog.StringValue("gopher")
-fmt.Println(v1 == v2)
-// invalid operation: v1 == v2 (struct containing [0]func() cannot be compared)
+package main
+
+import (
+	"fmt"
+	"log/slog"
+)
+
+func main() {
+	v1 := slog.StringValue("gopher")
+	v2 := slog.StringValue("gopher")
+	fmt.Println(v1 == v2)
+}
 ```
 
 ([Verify it in the Go Playground](https://go.dev/play/p/MPeWX_kJChR))
+
+```text
+invalid operation: v1 == v2 (struct containing [0]func() cannot be compared)
+```
 
 ## Question 1: Identify the mechanism that forbids comparison
 
@@ -17,7 +29,8 @@ fmt.Println(v1 == v2)
 
 **Investigation route**
 
-1. Open [Go 1.26.5 `src/log/slog/value.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.26.5:src/log/slog/value.go;l=22).
+1. Start at [Go Documentation](https://go.dev/doc/) and open the standard library's `log/slog` package.
+2. Open [Go 1.27.0 `src/log/slog/value.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/log/slog/value.go;l=21).
 
 **Answer**
 
@@ -55,24 +68,66 @@ Function types are not comparable. An array is comparable only when its element 
 
 ## Question 3: Why use a zero-length array?
 
-<details><summary>Hint</summary>Read [Size and alignment guarantees](https://go.dev/ref/spec#Size_and_alignment_guarantees), then verify with `unsafe.Sizeof`.</details>
+Distinguish the size of `[0]func()` itself from the size of a struct that places the field first or last. Explain why this mechanism does not increase `slog.Value` in the current implementation.
+
+```go
+package main
+
+import (
+	"fmt"
+	"log/slog"
+	"unsafe"
+)
+
+type withArrayFirst struct {
+	_ [0]func()
+	num uint64
+	any any
+}
+
+type withoutArray struct {
+	num uint64
+	any any
+}
+
+type withArrayLast struct {
+	num uint64
+	any any
+	_ [0]func()
+}
+
+func main() {
+	fmt.Println(unsafe.Sizeof([0]func(){}))
+	fmt.Println(unsafe.Sizeof(withArrayFirst{}))
+	fmt.Println(unsafe.Sizeof(withoutArray{}))
+	fmt.Println(unsafe.Sizeof(withArrayLast{}))
+	fmt.Println(unsafe.Sizeof(slog.Value{}))
+}
+```
+
+([Run it in the Go Playground](https://go.dev/play/p/w9nhI8d9nnl))
+
+```text
+0
+24
+24
+32
+24
+```
+
+<details><summary>Hint</summary>Read [Size and alignment guarantees](https://go.dev/ref/spec#Size_and_alignment_guarantees) for what the specification guarantees about the zero-length array itself. Then search the Go 1.27.0 compiler source for `zero-sized field` to explain why only the trailing layout grows.</details>
 
 <details><summary>Answer</summary>
 
 **Investigation route**
 
-1. Read [Size and alignment guarantees](https://go.dev/ref/spec#Size_and_alignment_guarantees).
-2. Measure the types with `unsafe.Sizeof`.
+1. Run the [shared size experiment](https://go.dev/play/p/w9nhI8d9nnl) and observe the difference between first and last placement.
+2. Read [Size and alignment guarantees](https://go.dev/ref/spec#Size_and_alignment_guarantees).
+3. Read the trailing zero-size-field padding in [Go 1.27.0 `cmd/compile/internal/types/size.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/compile/internal/types/size.go;l=516) and follow its reference to [Issue #9401](https://github.com/golang/go/issues/9401).
 
 **Answer**
 
-The specification guarantees that a struct or array has size zero when it contains no field or element whose size is greater than zero. Thus `[0]func()` imports incomparability without consuming memory. The measurement is available at https://go.dev/play/p/SVs4LjlKXGo:
-
-```go
-fmt.Println(unsafe.Sizeof([0]func(){})) // 0
-fmt.Println(unsafe.Sizeof(withArray{})) // 24 (with field)
-fmt.Println(unsafe.Sizeof(withoutArray{})) // 24 (without field)
-```
+The specification guarantees that `[0]func()` itself has size zero. It does not guarantee that adding it anywhere in a struct leaves the struct's total size unchanged. The gc compiler pads a non-zero-size struct ending in a zero-size field so that taking the field's address cannot point into the next heap object. The first-position layout stays at 24 bytes, while the trailing layout grows to 32 bytes. `slog.Value` deliberately puts the field first, importing incomparability while remaining 24 bytes in Go 1.27.0.
 
 </details>
 
@@ -80,19 +135,61 @@ fmt.Println(unsafe.Sizeof(withoutArray{})) // 24 (without field)
 
 ## Question 4: Why forbid `==` at all?
 
-<details><summary>Hint</summary>Read the comments on the `num` and `any` fields. Also read the interface comparison rule in [Comparison operators](https://go.dev/ref/spec#Comparison_operators).</details>
+Run this example to separate string contents from their data pointers, then observe both the successful and panicking boundaries of `Value.Equal`.
+
+```go
+package main
+
+import (
+	"fmt"
+	"log/slog"
+	"strings"
+	"unsafe"
+)
+
+func main() {
+	literal := "X"
+	computed := strings.ToUpper("x")
+	fmt.Println("strings equal:", literal == computed)
+	fmt.Println("data pointers equal:", unsafe.StringData(literal) == unsafe.StringData(computed))
+	fmt.Println("Value.Equal string:", slog.StringValue(literal).Equal(slog.StringValue(computed)))
+
+	sliceValue := slog.AnyValue([]int{1})
+	func() {
+		defer func() {
+			fmt.Println("Value.Equal slice panicked:", recover() != nil)
+		}()
+		fmt.Println(sliceValue.Equal(sliceValue))
+	}()
+}
+```
+
+([Run it in the Go Playground](https://go.dev/play/p/d6m0c3sgC6F))
+
+```text
+strings equal: true
+data pointers equal: false
+Value.Equal string: true
+Value.Equal slice panicked: true
+```
+
+<details><summary>Hint</summary>Read the comments on the `num` and `any` fields and the interface comparison rule in [Comparison operators](https://go.dev/ref/spec#Comparison_operators). Follow the history of the `disallow ==` line to find the change that states the design reason.</details>
 
 <details><summary>Answer</summary>
 
 **Investigation route**
 
-1. Read the field comments in `value.go`.
-2. Read the interface rules in [Comparison operators](https://go.dev/ref/spec#Comparison_operators).
-3. Find the comparison method in [pkg.go.dev/log/slog](https://pkg.go.dev/log/slog).
+1. Run the [shared comparison experiment](https://go.dev/play/p/d6m0c3sgC6F).
+2. Read the field comments in [Go 1.27.0 `value.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/log/slog/value.go;l=21).
+3. Read the interface rules in [Comparison operators](https://go.dev/ref/spec#Comparison_operators).
+4. Follow the file history to [CL 479516](https://go-review.googlesource.com/c/go/+/479516) and [Issue #56345](https://github.com/golang/go/issues/56345).
+5. Read [`Value.Equal`](https://pkg.go.dev/log/slog#Value.Equal) and its [Go 1.27.0 implementation](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/log/slog/value.go;l=420).
 
 **Answer**
 
-Even if `==` compiled, it would not reliably compare `slog.Value` contents. String values are stored by splitting their length into `num` and a pointer-like representation into `any`, so comparing the representation could compare pointers rather than string contents. Also, `any` can contain an incomparable dynamic value such as a slice; comparing two interfaces with that dynamic type panics at runtime. The type therefore rejects an unreliable and potentially panicking comparison. Use [`Value.Equal`](https://pkg.go.dev/log/slog#Value.Equal) instead.
+Even if `==` compiled, it would not reliably compare `slog.Value` contents. String values store their length in `num` and a pointer-like representation in `any`. The literal `"X"` and runtime-produced `strings.ToUpper("x")` have equal contents but different data pointers, reproducing the condition described in CL 479516. Also, `any` can contain an incomparable dynamic value such as a slice; comparing two interfaces with that dynamic type panics at runtime.
+
+The type therefore rejects an unreliable and potentially panicking comparison. [`Value.Equal`](https://pkg.go.dev/log/slog#Value.Equal) compares ordinary values by content, but it can itself panic when `KindAny` or `KindLogValuer` contains a non-comparable dynamic value. Callers must account for the kind and dynamic type rather than treating `Equal` as an unconditional safe replacement.
 
 </details>
 
@@ -100,7 +197,7 @@ Even if `==` compiled, it would not reliably compare `slog.Value` contents. Stri
 
 <details><summary>Trivia: Why is the field first?</summary>
 
-Putting `_ [0]func()` at the end can add padding (24 bytes at the beginning versus 32 at the end). A zero-size field at the end can also cause its address to point beyond the struct, so placing it first is the established pattern.
+Putting `_ [0]func()` at the end can add padding (24 bytes at the beginning versus 32 at the end). The compiler adds it so that the address of a trailing zero-size field cannot point into the next object; see [Issue #9401](https://github.com/golang/go/issues/9401) and the [Go 1.27.0 implementation](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/compile/internal/types/size.go;l=516).
 
 </details>
 
@@ -108,5 +205,7 @@ Putting `_ [0]func()` at the end can add padding (24 bytes at the beginning vers
 
 ## Research starting points
 
-- [slog Value source](https://cs.opensource.google/go/go/+/refs/tags/go1.26.5:src/log/slog/value.go;l=22)
+- [Go Documentation](https://go.dev/doc/)
+- [Go 1.27.0 `slog.Value` source](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/log/slog/value.go;l=21)
 - [Go language specification](https://go.dev/ref/spec)
+- [CL 479516](https://go-review.googlesource.com/c/go/+/479516) and [Issue #56345](https://github.com/golang/go/issues/56345)
