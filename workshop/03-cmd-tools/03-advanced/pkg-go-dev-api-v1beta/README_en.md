@@ -1,19 +1,30 @@
 [Workshop guide and scenario index](../../../README.md) | [How to research 03-cmd-tools](../../README.md)
 
-# Use the pkg.go.dev API (v1beta)
+# Use the pkg.go.dev API (v1)
 
 Our team must choose an HTTP router library. We want to compare and sort candidates by import count and maintenance status, but the pkg.go.dev browser UI has no such feature.
 
-We considered scraping, but the **pkg.go.dev API**, released in beta in [June 2026](https://opensource.googleblog.com/2026/06/a-new-pkggodev-api-for-go.html), provides structured JSON directly. Let us investigate the background behind this API design.
+We considered scraping, but the **pkg.go.dev API**, released in beta in [June 2026](https://opensource.googleblog.com/2026/06/a-new-pkggodev-api-for-go.html), provides structured JSON directly. The initial documentation used `/v1beta`, while the current API starts at `/v1`. The old path returns a 301 redirect, but a search query can lose its query string and end at `missing query`, so the experiments use `/v1` directly.
 
 ## Question 1: How do I sort and filter search results?
 
-The search API (`/v1beta/search`) sorts a `router` search by relevance by default, but has no parameter for import count or update time. Why is sorting unavailable? The API does provide a `filter` parameter, but its expression is a distinctive “subset of Go expressions,” rather than SQL or a regular expression. Why was it designed this way?
+The search API (`/v1/search`) sorts a `router` search by relevance by default, but has no parameter for import count or update time. Why is sorting unavailable? The API does provide a `filter` parameter, but the filter itself is a distinctive “subset of Go expressions,” rather than SQL or a raw regular expression. Why was it designed this way?
+
+Run this request and check the condition rather than relying on a result count that may change over time:
+
+```bash
+curl -L "https://pkg.go.dev/v1/search?q=xyzzy&filter=hasPrefix%28packagePath%2C%20%22github.com%22%29" \
+  | jq -c '{hasItems: ((.items | length) > 0), allGithub: ([.items[].packagePath] | all(startswith("github.com/")))}'
+```
+
+```text
+{"hasItems":true,"allGithub":true}
+```
 
 <details>
 <summary>Hint</summary>
 
-- The [API documentation](https://pkg.go.dev/v1beta/api) describes `filter` in “Requests.”
+- The [API documentation](https://pkg.go.dev/v1/api) describes `filter` in “Requests.”
 - Variables available to a filter are determined by the JSON fields in each endpoint's response type.
 - Check which fields `SearchResult` has, including whether it contains popularity metrics such as import count.
 
@@ -24,13 +35,13 @@ The search API (`/v1beta/search`) sorts a `router` search by relevance by defaul
 
 **Investigation route**
 
-1. Check the response type for `/v1beta/search` in the “Routes” section of https://pkg.go.dev/v1beta/api.
-2. Follow the `SearchResult` link and inspect its fields.
-3. Inspect the `SearchResult` definition in the pkg.go.dev source at https://cs.opensource.google/go/x/pkgsite.
+1. Start at [Go Documentation](https://go.dev/doc/) and open the [pkg.go.dev API documentation](https://pkg.go.dev/v1/api).
+2. Check the response type for `/v1/search` in “Routes,” then follow the `SearchResult` link and inspect its fields.
+3. Inspect the [`SearchResult` definition in pkgsite v0.4.0](https://cs.opensource.google/go/x/pkgsite/+/v0.4.0:internal/api/types.go;l=121).
 
 **Answer**
 
-The `/v1beta/search` response contains only basic information such as `packagePath`, `modulePath`, `version`, and `synopsis`; it does not return metadata such as import count or update time. The definition is at https://cs.opensource.google/go/x/pkgsite/+/refs/tags/v0.3.0:internal/api/types.go;l=115-121:
+The `/v1/search` response contains only basic information such as `packagePath`, `modulePath`, `version`, and `synopsis`; it does not return metadata such as import count or update time. The definition is in [pkgsite v0.4.0](https://cs.opensource.google/go/x/pkgsite/+/v0.4.0:internal/api/types.go;l=121):
 
 ```go
 type SearchResult struct {
@@ -41,9 +52,9 @@ type SearchResult struct {
 }
 ```
 
-Without those fields, a client cannot sort by them. The API also does not offer a sort parameter because search results are designed to be returned by relevance. To gather other information, query `/v1beta/package/{path}` or `/v1beta/imported-by/{path}` for each result.
+Without those fields, a client cannot sort by them. The documented order is relevance, and no alternate sort parameter is defined. To gather other information, query `/v1/package/{path}` or `/v1/imported-by/{path}` for each result.
 
-The [API documentation](https://pkg.go.dev/v1beta/api) defines filters as a subset of Go expressions. Restricting the operators and functions that the server evaluates makes them safer than accepting arbitrary SQL or regular expressions. A filter narrows results; it does not specify ordering.
+The [API documentation](https://pkg.go.dev/v1/api) defines filters as a subset of Go expressions with route-specific variables and approved functions. The filter is not arbitrary SQL or a raw regular expression, although the approved `matches(string, regexp)` function does accept a regular expression as its second argument. The documentation specifies the grammar but does not state that safety was the design motive, so that rationale should be treated as an inference. A filter narrows results; it does not specify ordering.
 
 For example, to select only paths beginning with `github.com`:
 
@@ -51,7 +62,7 @@ For example, to select only paths beginning with `github.com`:
 - Encoded: `hasPrefix%28packagePath%2C%20%22github.com%22%29`
 
 ```bash
-curl -L "https://pkg.go.dev/v1beta/search?q=xyzzy&filter=hasPrefix%28packagePath%2C%20%22github.com%22%29" | jq .
+curl -L "https://pkg.go.dev/v1/search?q=xyzzy&filter=hasPrefix%28packagePath%2C%20%22github.com%22%29" | jq .
 ```
 
 </details>
@@ -66,8 +77,25 @@ The API documentation says:
 
 Why can a package path theoretically be ambiguous, and how do the browser UI and API behave differently?
 
+First compare an unambiguous path with a real ambiguous path:
+
 ```bash
-curl -L "https://pkg.go.dev/v1beta/package/golang.org/x/time/rate" | jq .
+curl -L "https://pkg.go.dev/v1/package/golang.org/x/time/rate" \
+  | jq -c '{modulePath, path, name}'
+```
+
+```text
+{"modulePath":"golang.org/x/time","path":"golang.org/x/time/rate","name":"rate"}
+```
+
+```bash
+pkgsite="https://pkg.go.dev"
+curl -L "$pkgsite/v1/package/github.com/hashicorp/consul/api" \
+  | jq -c '{candidateModules: [.candidates[].modulePath]}'
+```
+
+```text
+{"candidateModules":["github.com/hashicorp/consul/api","github.com/hashicorp/consul"]}
 ```
 
 <details>
@@ -85,44 +113,18 @@ curl -L "https://pkg.go.dev/v1beta/package/golang.org/x/time/rate" | jq .
 
 **Investigation route**
 
-- Run `curl -s "https://pkg.go.dev/v1beta/package/golang.org/x/time/rate" | jq .` and observe the response.
-- Read the package-path ambiguity section under “Requests” in the API documentation.
-- Read the relationship between module and package paths in the [Go Modules reference](https://go.dev/ref/mod).
+1. Start at [Go Documentation](https://go.dev/doc/) and read the relationship between module and package paths in the [Go Modules reference](https://go.dev/ref/mod).
+2. Read the package-path ambiguity section under “Requests” in the [API documentation](https://pkg.go.dev/v1/api).
+3. Run the two requests above and compare a package response with a `candidates` response.
+4. Retry the ambiguous request with `?module=github.com/hashicorp/consul/api` and confirm that the explicit module resolves it.
 
 **Answer**
 
-Module and package paths are independent. The same string can describe package `c` in module `a/b` or package `b/c` in module `a`, so both can theoretically have package path `a/b/c`. In practice this is rare because multiple modules in one repository are discouraged, nested modules are designed to avoid collisions, and modules commonly live at repository roots.
+Module and package paths are independent. The same string can describe package `c` in module `a/b` or package `b/c` in module `a`, so both can have package path `a/b/c`.
 
-The browser UI chooses the longest matching module path. The API instead returns an error for ambiguity and asks the client to specify the module with a query parameter. This avoids silently returning an unexpected result.
+The browser UI chooses the longest matching module path. The API instead returns candidates for ambiguity and asks the client to specify the module with a query parameter. The documentation states this behavior; interpreting it as avoiding an implicit choice is an inference.
 
-For `golang.org/x/time/rate`, the response is unambiguous:
-
-```json
-{
-  "modulePath": "golang.org/x/time",
-  "version": "v0.15.0",
-  "isLatest": true,
-  "isStandardLibrary": false,
-  "goos": "all",
-  "goarch": "all",
-  "path": "golang.org/x/time/rate",
-  "name": "rate",
-  "synopsis": "Package rate provides a rate limiter.",
-  "isRedistributable": true
-}
-```
-
-An ambiguous request may return:
-
-```json
-{
-  "code": 400,
-  "message": "ambiguous package path",
-  "candidates": ["module1", "module2"]
-}
-```
-
-Retry with an explicit query such as `?module=module1`.
+The observed `golang.org/x/time/rate` response resolves to module `golang.org/x/time`. The real `github.com/hashicorp/consul/api` request returns both `github.com/hashicorp/consul/api` and `github.com/hashicorp/consul` in `candidates`. Retry with an explicit query such as `?module=github.com/hashicorp/consul/api`.
 
 </details>
 
@@ -132,13 +134,21 @@ Retry with an explicit query such as `?module=module1`.
 
 The API has a rate limit of 45 QPS (queries per second) per IP block. Large result sets are returned through pagination. Why are these limits and designs necessary, and what does `nextPageToken` represent?
 
+```bash
+curl -L "https://pkg.go.dev/v1/search?q=xyzzy&limit=1" \
+  | jq -c '{items: (.items | length), hasNext: (.nextPageToken != null and .nextPageToken != "")}'
+```
+
+```text
+{"items":1,"hasNext":true}
+```
+
 <details>
 <summary>Hint</summary>
 
-- pkg.go.dev is a public service operated by Google.
-- Rate limits protect resources and help prevent DoS attacks.
 - `nextPageToken` is an opaque string.
 - The documentation says to make no request changes other than adding the token.
+- Separate what the documentation guarantees from your inference about why the limit exists.
 
 </details>
 
@@ -147,15 +157,29 @@ The API has a rate limit of 45 QPS (queries per second) per IP block. Large resu
 
 **Investigation route**
 
-- Read the “Rate Limiting” and “Pagination” sections of the API documentation.
-- Retrieve search results and inspect `nextPageToken`.
-- Inspect the pagination implementation in the pkgsite source at https://cs.opensource.google/go/x/pkgsite.
+1. Start at [Go Documentation](https://go.dev/doc/) and open the [pkg.go.dev API documentation](https://pkg.go.dev/v1/api).
+2. Read “Rate Limiting” and “Pagination.”
+3. Run the request above, then pass the returned token without changing the original query to retrieve the next page.
 
 **Answer**
 
-The 45-QPS-per-IP-block limit protects the free public service from DoS, overload, resource monopolization, and excessive scraping. It is enough for ordinary use but constrains large batch jobs; exceeding it produces `429 Too Many Requests`.
+The documentation states a 45-QPS-per-IP-block limit and a `429 Too Many Requests` response when it is exceeded. Protecting service capacity and preventing one client from monopolizing resources are reasonable interpretations, but the API documentation does not state those motives or promise that 45 QPS is sufficient for a particular workload.
 
-`nextPageToken` is an **opaque token** containing an encoded page position. Its long hexadecimal-looking value is not intended for client interpretation. The documentation warns: “Changing the request in any way other than providing a token may result in an error.” Keep the original request unchanged and pass the token to retrieve the next page.
+`nextPageToken` is an **opaque token** whose contents clients must not interpret. The documentation warns: “Changing the request in any way other than providing a token may result in an error.” Keep the original request unchanged and add only the token:
+
+```bash
+page_token=$(curl -sS "https://pkg.go.dev/v1/search?q=xyzzy&limit=1" | jq -r .nextPageToken)
+pkgsite="https://pkg.go.dev"
+curl -sS -G "$pkgsite/v1/search" \
+  --data-urlencode "q=xyzzy" \
+  --data-urlencode "limit=1" \
+  --data-urlencode "token=$page_token" \
+  | jq -c '{items: (.items | length)}'
+```
+
+```text
+{"items":1}
+```
 
 </details>
 
@@ -163,18 +187,26 @@ The 45-QPS-per-IP-block limit protects the free public service from DoS, overloa
 
 ## Question 4: Why does `imported-by` exclude packages in the same module?
 
-`/v1beta/imported-by/{path}` returns packages that import the specified package, but the documentation says:
+`/v1/imported-by/{path}` returns packages that import the specified package, but the documentation says:
 
 > Paths of packages importing the package at {path}, not including packages in the same module.
 
 Why exclude packages in the same module?
 
+```bash
+curl -L "https://pkg.go.dev/v1/imported-by/golang.org/x/time/rate" \
+  | jq -c --arg modulePath "golang.org/x/time" '{pageSize: (.importedBy.items | length), sameModuleItems: ([.importedBy.items[] | select(startswith($modulePath + "/"))] | length), hasNext: (.importedBy.nextPageToken != null and .importedBy.nextPageToken != "")}'
+```
+
+```text
+{"pageSize":100,"sameModuleItems":0,"hasNext":true}
+```
+
 <details>
 <summary>Hint</summary>
 
 - Dependencies within a module differ from dependencies between modules.
-- A common use is understanding the package's external impact.
-- Packages in one module are usually managed by the same team and repository.
+- Run the request and inspect only what the returned page demonstrates before inferring the intended use case.
 
 </details>
 
@@ -183,13 +215,13 @@ Why exclude packages in the same module?
 
 **Investigation route**
 
-- Read the `/v1beta/imported-by/{path}` description in the API documentation.
-- Inspect the implementation in the pkgsite source at https://cs.opensource.google/go/x/pkgsite.
-- Read about module boundaries in the [Go Modules reference](https://go.dev/ref/mod).
+1. Start at [Go Documentation](https://go.dev/doc/) and read about module boundaries in the [Go Modules reference](https://go.dev/ref/mod).
+2. Read the `/v1/imported-by/{path}` description in the [API documentation](https://pkg.go.dev/v1/api).
+3. Run the request above and confirm that the returned page contains no path beginning with the target module path.
 
 **Answer**
 
-The main use case is understanding impact outside the module. Packages within one module are usually maintained by the same team, released together, and can be changed together. Dependencies between modules represent other projects and teams, where a breaking change has a broader impact. Thus `imported-by` focuses on external users and is useful for questions such as which projects a package change affects and how widely it is used.
+The documented fact is that same-module packages are excluded. This can be interpreted as focusing the endpoint on impact across module boundaries: packages in one module are versioned together, while other modules are independent consumers. That use-case explanation is an inference from the API behavior and Go's module boundary, not a rationale explicitly stated by the API documentation.
 
 </details>
 
@@ -197,7 +229,8 @@ The main use case is understanding impact outside the module. Packages within on
 
 ## Research starting points
 
-- https://pkg.go.dev/v1beta/api
-- https://pkg.go.dev/golang.org/x/pkgsite/internal/api (response type definitions)
-- https://cs.opensource.google/go/x/pkgsite (pkgsite source)
-- https://go.dev/ref/mod (Go Modules reference)
+- [Go Documentation](https://go.dev/doc/)
+- [pkg.go.dev API](https://pkg.go.dev/v1/api)
+- [pkgsite internal/api](https://pkg.go.dev/golang.org/x/pkgsite/internal/api) (response type definitions)
+- [pkgsite source](https://cs.opensource.google/go/x/pkgsite)
+- [Go Modules reference](https://go.dev/ref/mod)

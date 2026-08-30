@@ -6,7 +6,7 @@
 「インポート数」や「メンテナンス状況」で比較・ソートしたいのですが、pkg.go.dev のブラウザ UI にはそうした機能がありません。
 
 スクレイピングも検討しましたが、[2026年6月にベータ公開された](https://opensource.googleblog.com/2026/06/a-new-pkggodev-api-for-go.html) **pkg.go.dev API** を使えば、構造化された JSON データを直接取得できます。
-この API は公開初期に `/v1beta` というパスで案内されましたが、現在の API の入口は `/v1` です。実際に `/v1beta` を開くと `/v1` にリダイレクトされます。なぜこの API はこのような設計になっているのか、背景を調べましょう。
+この API は公開初期に `/v1beta` というパスで案内されましたが、現在の API の入口は `/v1` です。旧パスは 301 で `/v1` へ案内されるものの、検索のクエリ文字列が引き継がれず `missing query` になるため、実験では最初から現行パスを使います。なぜこの API はこのような設計になっているのか、背景を調べましょう。
 
 ## 設問 1: 検索結果をソート・フィルタリングしたい
 
@@ -15,20 +15,20 @@
 なぜソート機能が提供されていないのでしょうか？
 
 また、検索結果を絞り込むための `filter` パラメータが用意されています。
-このフィルター式は SQL や正規表現ではなく、「Go 式のサブセット」という独特な仕様になっています。
+このフィルター式そのものは SQL や生の正規表現ではなく、「Go 式のサブセット」という独特な仕様になっています。
 なぜこのような設計になっているのか、調べてみましょう。
 
 次のリクエストを実行し、`filter` を適用した結果に `github.com/` 以外のパッケージが含まれていないことを確認してください。結果件数は将来変わる可能性があるため、ここでは条件を満たすかどうかだけを表示します。
 
 ```bash
 curl -L "https://pkg.go.dev/v1/search?q=xyzzy&filter=hasPrefix%28packagePath%2C%20%22github.com%22%29" \
-  | jq -c '{allGithub: ([.items[].packagePath] | all(startswith("github.com/")))}'
+  | jq -c '{hasItems: ((.items | length) > 0), allGithub: ([.items[].packagePath] | all(startswith("github.com/")))}'
 ```
 
 実行結果:
 
 ```text
-{"allGithub":true}
+{"hasItems":true,"allGithub":true}
 ```
 
 <details>
@@ -74,8 +74,7 @@ type SearchResult struct {
 **フィルターが Go 式のサブセットである理由:**
 
 [API ドキュメント](https://pkg.go.dev/v1/api) では、filter は boolean を返す「Go 式のサブセット」として定義されています。利用できる演算子・関数と各 route のフィールドを限定することで、サーバー側で検証・評価できる入力形式にしています。
-これは SQL や正規表現全体のような自由形式を受け付けない設計ですが、API ドキュメントはその目的を「安全のため」とまでは説明していません。
-そのため、SQL のような自由形式のクエリや任意の正規表現を受け付ける設計にはなっていません。
+これは SQL や生の正規表現を filter 全体として受け付ける設計ではありません。ただし、許可された `matches(string, regexp)` 関数の第2引数には正規表現を書けます。API ドキュメントは、この文法を選んだ目的を「安全のため」とまでは説明していないので、そこは事実と推測を分けてください。
 また、filter は主に絞り込み用途で、並び替え（例: インポート数降順）の指定はできません。  
 
 ***例：特定のドメインのみに絞り込む***
@@ -113,6 +112,20 @@ curl -L "https://pkg.go.dev/v1/package/golang.org/x/time/rate" \
 {"modulePath":"golang.org/x/time","path":"golang.org/x/time/rate","name":"rate"}
 ```
 
+次に、実在する曖昧なパスを同じ API へ渡します。
+
+```bash
+pkgsite="https://pkg.go.dev"
+curl -L "$pkgsite/v1/package/github.com/hashicorp/consul/api" \
+  | jq -c '{candidateModules: [.candidates[].modulePath]}'
+```
+
+実行結果:
+
+```text
+{"candidateModules":["github.com/hashicorp/consul/api","github.com/hashicorp/consul"]}
+```
+
 <details> 
 <summary>ヒント</summary>
 
@@ -130,7 +143,8 @@ curl -L "https://pkg.go.dev/v1/package/golang.org/x/time/rate" \
 
 - [Go Documentation](https://go.dev/doc/) から [Go Modules Reference](https://go.dev/ref/mod) を開き、モジュールパスとパッケージパスの関係を確認する。
 - [pkg.go.dev API ドキュメント](https://pkg.go.dev/v1/api) の「Requests」セクションでパッケージパスの曖昧性について読む。
-- `curl -L "https://pkg.go.dev/v1/package/golang.org/x/time/rate" | jq .` を実行して、実際の挙動を確認する。
+- `golang.org/x/time/rate` と `github.com/hashicorp/consul/api` に対する上の2コマンドを実行し、一意な応答と `candidates` 応答を比較する。
+- `?module=github.com/hashicorp/consul/api` を付けて再実行し、候補を明示すると解決できることを確認する。
 
 **答え**
 
@@ -153,17 +167,7 @@ Go のモジュールシステムでは、モジュールパスとパッケー�
 
 上の実行結果のようにエラーは返らず、`golang.org/x/time` モジュールの `rate` パッケージとして解決されます。これは、この入力では所属モジュールを一意に識別できるためです。
 
-曖昧なケースに遭遇した場合、APIは次のようなエラーレスポンスを返します.
-
-```json
-{
-  "code": 400,
-  "message": "ambiguous package path",
-  "candidates": ["module1", "module2"]
-}
-```
-
-この場合、?module=module1 のようにクエリパラメータで明示的にモジュールを指定して再リクエストします。
+実在する `github.com/hashicorp/consul/api` では、上の実行結果のように2つの候補が `candidates` に返ります。この場合、`?module=github.com/hashicorp/consul/api` のように候補のモジュールをクエリパラメータで明示して再リクエストします。
 
 </details>
 
@@ -193,10 +197,9 @@ curl -L "https://pkg.go.dev/v1/search?q=xyzzy&limit=1" \
 <details> 
 <summary>ヒント</summary>
 
-- pkg.go.dev は Google が運営する公開サービスである
-- レート制限は DoS 攻撃の防止やリソース保護のため
 - nextPageToken は不透明な文字列(opaque token)として設計されている
 - API ドキュメントには「リクエストを一切変更せず、token だけ追加せよ」と書かれている
+- レート制限の数値とエラー応答は事実として確認し、その目的についての考察とは分ける
 </details> 
 <details> 
 <summary>答え</summary>
@@ -229,7 +232,21 @@ pkg.go.dev は公開サービスであり、API ドキュメントには 45 QPS 
 > Changing the request in any way other than providing a token may result in an error.
 
 これは、「ソート順やフィルターを途中で変更すると、トークンが無効になる可能性がある」ことを意味します。
-クライアントは、トークンをそのまま渡すだけで次ページを取得できる設計です。
+クライアントは、トークンをそのまま渡すだけで次ページを取得できます。次のように元の `q` と `limit` を維持し、`token` だけを追加して確認できます。
+
+```bash
+page_token=$(curl -sS "https://pkg.go.dev/v1/search?q=xyzzy&limit=1" | jq -r .nextPageToken)
+pkgsite="https://pkg.go.dev"
+curl -sS -G "$pkgsite/v1/search" \
+  --data-urlencode "q=xyzzy" \
+  --data-urlencode "limit=1" \
+  --data-urlencode "token=$page_token" \
+  | jq -c '{items: (.items | length)}'
+```
+
+```text
+{"items":1}
+```
 
 </details>
 
@@ -260,9 +277,8 @@ curl -L "https://pkg.go.dev/v1/imported-by/golang.org/x/time/rate" \
 <details> 
 <summary>ヒント</summary>
 
-- モジュール内の依存関係と、モジュール間の依存関係は性質が異なる
-- imported-by の用途として、「このパッケージの影響範囲」を知りたい場合が多い
-- 同一モジュール内のパッケージは、通常同じチーム・リポジトリで管理されている
+- [Go Modules Reference](https://go.dev/ref/mod) で、同じモジュールに属するパッケージが共有するバージョン境界を確認します。
+- コマンドの結果と API ドキュメントが保証する範囲を確認してから、モジュール間の影響調査という用途を考えます。
 </details> 
 <details> 
 <summary>答え</summary>
