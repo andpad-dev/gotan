@@ -51,8 +51,8 @@ detailed format: load config: not found
 <details>
 <summary>ヒント</summary>
 
-- 公式ブログ https://go.dev/blog/ で "error" という文言で検索してみましょう。
-- 言語そのものの "哲学" や "設計思想" のような概念は初期の段階から考えられています。直近のブログではなく一番古いブログから順に探していくのが良いでしょう。
+- [Go Blog の一覧](https://go.dev/blog/all) を開き、ブラウザ内検索で `Errors are values` を探しましょう。
+- 記事を読んだら、設計資料 [Error Values — Problem Overview](https://go.googlesource.com/proposal/+/master/design/go2draft-error-values-overview.md) の `Problem` で `fixed cost` を探します。
 
 </details>
 
@@ -62,12 +62,15 @@ detailed format: load config: not found
 **調査ルート**
 
 1. [Go Playground の共有コード](https://go.dev/play/p/m3PMRBAE_rq) を実行し、エラーの表示と `errors.Is` の結果を観測する。
-2. [Go Blog の一覧](https://go.dev/blog/all) から error に関する記事を探す。
+2. [Go Blog の一覧](https://go.dev/blog/all) を開き、ブラウザ内検索で `Errors are values` を探す。
 3. [Errors are values](https://go.dev/blog/errors-are-values) を読み、エラーを値として扱う例を確認する。
+4. [Error Values — Problem Overview](https://go.googlesource.com/proposal/+/master/design/go2draft-error-values-overview.md) の Problem を読み、エラー生成に求められたコストの性質を確認する。
 
 **答え**
 
 Go では、エラーは「特別な制御フロー（例外）」ではなく、単なる「値（Value）」として扱われます。
+
+また設計資料は、エラーは例外的にしか起きないものではなく、プログラム中で繰り返し生成・処理・破棄されるものだと整理しています。そのため、エラー生成のコストはスタックの深さなどに左右されない一定のコストである必要があります。標準エラーへ常にスタックを記録する設計は、この制約と緊張関係にあります。
 
 記事には "Errors are values." という有名なフレーズが登場します。
 
@@ -161,13 +164,16 @@ Go 1.13 では、Wrap されたエラーを検査する新しい API として `
 **調査ルート**
 
 1. [Go Playground の共有コード](https://go.dev/play/p/m3PMRBAE_rq) を実行し、`%+v` の出力にスタックトレースが含まれないことをもう一度確認する。
-2. [Error Values proposal](https://go.googlesource.com/proposal/+/master/design/29934-error-values.md) の Stack Frames と Formatting の項目を読む。
-3. issue の [Proposal-Accepted のコメント](https://github.com/golang/go/issues/29934#issuecomment-489682919) と [最終決定のコメント](https://github.com/golang/go/issues/29934#issuecomment-521245013) を比較する。
-4. [Working with Errors in Go 1.13](https://go.dev/blog/go1.13-errors) で、最終的に導入された Wrapping と検査 API を確認する。
+2. [Error Values — Problem Overview](https://go.googlesource.com/proposal/+/master/design/go2draft-error-values-overview.md) の Problem を読み、エラー生成をスタックの深さにかかわらず一定コストにする設計上の制約を確認する。
+3. [Error Values proposal](https://go.googlesource.com/proposal/+/master/design/29934-error-values.md) の Stack Frames と Formatting の項目を読む。
+4. issue の [Proposal-Accepted のコメント](https://github.com/golang/go/issues/29934#issuecomment-489682919) と [最終決定のコメント](https://github.com/golang/go/issues/29934#issuecomment-521245013) を比較する。
+5. [Working with Errors in Go 1.13](https://go.dev/blog/go1.13-errors) で、最終的に導入された Wrapping と検査 API を確認する。
 
 **答え**
 
 最初の提案には、エラーを連鎖させて検査する Wrapping (`fmt.Errorf("... %w", err)`, `errors.Is`, `errors.As`) と、スタックフレームや詳細なフォーマットを扱う案 (`errors.Frame`, `errors.Printer`, `errors.Formatter`) が含まれていました。
+
+その前提となる設計資料では、Go のエラーは頻繁に生成・処理される通常の値なので、生成コストをスタックの深さに依存させないことが要件とされています。これは、すべてのエラー生成時にスタックを採取しない理由を、言語のエラー観から説明する根拠です。
 
 Go 1.13 の採否を決める議論で残ったのは、`Unwrap`、`errors.Is`、`errors.As`、`%w` によるエラーの Wrapping と検査です。一方、`Formatting and Location` に関する議論は合意に至らず、`errors.Printer`、`errors.Formatter`、`errors.Frame` は見送られました。
 
@@ -187,5 +193,6 @@ issue の議論には、スタックトレースを付与した場合のパフ�
 - [Go 1.13 Release Notes](https://go.dev/doc/go1.13)
 - [Errors are values](https://go.dev/blog/errors-are-values)
 - [Working with Errors in Go 1.13](https://go.dev/blog/go1.13-errors)
+- [Error Values — Problem Overview](https://go.googlesource.com/proposal/+/master/design/go2draft-error-values-overview.md)
 - [Error Values proposal](https://go.googlesource.com/proposal/+/master/design/29934-error-values.md)
 - [Proposal issue #29934](https://go.dev/issues/29934)
