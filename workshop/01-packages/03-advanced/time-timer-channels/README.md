@@ -6,7 +6,7 @@
 
 次のコードを [Go Playground で動かす](https://go.dev/play/p/F4r40BDO4dv) と、現行のタイマーチャンネルの容量と、停止後の再設定を確認できます。
 
-このシナリオには、Go 1.23 以降のタイマーチャンネルの挙動を有効にする `go.mod` を同梱しています。ローカルで試すときは、このディレクトリでコードを実行してください。
+このシナリオには、冒頭のコードを保存した `main.go` と Go 1.27 の `go.mod` を同梱しています。ローカルで試すときは、このディレクトリで `go run .` を実行してください。
 
 ```go
 package main
@@ -56,7 +56,7 @@ Go 1.23 より前のタイマーチャンネルは容量 1 のバッファ付き
 
 1. [Go 1.23 Release Notes](https://go.dev/doc/go1.23) の「Timer changes」を読む。
 2. [time.NewTimer](https://pkg.go.dev/time#NewTimer) のバージョン間の説明を読む。
-3. [sleep.go のコメント](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=123) を読む。
+3. [Go 1.27.0 の sleep.go のコメント](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/time/sleep.go;l=77) を読む。
 
 **答え**
 
@@ -103,7 +103,7 @@ stop=false cap=0
 unconditional drain would block
 ```
 
-比較実験をするときは、導入の Go Playground の結果を基準にし、手元では `go version`、`go env GOMOD`、`go env GODEBUG` も記録してください。特に `go.mod` がない実行や、`go 1.23` 未満のモジュールでは、同じ Go コンパイラでも旧いタイマーチャンネルの挙動になることがあります。
+比較実験をするときは、導入の Go Playground の結果を基準にし、手元では `go version`、`go env GOMOD`、`go env GODEBUG` も記録してください。`go.mod` の版や `asynctimerchan` で旧挙動へ切り替えられたのは Go 1.26 までです。Go 1.27 では、旧値を指定しても容量 1 には戻りません。
 
 <details>
 <summary>ヒント</summary>
@@ -112,7 +112,7 @@ unconditional drain would block
 - 「値がチャンネルに残る」と「タイマーが発火済みだが送信は完了していない」を区別する。
 - `Stop` が `false` でも、値がバッファに残っているとは限らないことを確認する。別の goroutine が先に受信した場合も含め、無条件の受信には `select` とタイムアウトを付けて観察する。
 - [最小実験](https://go.dev/play/p/X_a-_2PuQoV) は通知を一度受信してから `Stop` し、後続の受信をタイムアウト付きで試します。`Stop=false` と「今すぐ `C` から受信できる」を同一視しないでください。
-- 古い挙動との切り替え条件として、主プログラムの `go.mod` の `go` 行と `GODEBUG=asynctimerchan` を調べる。
+- Go 1.26 までの切り替え条件として、主プログラムの `go.mod` の `go` 行と `GODEBUG=asynctimerchan` を調べる。続けて Go 1.27 で設定が削除されたことを確認する。
 
 </details>
 
@@ -124,13 +124,13 @@ unconditional drain would block
 1. [Go Playground の共有コード](https://go.dev/play/p/X_a-_2PuQoV) を実行し、`Stop=false` の後の受信がタイムアウトすることを観測する。
 2. [Go 1.23 Release Notes](https://go.dev/doc/go1.23) の Timer changes を読み直す。
 3. [time.NewTimer](https://pkg.go.dev/time#NewTimer) の `Stop` / `Reset` に関する説明を読む。
-4. 容量 0 と stale value の背景を、[Issue #37196](https://github.com/golang/go/issues/37196) と [time パッケージの実装コメント](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=133) で確認する。
+4. 容量 0 と stale value の背景を、[Issue #37196](https://github.com/golang/go/issues/37196) と [Go 1.27.0 の time パッケージの実装コメント](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/time/sleep.go;l=77) で確認する。
 
 **答え**
 
 新しい意味論では、古い時刻値を受け取るためのドレインは不要です。`Stop` が `false` でも、それは「チャンネルに値がバッファされている」という意味ではありません。同期チャンネルでは、別の goroutine が通知を受信済みであったり、古い通知が無効化されていたりするため、無条件の受信は待ち続ける可能性があります。
 
-一方で、古い Go も対象なら挙動が異なります。ライブラリは最低対応 Go バージョン、主プログラムの `go.mod` の `go` 行、`GODEBUG=asynctimerchan` の扱い、タイマーチャンネルを受信する goroutine の所有関係を明確にします。古いバッファ付きチャンネル向けのドレインは、受信者を一つに限定できる旧い前提でのみ成立します。単に古い慣用句を削除・追加するのではなく、どの意味論で同期しているかを設計として確認します。
+一方で、Go 1.26 以前の toolchain も対象なら挙動が異なります。ライブラリは最低対応 Go バージョン、主プログラムの `go.mod` の `go` 行、`GODEBUG=asynctimerchan` の扱い、タイマーチャンネルを受信する goroutine の所有関係を明確にします。古いバッファ付きチャンネル向けのドレインは、受信者を一つに限定できる旧い前提でのみ成立します。単に古い慣用句を削除・追加するのではなく、どの意味論で同期しているかを設計として確認します。
 
 </details>
 
@@ -142,13 +142,21 @@ Go 1.23 では、新挙動の有効化にモジュールの `go` 行が関係し
 
 この設問でいう「新挙動」は、まず `time.NewTimer(0)` のチャンネルの `cap` / `len` として観察します。「互換設定」は、環境変数の `GODEBUG`、`go.mod` の `godebug`、ソース中の `//go:debug` を混同せず、それぞれがどの実行条件に効くかを整理してください。
 
+Go 1.27.0 の Playground で観測できる出発点は次のとおりです。なぜ 3 本目だけ容量を表示する前に失敗するのかを調べてください。
+
+| 実験 | Go 1.27.0 の結果 |
+| --- | --- |
+| [既定値](https://go.dev/play/p/zAkeGmN14Q7) | `go1.27.0 0 0` |
+| [`//go:debug asynctimerchan=0`](https://go.dev/play/p/V8esF3Hmib8) | `go1.27.0 0 0` |
+| [`//go:debug asynctimerchan=1`](https://go.dev/play/p/o-pDN23HyaX) | `invalid //go:debug: removed GODEBUG "asynctimerchan" set to old value "1"` |
+
 <details>
 <summary>ヒント</summary>
 
 - Go 1.23 のリリースノートで、新挙動が有効になる条件を探す。
 - Go 1.26 と Go 1.27 のリリースノートで `asynctimerchan` を検索する。
-- [既定値の実験](https://go.dev/play/p/zAkeGmN14Q7)、[旧挙動を指定した実験](https://go.dev/play/p/o-pDN23HyaX)、[新挙動を指定した実験](https://go.dev/play/p/V8esF3Hmib8) を順に実行し、`cap=0` と `cap=1` の違いを確認する。Go 1.27が未リリースまたはPlaygroundで選べない場合は、リリースノートを「予定仕様」として扱い、実行結果と混ぜない。
-- これらのPlaygroundはGo 1.26.5で、期待値は順に `go1.26.5 0 0`、`go1.26.5 1 0`、`go1.26.5 0 0` です。手元や開催時のバージョンが違う場合は、実際のバージョンも記録して比較します。
+- 3 つの実験の `//go:debug` の有無と値を比較し、リリースノートの規則に当てはめる。
+- [Go 1.27 リリースノートの GODEBUG 節](https://go.dev/doc/go1.27#godebug) で、最終的な既定値は受理され、旧値は拒否されるという規則を確認する。
 
 </details>
 
@@ -158,14 +166,24 @@ Go 1.23 では、新挙動の有効化にモジュールの `go` 行が関係し
 **調査ルート**
 
 1. [Go 1.23 Release Notes](https://go.dev/doc/go1.23) で、`go 1.23.0` 以上のモジュールと `asynctimerchan=1` の説明を読む。
-2. [Go 1.26 Release Notes](https://go.dev/doc/go1.26) で、Go 1.27 からの変更予定を確認する。
-3. [Go 1.27 Release Notes](https://go.dev/doc/go1.27) の Runtime と GODEBUG の説明を読む。
+2. [Go 1.26 Release Notes](https://go.dev/doc/go1.26) で、当時予告されていた Go 1.27 での削除を確認する。
+3. [Go 1.27 Release Notes の GODEBUG 節](https://go.dev/doc/go1.27#godebug) と [Runtime 節](https://go.dev/doc/go1.27#runtime) を読み、正式に削除された結果を確認する。
+4. 3 つの Playground を実行し、既定値・最終値 `0`・旧値 `1` の結果を記録する。
+5. [Go 1.27.0 の削除済み GODEBUG 一覧](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/internal/godebugs/table.go;l=100) で、`asynctimerchan` の旧値が `1` と `2` だと確認する。
 
 **答え**
 
 Go 1.23 では、主プログラムのモジュールが `go 1.23.0` 以降なら新しいタイマー挙動が有効で、`asynctimerchan=1` は調査や移行時に旧挙動へ戻すための設定でした。
 
-Go 1.27 ではこの設定は恒久的に削除され、`time` のタイマーチャンネルは常に同期・非バッファです。したがって、互換設定に依存して障害を隠すのではなく、旧来のドレインや `len` / `cap` への依存を直して、現在の意味論で正しく動くようにする必要があります。
+Go 1.27 ではこの設定は恒久的に削除され、`time` のタイマーチャンネルは同期・非バッファに固定されました。主プログラムの `go` 行が 1.23 未満でも旧挙動には戻りません。`asynctimerchan=0` は最終値として受理されますが意味は変わらず、旧値 `1`（および `2`）は拒否されます。
+
+指定場所によって失敗する段階が異なります。`go.mod` の `godebug` とソースの `//go:debug` は `go` コマンドがビルド前に拒否し、環境変数 `GODEBUG=asynctimerchan=1` は起動時に fatal error になります。どの場合も容量 1 の互換動作は得られません。したがって、互換設定に依存して障害を隠すのではなく、旧来のドレインや `len` / `cap` への依存を直して、現在の意味論で正しく動くようにする必要があります。
+
+| 指定場所 | 再現方法 | Go 1.27.0 の結果 |
+| --- | --- | --- |
+| 環境変数 | `GODEBUG=asynctimerchan=1 go run .` | 起動時に `fatal error` |
+| `go.mod` | `godebug asynctimerchan=1` を追加して `go run .` | `go.mod` 読み込み時にエラー |
+| ソース | [`//go:debug asynctimerchan=1` の Playground](https://go.dev/play/p/o-pDN23HyaX) | コンパイルエラー |
 
 </details>
 
@@ -184,7 +202,7 @@ Go 1.27 ではこの設定は恒久的に削除され、`time` のタイマー�
 
 - Issue の冒頭にある、`Stop` 後に値があるかもしれないという従来の説明を読む。
 - 実装コメントにある `stale time values` を探す。
-- [Issue #37196](https://github.com/golang/go/issues/37196) の冒頭にある従来のドレイン例と、[Go 1.26.4のsleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=105) の `Stop` / `NewTimer` のコメントを並べて読む。
+- [Issue #37196](https://github.com/golang/go/issues/37196) の冒頭にある従来のドレイン例と、[Go 1.27.0 の sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/time/sleep.go;l=77) の `Stop` / `NewTimer` のコメントを並べて読む。
 - 公式 Wiki の「Debugging」で、互換設定を全体へ切り替えた後に示される診断手順と、その出力例を読む。
 - research.swtch.com の記事では、`git bisect` の結果の次に始まる「A New Trick」と、揺らぐ対象を繰り返す理由に注目する。bisect のドキュメントでは、試行の反復に関する flag を探す。
 
@@ -197,7 +215,7 @@ Go 1.27 ではこの設定は恒久的に削除され、`time` のタイマー�
 
 1. [Go 1.23 Release Notes](https://go.dev/doc/go1.23) でタイマー変更の概要を確認する。
 2. [Issue #37196](https://github.com/golang/go/issues/37196) の問題提起と議論を読む。
-3. 最終的な保証を [sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=133) の実装コメントで確認する。
+3. 最終的な保証を [Go 1.27.0 の sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/time/sleep.go;l=77) の実装コメントで確認する。
 4. [Go Wiki の Timer Channel Changes](https://go.dev/wiki/Go123Timer) の「Debugging」を読み、旧・新挙動の全体切り替えで原因の種類を確認した後、`bisect` がスタックトレースごとに挙動を切り替えて依存箇所を絞る手順を確認する。
 5. [Hash-Based Bisect Debugging in Compilers and Runtimes](https://research.swtch.com/bisect) のタイマー障害の実例を読み、`git bisect` は変更を導入したコミットを、`bisect` は同じプログラム内で変更を有効にする呼び出しスタックを探索する、という探索軸の違いを整理する。揺らぐ失敗に対しては、記事、[`golang.org/x/tools/cmd/bisect` のドキュメント](https://pkg.go.dev/golang.org/x/tools/cmd/bisect)、[v0.47.0 のコマンドソース](https://cs.opensource.google/go/x/tools/+/refs/tags/v0.47.0:cmd/bisect/main.go) を読み、対象コマンドの `go test -count=N` と `bisect -count=N` の役割も区別する。
 
