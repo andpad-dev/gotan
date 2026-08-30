@@ -14,13 +14,13 @@ type Slice[T any] struct {
 func (s Slice[T]) Map[F any](f func(T) F) Slice[F] { ... }
 ```
 
-いま使っている Go 1.26.4 でこのコードをコンパイルしようとすると、次のように怒られます。
+Go 1.26.4 でこのコードをコンパイルすると、次のように拒否されます。
 
 ```
 syntax error: method must have no type parameters
 ```
 
-どうやら Go 1.27 で「ジェネリックメソッド」が入るらしいのですが、
+Go 1.27 では「ジェネリックメソッド」が正式に使えるようになりました。1.26 と 1.27 の違いを、
 
 - 仕様書のどこがどう変わったのか
 - なぜ Go 1.26 までは書けなかったのか
@@ -41,6 +41,7 @@ Go 1.27 で「method に何が書けるようになったか」を、リリー�
 - Changes to the language セクションに「generic methods」の段落があるはず
 - リリースノートの HTML には `go.dev/issue/<番号>` の形で関連 issue が埋め込まれている（開発者ツールでソースを見ると拾える）
 - 仕様書側は `Method declarations` セクションを開いて、EBNF が旧版とどう変わっているか比べる
+- 仕様書の冒頭が `Language version go1.27` であることも確認し、リリースノート・仕様・実行環境の版を揃える
 
 </details>
 
@@ -52,6 +53,7 @@ Go 1.27 で「method に何が書けるようになったか」を、リリー�
 1. [Go 1.27 リリースノート の Changes to the language 節](https://go.dev/doc/go1.27#language) を開き、`generic methods` の段落を読む。
 2. その段落に埋め込まれた `go.dev/issue/77273` を開いて [proposal #77273 "spec: generic methods for Go"](https://go.dev/issue/77273) の Proposal 節に飛ぶ。旧新の EBNF が並記されている。
 3. [仕様書の Method declarations](https://go.dev/ref/spec#Method_declarations) セクションで、実際に採用された EBNF を確認する。
+4. 手元の `go version` と Playground の表示が Go 1.27 以降であることを確認する。
 
 **答え**
 
@@ -104,7 +106,7 @@ func main() {
 }
 ```
 
-（Go Playground で動かす: https://go.dev/play/p/Lqn-PC8jg9E?v=gotip 、Dev/gotip を選んで Run）
+（[Go Playground で動かす](https://go.dev/play/p/Lqn-PC8jg9E)）
 
 <details>
 <summary>ヒント</summary>
@@ -122,8 +124,9 @@ func main() {
 
 1. [proposal #77273](https://go.dev/issue/77273) の Background 節を読み、歴史的な禁止理由と "A change of view" の考え方を押さえる。
 2. 同 proposal の Examples 節で、`Reader.Read[E any]` と `io.Reader` の関係を確認する。
-3. 手元 (`gotip`) か Playground で実際にコンパイルして、compiler のエラーメッセージを見る。
-4. 深追いしたい人向け: [Type Parameters Proposal の No parameterized methods 節](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#No-parameterized-methods) で当時の議論を読む。
+3. [仕様書の Interface types](https://go.dev/ref/spec#Interface_types) で、interface method は型パラメータを宣言できないという現行規則を確認する。
+4. Go 1.27 以降の手元環境か Playground で実際にコンパイルして、compiler のエラーメッセージを見る。
+5. 深追いしたい人向け: [Type Parameters Proposal の No parameterized methods 節](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#No-parameterized-methods) で当時の議論を読む。
 
 **答え**
 
@@ -153,7 +156,7 @@ proposal Examples 節にそのままの答えがあります。
 > ```
 > does not implement `io.Reader`, even though it might if there were some way to instantiate the method as `(*Reader).Read[byte]` (which there is not, and we are not proposing it).
 
-実際にコンパイルすると、gotip の compiler が同じことを言います。
+Go 1.27.0 で実際にコンパイルすると、compiler が同じことを言います。
 
 ```
 ./main.go:10:20: cannot use (*Reader)(nil) (value of type *Reader) as io.Reader value in variable declaration: *Reader does not implement io.Reader (wrong type for method Read)
@@ -169,14 +172,14 @@ proposal Examples 節にそのままの答えがあります。
 
 ## 設問 3: 実際に書いて動かそう — `Slice[T]` に `Map[F any]` を生やす
 
-一次情報で挙動を押さえたら、冒頭の `Slice[T].Map[F any]` を完成させて、`gotip` か Playground（`?v=gotip`）で動かしてみましょう。呼び出し側で型引数を明示しなくても済むか（型推論が効くか）も確かめてください。
+一次情報で挙動を押さえたら、冒頭の `Slice[T].Map[F any]` を完成させて、Go 1.27 以降の手元環境か Playground で動かしてみましょう。呼び出し側で型引数を明示しなくても済むか（型推論が効くか）も確かめてください。
 
 <details>
 <summary>ヒント</summary>
 
-- 手元で試すなら `go install golang.org/dl/gotip@latest && gotip download` してから `gotip run .`
-- Playground は URL に `?v=gotip` を付けるか、Playground 画面の Go version セレクタから "Dev branch" を選ぶ
-- go.mod は `go 1.27` にする（`go 1.26` のままだと設問 1 で見たエラーが出る）
+- 手元で `go version` を実行し、Go 1.27 以降であることを確認してから `go run .` を実行する
+- Playground の実行結果に表示される Go バージョンも確認する
+- `go.mod` は `go 1.27` にする。Go 1.27 toolchain でも `go 1.26` のままだと、`generic method requires go1.27 or later` という言語バージョンのエラーになる
 - 呼び出し側は `s.Map(func(n int) string { ... })` のように書ける（型引数 `F` は関数リテラルから推論される）
 
 </details>
@@ -187,7 +190,7 @@ proposal Examples 節にそのままの答えがあります。
 **調査ルート**
 
 1. 設問 1 の EBNF を思い出しつつ、メソッド名の直後に `[F any]` を置く。
-2. 手元で `gotip run .` するか、Playground の Dev/gotip で走らせて出力を確認する。
+2. `go version` と `go.mod` の `go 1.27` を確認し、手元で `go run .` するか Playground で走らせて出力を確認する。
 3. 型推論の効き方は [仕様書の Type inference](https://go.dev/ref/spec#Type_inference) と同じ。関数引数から `F` が推論される。
 
 **答え**
@@ -224,7 +227,7 @@ func main() {
 }
 ```
 
-（Go Playground で動かす: https://go.dev/play/p/ZlBpqqdQJvd?v=gotip ）
+（[Go Playground で動かす](https://go.dev/play/p/ZlBpqqdQJvd)）
 
 出力はこうなります。
 
@@ -263,7 +266,7 @@ func main() {
 }
 ```
 
-（Go Playground で動かす: https://go.dev/play/p/HQD1EdC7pL6?v=gotip ）
+（[Go Playground で動かす](https://go.dev/play/p/HQD1EdC7pL6)）
 
 出力:
 
@@ -284,4 +287,4 @@ Go 1.27 リリースノートの [math/rand/v2 節](https://go.dev/doc/go1.27#mi
 - 言語仕様: [Method declarations](https://go.dev/ref/spec#Method_declarations) / [Type parameter declarations](https://go.dev/ref/spec#Type_parameter_declarations)
 - Proposal: [#77273 spec: generic methods for Go](https://go.dev/issue/77273)
 - 先行議論: [#49085 proposal: spec: allow type parameters in methods](https://go.dev/issue/49085) / [Type Parameters Proposal の No parameterized methods 節](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#No-parameterized-methods)
-- 手元で試す: `go install golang.org/dl/gotip@latest && gotip download` / Playground の `?v=gotip`
+- 実行環境: `go version` と `go.mod` の `go 1.27` を確認し、手元の `go run .` または Go Playground で実行する
