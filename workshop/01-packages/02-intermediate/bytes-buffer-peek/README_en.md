@@ -1,3 +1,5 @@
+[Workshop guide and scenario index](../../../README.md) | [How to research 01-packages](../../README.md)
+
 # Peek Ahead at the Header of an Incoming Message
 
 In backend message reception, the first 4 bytes of a message from an external system indicate its type, followed by the body. The receiving handler wants to inspect the type and then pass the message to the appropriate processing logic, but must not consume the body yet. Let's investigate how to use `bytes.Buffer.Peek` to inspect the beginning of a received message.
