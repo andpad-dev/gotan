@@ -150,7 +150,7 @@ goroutineleak profile: total 4
 <summary>ヒント</summary>
 
 - リリースノートの `Goroutine leak profile` 節には、判定に**ランタイムの既存機能を流用している**ことをほのめかす一文があります。まずはその段落を最後まで読み切って、どの既存機能を頼りにしているのかを掴みましょう。
-- Go 1.27 リリースノートの各行には `go.dev/issue/<N>` の形で関連 issue のリンクが埋め込まれています（category README 参照）。Goroutine leak profile 節にも該当の proposal issue リンクがあります。
+- Go 1.27 リリースノートで現在の機能を確認したら、そこからリンクされた Go 1.26 リリースノートの `Experimental goroutine leak profile` 節へ戻ります。この節には proposal issue へのリンクがあります。
 - proposal issue の Description には「Design document」へのリンクがあります。設計文書は Go 本体のリポジトリではなく `go.googlesource.com/proposal` の下にあります。設計文書の `Proposal` 節には、番号付きで手順が並んでいます。
 
 </details>
@@ -160,9 +160,9 @@ goroutineleak profile: total 4
 
 **調査ルート**
 
-1. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) の `Goroutine leak profile` 節から、埋め込まれた proposal issue [#74609](https://go.dev/issue/74609) に飛ぶ。
-2. proposal Description の冒頭にある [Design document (`74609-goroutine-leak-detection-gc.md`)](https://go.googlesource.com/proposal/+/master/design/74609-goroutine-leak-detection-gc.md) を開く。
-3. 設計文書の `Proposal` 節にある 6 ステップを、冒頭の実行結果と突き合わせて理解する。
+1. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) の `Goroutine leak profile` 節で現在の機能を確認し、そこから [Go 1.26 リリースノート](https://go.dev/doc/go1.26) の experiment 版へ戻る。
+2. Go 1.26 リリースノートの `Experimental goroutine leak profile` 節にある proposal issue [#74609](https://go.dev/issue/74609) へのリンクを開く。
+3. proposal Description の冒頭にある [Design document (`74609-goroutine-leak-detection-gc.md`)](https://go.googlesource.com/proposal/+/master/design/74609-goroutine-leak-detection-gc.md) を開き、`Proposal` 節の 6 ステップを冒頭の実行結果と突き合わせて理解する。
 
 **答え**
 
@@ -216,8 +216,9 @@ Go 1.27 リリースノートの `Goroutine leak profile` 節には、実は次�
 
 **調査ルート**
 
-1. 設計文書 [`74609-goroutine-leak-detection-gc.md`](https://go.googlesource.com/proposal/+/master/design/74609-goroutine-leak-detection-gc.md) の `Rationale` 節を読む。
-2. 設計文書 `Background` 節から、Uber Saioc らの学術論文（`10.1145/3676641.3715990`）へのリンクを辿り、"partial deadlock" の定義と検出可能性の議論を確認する（このページはブラウザで開くと 200 が返る一方、`curl` 等では 403 が返るため、参考文献として補助的に扱う）。
+1. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) の `Goroutine leak profile` 節で、到達可能性に由来する現在の検出限界を確認する。
+2. [Go 1.26 リリースノート](https://go.dev/doc/go1.26) の experiment 版から proposal issue [#74609](https://go.dev/issue/74609) を開き、設計文書 [`74609-goroutine-leak-detection-gc.md`](https://go.googlesource.com/proposal/+/master/design/74609-goroutine-leak-detection-gc.md) の `Rationale` 節へ進む。
+3. 設計文書 `Background` 節から、Uber Saioc らの学術論文（`10.1145/3676641.3715990`）へのリンクを辿り、"partial deadlock" の定義と検出可能性の議論を確認する（このページはブラウザで開くと 200 が返る一方、`curl` 等では 403 が返るため、参考文献として補助的に扱う）。
 
 **答え**
 
@@ -237,13 +238,17 @@ Go チームは **soundness を保つ代わりに completeness を犠牲にす�
 
 ---
 
-## 設問 4: この機能はいつから議論されていたのか？
+## 設問 4: なぜ「回収」ではなく「診断」になり、実装まで 10 年以上かかった？
 
-Go 1.26 で experimental、Go 1.27 で GA というスピード感の裏に、実は 10 年前からの前史があります。それを辿ってみましょう。
+Go 1.26 で experimental、Go 1.27 で GA というスピード感の裏に、実は 10 年以上前からの前史があります。それを辿ってみましょう。
+
+[Go 1.27 リリースノート](https://go.dev/doc/go1.27) で現在の機能を確認してから、さらに前へ戻ります。2012 年、Russ Cox は [A Tour of Go](https://research.swtch.com/gotour) の質疑で「参照されなくなった channel を待つ goroutine は GC されるか」と問われています。当時の回答と、2015 年の partial deadlock proposal、現在の `goroutineleak` profile を比べてください。何が変わり、なぜ現在も goroutine を消すのではなく診断情報として残す設計なのかを説明しましょう。
 
 <details>
 <summary>ヒント</summary>
 
+- [Go 1.27 リリースノート](https://go.dev/doc/go1.27) で現在の profile を確認し、そこから [Go 1.26 リリースノート](https://go.dev/doc/go1.26) の experiment 版へ戻って proposal issue に進みます。
+- research.swtch.com の記事では「If a goroutine is stuck reading from a channel ...」という質問を探し、2012 年当時の実装についての説明と、診断時にスタックを残す理由を分けて読みます。
 - proposal issue [#74609](https://go.dev/issue/74609) のコメント欄で、開発者たちが `#13759` という別 issue に言及しています。**その issue を開いてみましょう。**
 - issue #13759 の中で、Go チームメンバーの一人が Dec 2015 に「blocked な goroutine を最初は root から外す → mark → 待っている primitive が mark されていれば root に昇格 → 反復」という **アイデア** を短いコメントで書いています。設問 2 で読んだ設計文書の 6 ステップと比べてみましょう。
 - proposal #74609 の議論で、提案者本人が「#13759 のあのコメントとほぼ同じアプローチだ」と認めている返信があります。
@@ -255,21 +260,29 @@ Go 1.26 で experimental、Go 1.27 で GA というスピード感の裏に、�
 
 **調査ルート**
 
-1. proposal [#74609](https://go.dev/issue/74609) の議論から、`randall77` が言及している [issue #13759](https://github.com/golang/go/issues/13759) を開く。
-2. issue #13759 の RLH（Rick Hudson、当時 Go GC 開発者）の Dec 30, 2015 コメントを読む。設問 2 の 6 ステップと同じアイデアを、10 年前に短いコメントで書き切っていることに気付く。
-3. issue の下の方で、rsc の Nov 22, 2016 コメントを確認する。proposal は accepted-in-principle にされたが、「we are not ourselves planning to do the work」で `Unplanned` マイルストーンに置かれた。
-4. proposal #74609 で [VladSaiocUber の Jul 16, 2025 コメント](https://github.com/golang/go/issues/74609#issuecomment-3077678435) を確認する。RLH の 2015 年コメントと自分たちの実装がほぼ同一だと明言している。
+1. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) の `Goroutine leak profile` で現在の機能を確認し、リンク先の [Go 1.26 リリースノート](https://go.dev/doc/go1.26) の experiment 版から proposal [#74609](https://go.dev/issue/74609) と設計文書へ進む。現在の機能が special GC cycle の結果を profile と traceback に出す診断機能であること、設計文書の手順 5 が報告後の leaked goroutine も mark root に戻すことを確認する。
+2. proposal #74609 の [「Collecting dead goroutines and the memory they reference」](https://github.com/golang/go/issues/74609#issuecomment-3119676873) を読む。goroutine はメモリ以外に network connection、file、C memory なども保持し得るため、メモリだけの回収は問題を先送りして診断を難しくし得る、という現在の判断を確認する。
+3. [A Tour of Go](https://research.swtch.com/gotour) の 2012 年の質疑を読む。当時は channel の送受信側を GC から区別できないという実装上の説明に加え、blocked goroutine を回収すると deadlock 時に有用な stack を表示できなくなる、という診断上の理由が述べられている。この記述は 2012 年当時の実装説明であり、現在実装の根拠には使わない。
+4. proposal #74609 の議論から、`randall77` が言及している [issue #13759](https://github.com/golang/go/issues/13759) を開く。
+5. issue #13759 の RLH（Rick Hudson、当時 Go GC 開発者）の Dec 30, 2015 コメントを読む。設問 2 の 6 ステップと同じアイデアを、10 年前に短いコメントで書き切っていることに気付く。
+6. issue の下の方で、rsc の Nov 22, 2016 コメントを確認する。proposal は accepted-in-principle にされたが、「we are not ourselves planning to do the work」で `Unplanned` マイルストーンに置かれた。
+7. proposal #74609 で [VladSaiocUber の Jul 16, 2025 コメント](https://github.com/golang/go/issues/74609#issuecomment-3077678435) を確認する。RLH の 2015 年コメントと自分たちの実装がほぼ同一だと明言している。
 
 **答え**
 
-`goroutineleak` プロファイルは 2025 年に突然生まれた機能ではなく、**2015 年から議論されていた partial deadlock 検出の、10 年越しの実装**です。
+`goroutineleak` プロファイルは 2025 年に突然生まれた機能ではありません。**少なくとも 2012 年には「回収するのか」という問いが表に現れ、2015 年から partial deadlock 検出として議論されていた、10 年以上越しの診断機能**です。
 
+- **2012-06** — research.swtch.com の講演 Q&A で、参照されない channel を待つ goroutine を GC するかが質問された。回答は「しない」で、当時の channel 表現の制約だけでなく、回収すると deadlock handler が有用な goroutine stack を失うことも理由に挙げた。これは当時の実装説明であり、現在の channel 表現についての主張ではない。
 - **2015-12** — issue [#13759](https://github.com/golang/go/issues/13759) で rfliam が「GC の mark phase を使って partial deadlock を検出できないか」という proposal を投稿。RLH が短いコメントで、**現在の設計とほぼ同じ「blocked な goroutine を最初は root から外して mark を反復する」アプローチ**を提案。
 - **2016-11** — rsc が accepted-in-principle でクローズ。「we are not ourselves planning to do the work」で `Unplanned` マイルストーンに。良いアイデアだが誰もやらない、の状態が続く。
 - **2025** — Uber の Saioc らが `10.1145/3676641.3715990` で理論と実装を発表。proposal Description によれば、Uber 社内で 3111 のテストスイートと本番サービス（24 時間で 252 件のリーク検出）で検証した実績を伴う。
 - **2025-07** — VladSaiocUber が [proposal #74609](https://go.dev/issue/74609) を上げて、設計文書と `goroutineleakprofile` GOEXPERIMENT で提供。「[#13759 の RLH のコメント](https://github.com/golang/go/issues/74609#issuecomment-3077678435) とほぼ同じアプローチだ」と自ら認めている。試作 CL は [go-review 688335](https://go.dev/cl/688335)。
 - **2026-02** — Go 1.26 で experiment としてリリース。`GOEXPERIMENT=goroutineleakprofile` でオプトイン。
 - **2026-08** — Go 1.27 で既定 ON になり GA。同時に `goroutineleakprofile` フラグは削除された（[CL 774620](https://go.dev/cl/774620) で default-on、[CL 774621](https://go.dev/cl/774621) で experiment 削除）。
+
+2012 年の回答と現在の設計には、blocked goroutine を黙って消さず、原因を調べられる状態を残すという共通点が見えます。ただし、これは歴史資料を並べた考察であり、現在「回収ではなく診断」を選んだ直接の根拠は proposal #74609 の議論にあります。goroutine は Go heap のメモリだけでなく、network connection、file、C memory なども保持し得ます。メモリだけを回収すると他の resource は残り、問題の発覚を遅らせたり、かえって原因を追いにくくしたりする可能性があるため、まず detector として提供するのが安全だと判断されました。
+
+変わったのは、GC の到達可能性を使って「絶対に起きられない」一部を false positive なしで識別し、その結果を `goroutineleak` profile として要求時に取り出せる点です。設計文書の手順 5 は、リークを報告した後、その goroutine も mark root に戻して reachable memory を mark すると定めています。つまり現在の機能も回収ではなく検出です。
 
 冒頭の「本番で goroutine 数がなだらかに増える」現象を思い出すと、10 年前の #13759 で aclements が既にこう書いていました。
 
@@ -300,8 +313,9 @@ Go でメインループを止める慣用イディオムに `select{}`（case �
 
 ## 調査の入り口
 
-- [Go 1.27 リリースノート](https://go.dev/doc/go1.27)（`Goroutine leak profile` 節。proposal・設計文書・論文へのリンクの起点）
-- [Go 1.26 リリースノート](https://go.dev/doc/go1.26)（`Experimental goroutine leak profile` 節。同じ機能の experiment 版と、リークするサンプルコード）
+- [Go 1.27 リリースノート](https://go.dev/doc/go1.27)（`Goroutine leak profile` 節。現在の定義と制約）
+- [A Tour of Go](https://research.swtch.com/gotour)（2012 年の講演 Q&A。blocked goroutine を回収しない当時の理由）
+- [Go 1.26 リリースノート](https://go.dev/doc/go1.26)（`Experimental goroutine leak profile` 節。同じ機能の experiment 版、proposal issue へのリンク、リークするサンプルコード）
 - [`runtime/pprof` パッケージドキュメント](https://pkg.go.dev/runtime/pprof)（`type Profile` docstring の予約プロファイル名一覧）
 - [`net/http/pprof` パッケージドキュメント](https://pkg.go.dev/net/http/pprof)（`/debug/pprof/goroutineleak` エンドポイントの登録）
 
