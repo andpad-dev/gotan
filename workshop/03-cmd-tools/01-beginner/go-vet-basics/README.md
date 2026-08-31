@@ -19,6 +19,8 @@ func main() {
 
 （Go Playground で動かす: https://go.dev/play/p/GOVSRd_FWPU ）
 
+同じコードを [main.go](./main.go) として、`go 1.27` の [go.mod](./go.mod) と一緒に置いてあります。このディレクトリで `go version`、`go build ./...`、`go run .`、`go vet ./...` の順に実行してください。
+
 `go build` や `go run` は普通に通り、実行結果は次のとおりです。
 
 ```
@@ -28,7 +30,7 @@ hello, %!d(string=gopher)
 ところが `go vet ./...` を走らせると、次のような指摘が出ます。
 
 ```
-./main.go:7:21: fmt.Printf format %d has arg name of wrong type string
+main.go:7:21: fmt.Printf format %d has arg name of wrong type string
 ```
 
 `go vet` はビルドやテストとは別に、いったい何を見ているのでしょうか。
@@ -40,9 +42,9 @@ hello, %!d(string=gopher)
 <details>
 <summary>ヒント</summary>
 
-- 手元で `go help vet` を打つとまとまった説明が読める
-- 同じ内容は [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) の Overview にも書かれている
-- `go` コマンド側から見た説明は [`pkg.go.dev/cmd/go`](https://pkg.go.dev/cmd/go) を `f` キーで「vet」検索
+- 手元で `go help vet` を読み、そこから案内される次のコマンドを実行してみましょう。
+- `go tool vet help` には、検査対象と誤検知の可能性がまとまっています。
+- [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) の Overview にも関連する説明があります。CLI と一字一句同じとは限らないので、それぞれの文を確認しましょう。
 
 </details>
 
@@ -52,14 +54,15 @@ hello, %!d(string=gopher)
 **調査ルート**
 
 1. [Go Documentation](https://go.dev/doc/) を入口に、`go vet` の公式ドキュメントを探す。
-2. 手元で `go help vet` を実行し、CLI 版のヘルプ全文を読む。
-3. 同じ内容を [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) の Overview で確認する。「Analyzers may use heuristics that do not guarantee all reports are genuine problems, but can find mistakes not caught by the compiler.」というくだりが今回の核心。
-4. `go` コマンド側の位置づけは [`pkg.go.dev/cmd/go` の「Report likely mistakes in packages」節](https://pkg.go.dev/cmd/go#hdr-Report_likely_mistakes_in_packages) にある（`go help vet` と同じ文面）。
+2. Go 1.27.0 で `go help vet` を実行する。`go vet` が既定の `cmd/vet` を呼ぶことと、チェッカーの説明には `go tool vet help` を使うことを確認する。
+3. `go tool vet help` を実行する。「vet is a tool for static analysis of Go programs.」に続き、アナライザはヒューリスティックを使うため全報告が本物の問題とは限らない一方、コンパイラが見つけない誤りを発見できると説明されている。
+4. [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) の Overview も読む。こちらは「Vet uses heuristics ...」という別の文面で、同じ性質を説明している。
+5. `go` コマンド内での位置づけは [`pkg.go.dev/cmd/go` の「Report likely mistakes in packages」節](https://pkg.go.dev/cmd/go#hdr-Report_likely_mistakes_in_packages) で確認する。CLI とWebの文面を同一視せず、役割と実装ツールの関係を照合する。
 
 **答え**
 
-- `go vet` は **Go プログラムの静的解析ツール**で、「怪しい構文（suspicious constructs）」や「改善の余地がある箇所（opportunities for improvement）」を報告する。
-- 特徴は「**コンパイラでは検出できない間違い**をヒューリスティックで見つける」こと。裏を返せば、`go vet` の指摘は必ずしも真のバグとは限らないため、報告を読んで判断する前提のツール。
+- `go vet` は既定で静的解析ツール `cmd/vet` を実行し、怪しい構文（suspicious constructs）や改善候補（opportunities for improvement）の診断を報告する。
+- アナライザは **コンパイラでは検出できない間違い**をヒューリスティックで見つける。`go tool vet help` が明記するとおり、すべての報告が本物の問題である保証はないため、根拠を読んで判断する。
 - 冒頭で試した `fmt.Printf("hello, %d\n", name)` は、書式（`%d`）と引数の型（`string`）が食い違っており、コンパイルは通るが実行時に `%!d(string=gopher)` という壊れた出力になる。この種の「型システムをすり抜ける論理エラー」を捕まえるのが `go vet` の代表的な仕事。
 
 </details>
@@ -73,9 +76,10 @@ hello, %!d(string=gopher)
 <details>
 <summary>ヒント</summary>
 
-- [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) の Overview の下に、登録済みアナライザの一覧表がある
-- 手元で `go tool vet help` を打つと同じ一覧が、`go tool vet help printf` を打つと個別アナライザの詳細が読める
-- `printf` チェッカーの本体は Go 本体ではなく [`golang.org/x/tools`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf) にある
+- 手元で `go tool vet help` を実行すると、`Registered analyzers:` の直後に現在のツールチェーンの一覧が出る
+- [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) にもアナライザ一覧はあるが、`Registered analyzers` という見出しではない
+- `go tool vet help printf` を実行すると個別アナライザの詳細が読める
+- `printf` アナライザの公式パッケージ文書は [`golang.org/x/tools`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf) で読める
 
 </details>
 
@@ -85,13 +89,14 @@ hello, %!d(string=gopher)
 **調査ルート**
 
 1. [Go Documentation](https://go.dev/doc/) を入口に、`vet` の公式ドキュメントを探す。
-2. [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) の Overview を下にスクロールし、Registered analyzers の一覧表を読む（`appends`、`printf`、`slog`、`stdversion`、`waitgroup` など約 30 個）。
-3. 手元で `go tool vet help` を実行して同じ一覧を確認する。`go tool vet help printf` のようにアナライザ名を続けると、そのアナライザ専用のドキュメントとフラグが表示される。
-4. `printf` アナライザの実装ドキュメントは [`pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf) にある。`fmt.Printf` / `fmt.Sprintf` などの書式文字列と引数の整合性を検査する、ということが仕様レベルで書かれている。
+2. `go tool vet help` を実行し、`Registered analyzers:` の一覧を読む。Go 1.27.0 では 35 個だが、数や名前は版によって変わるので自分の出力を記録する。
+3. [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) の Overview にある「To list the available checks...」以降も読む。CLI と同じ見出しではないため、一覧を探す操作を混同しない。
+4. `go tool vet help printf` を実行し、そのアナライザ専用のドキュメントとフラグを確認する。
+5. `printf` アナライザのパッケージ文書は [`pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf) にある。`fmt.Printf` / `fmt.Sprintf` などの書式文字列と引数の整合性を検査すると説明されている。
 
 **答え**
 
-- `go vet` は単一のチェッカーではなく、**個別のアナライザの集合体**。`pkg.go.dev/cmd/vet` と `go tool vet help` の Registered analyzers 一覧が公式カタログ。
+- `go vet` は単一のチェッカーではなく、**個別のアナライザの集合体**。実行中の版で正確な一覧を得るには、`go tool vet help` の `Registered analyzers:` を確認する。
 - 各アナライザは [`golang.org/x/tools/go/analysis`](https://pkg.go.dev/golang.org/x/tools/go/analysis) フレームワーク上で書かれた独立したモジュールで、実装や詳細ドキュメントはたいてい `passes/<アナライザ名>` パッケージにある。
 - 今回の指摘を出したのは `printf` アナライザ。カバー範囲や、追加で検査させたい関数名を指定する `-printf.funcs` フラグの詳細は、`go tool vet help printf` と `pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf` の両方に載っている。
 
@@ -122,6 +127,7 @@ hello, %!d(string=gopher)
 
 ## 調査の入り口
 
+- https://go.dev/doc/
 - https://pkg.go.dev/cmd/vet
 - https://pkg.go.dev/cmd/go#hdr-Report_likely_mistakes_in_packages
 - https://pkg.go.dev/cmd/go#hdr-Test_packages
