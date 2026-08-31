@@ -6,7 +6,7 @@
 
 「HTTP リクエスト終了後も監査ログの書き込みを一定時間だけ続ける」ことをやりたいです。どういうふうにやればいいか調べよう。
 
-[Go Playground で実行](https://go.dev/play/p/02PmNtj9kUO) し、親を取り消した後のエラーとリクエスト ID を観測してください。
+[Go Playground で実行](https://go.dev/play/p/KMPAVezHNXF) し、親を取り消した後のエラー、リクエスト ID、期限と `Done`、監査ログ用の独自タイムアウトを観測してください。
 
 ```go
 package main
@@ -14,6 +14,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 type requestIDKey struct{}
@@ -25,18 +26,29 @@ func main() {
 	detached := context.WithoutCancel(parent)
 	cancel()
 
+	_, hasDeadline := detached.Deadline()
 	fmt.Println("parent:", parent.Err())
 	fmt.Println("detached:", detached.Err())
 	fmt.Println("request ID:", detached.Value(requestIDKey{}))
+	fmt.Println("detached has deadline:", hasDeadline)
+	fmt.Println("detached Done is nil:", detached.Done() == nil)
+
+	auditCtx, stop := context.WithTimeout(detached, 10*time.Millisecond)
+	defer stop()
+	<-auditCtx.Done()
+	fmt.Println("audit:", auditCtx.Err())
 }
 ```
 
-Go 1.26.4 での実行結果です。
+Go 1.27.0 での実行結果です。
 
 ```text
 parent: context canceled
 detached: <nil>
 request ID: req-42
+detached has deadline: false
+detached Done is nil: true
+audit: context deadline exceeded
 ```
 
 ---
@@ -59,7 +71,7 @@ request ID: req-42
 
 1. [Go 1.21 リリースノートの context](https://go.dev/doc/go1.21#context) を開き、親のキャンセルを伝播しない派生コンテキストが追加されたことを確認する。
 2. リリースノートから [context の `WithoutCancel`](https://pkg.go.dev/context#WithoutCancel) を開き、`Deadline`、`Done`、`Err` の規則を読む。
-3. 固定版の [context 実装](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/context/context.go;l=592) で、各メソッドと `Value` の実装を確認する。
+3. [Go 1.27.0 の `WithoutCancel` と各メソッド](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/context/context.go;l=582-615) を開き、宣言、`Deadline`、`Done`、`Err`、`Value` の順に実装を確認する。
 
 **答え**
 
@@ -88,7 +100,7 @@ request ID: req-42
 1. [Go 言語仕様の Select statements](https://go.dev/ref/spec#Select_statements) で、`nil` チャネルの通信は選択されないことを確認する。
 2. [context の `WithoutCancel`](https://pkg.go.dev/context#WithoutCancel) で `Done` が `nil` であることを再確認する。
 3. 同じパッケージの [context の `WithTimeout`](https://pkg.go.dev/context#WithTimeout) を開き、期限と `CancelFunc` の規則を確認する。
-4. 固定版の [context 実装](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/context/context.go;l=592) と照合する。
+4. [Go 1.27.0 の `WithoutCancel`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/context/context.go;l=582-615) と [`WithTimeout`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/context/context.go;l=696-709) の実装を開き、切り離した親から新しい期限付きコンテキストを作る流れを照合する。
 
 **答え**
 
@@ -116,11 +128,11 @@ request ID: req-42
 
 1. [Go 1.21 リリースノートの context](https://go.dev/doc/go1.21#context) から、親のキャンセルを伝播しないという目的を確認する。
 2. [context の `WithoutCancel`](https://pkg.go.dev/context#WithoutCancel) と [context の `WithTimeout`](https://pkg.go.dev/context#WithTimeout) を順に読み、値の伝播と独自の期限を照合する。
-3. [実行例](https://go.dev/play/p/02PmNtj9kUO) を基準に、親のキャンセル後も値を読める状態を再現する。
+3. [実行例](https://go.dev/play/p/KMPAVezHNXF) を基準に、親のキャンセル後も値を読めることと、独自の期限では `context deadline exceeded` になることを再現する。
 
 **答え**
 
-一つ目は、親を取り消した後も監査ログの処理がリクエスト ID を取得でき、ただちに `context canceled` にならないことです。これは冒頭の `detached: <nil>` と `request ID: req-42` を再現する観測です。二つ目は、ログ保存先が応答しない場合でも、監査ログ用に作った独自の期限で処理が終わることです。
+一つ目は、親を取り消した後も監査ログの処理がリクエスト ID を取得でき、ただちに `context canceled` にならないことです。これは冒頭の `detached: <nil>` と `request ID: req-42` を再現する観測です。二つ目は、ログ保存先が応答しない場合でも、監査ログ用に作った独自の期限で処理が終わり、`context deadline exceeded` になることです。
 
 この二つを分けて検証すれば、単にバックグラウンド化しただけではなく、冒頭の「クライアント切断で記録が止まる」問題を解消しながら、設問 2 で見つけた `Done` が `nil` という性質による無期限待ちも防げていると説明できます。
 
