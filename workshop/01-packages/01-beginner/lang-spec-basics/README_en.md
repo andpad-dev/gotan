@@ -1,20 +1,40 @@
 [Workshop guide and scenario index](../../../README.md) | [How to research 01-packages](../../README.md)
 
-# Investigate `for` syntax in the specification
+# Investigate Go `for` and `switch` statements in the specification
 
-You are coding in Go again after a very long break.
-You come across a `for` statement. Let’s investigate what it does.
+You are maintaining Go code again after a long break and encounter `for` and `switch` statements during review. Instead of relying on half-remembered syntax from another language, start from observed output and find the corresponding rules in the Go language specification.
 
-You have also forgotten some details of the language specification, so let’s read the Go language specification.
+---
 
 ## Question 1: `for` statements
 
-A counter variable is straightforward, but there was probably syntax like `in`. How is this written in Go?
+How does Go express iteration like `for value in values` in other languages? Observe how the following code prints each element of the `values` slice, then investigate the two values produced by `range` and the role of `_`.
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	values := []string{"a", "b"}
+	for _, value := range values {
+		fmt.Println(value)
+	}
+}
+```
+
+[Run it in the Go Playground](https://go.dev/play/p/bJ7XfrbuNHo).
+
+```text
+a
+b
+```
 
 <details>
 <summary>Hint</summary>
 
-- First prepare `values := []string{"a", "b"}` and try `for value in values` and `for _, value := range values`. Compare the one that produces an error with the one that works, then open “For statements” in the specification.
+- Try both `for value in values` and `for _, value := range values`, and compare the syntax error with the working form.
+- After opening “For statements” in the table of contents, continue past the parent grammar to “For statements with range clause.”
 
 </details>
 
@@ -23,19 +43,19 @@ A counter variable is straightforward, but there was probably syntax like `in`. 
 
 **Investigation path**
 
-1. Open https://go.dev/ref/spec and select “For statements” from the table of contents.
-2. Check the syntax of `for` statements.
+1. Run the [shared Go Playground code](https://go.dev/play/p/bJ7XfrbuNHo) and observe the slice elements being printed in order.
+2. Open the [Go language specification](https://go.dev/ref/spec), select “For statements,” and identify the three `ForStmt` forms.
+3. Continue to [For statements with range clause](https://go.dev/ref/spec#For_range), then check the `RangeClause` syntax and the first and second iteration values for a slice.
 
 **Answer**
 
-- `for` statements have the following three forms.
-- There is no syntax like `in`, but there is a form using the `range` keyword, which serves a similar purpose.
+A `for` statement can contain only a condition, an initializer/condition/post clause, or a `range` clause. Go has no `for value in values` syntax; collection iteration uses `range`.
 
 ```
 ForStmt = "for" [ Condition | ForClause | RangeClause ] Block .
 ```
 
-[do it](https://go.dev/play/p/WCZlhaPrgG_p)
+For a slice, the first `range` value is the index and the second is the element. The opening `for _, value := range values` discards the unused index with the blank identifier `_` and receives only the element in `value`.
 
 </details>
 
@@ -43,12 +63,35 @@ ForStmt = "for" [ Condition | ForClause | RangeClause ] Block .
 
 ## Question 2: `switch` statements
 
-Unlike C’s `switch`, Go’s `switch` does not require `break`. How can you make the next case execute after one case matches, as it does in C?
+Unlike C’s `switch`, Go’s `switch` does not require `break`. In the following code, `x == 1` prints only `one`. How can you continue into the next case body?
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	x := 1
+	switch x {
+	case 1:
+		fmt.Println("one")
+	case 2:
+		fmt.Println("two")
+	}
+}
+```
+
+[Run it in the Go Playground](https://go.dev/play/p/FhO9_Qu5-ca).
+
+```text
+one
+```
 
 <details>
 <summary>Hint</summary>
 
-- Set `x := 1` and create a short switch that prints `one` for `case 1` and `two` for `case 2`. If you want `two` to print when `x` is 1, find the required syntax in the specification.
+- After observing that `x == 1` prints only `one`, continue from “Switch statements” to its “Expression switches” subsection.
+- Check whether the next case expression is evaluated again or control transfers unconditionally.
 
 </details>
 
@@ -57,24 +100,37 @@ Unlike C’s `switch`, Go’s `switch` does not require `break`. How can you mak
 
 **Investigation path**
 
-1. Open https://go.dev/ref/spec and select “Switch statements” from the table of contents.
-2. Check the explanation of the `fallthrough` keyword.
+1. Run the [shared Go Playground code](https://go.dev/play/p/FhO9_Qu5-ca) and observe that `x == 1` prints only `one`.
+2. Open the [Go language specification](https://go.dev/ref/spec) and select “Switch statements.”
+3. In [Expression switches](https://go.dev/ref/spec#Expression_switches), check the implicit break and `fallthrough` rules.
 
 **Answer**
 
-- The `fallthrough` keyword makes the next case execute after a case matches, as in a C `switch` statement.
+Placing `fallthrough` as the final statement of `case 1` transfers control to the first statement of the next case without evaluating that case expression.
 
 ```go
-switch x {
-case 1:
-    fmt.Println("one")
-    fallthrough
-case 2:
-    fmt.Println("two")
+package main
+
+import "fmt"
+
+func main() {
+	x := 1
+	switch x {
+	case 1:
+		fmt.Println("one")
+		fallthrough
+	case 2:
+		fmt.Println("two")
+	}
 }
 ```
 
-[just do it](https://go.dev/play/p/HumLQAbZ-eQ)
+[Run it in the Go Playground](https://go.dev/play/p/fOZxxOIZNDA). Both case bodies now execute:
+
+```text
+one
+two
+```
 
 
 </details>
@@ -82,9 +138,9 @@ case 2:
 ---
 
 <details>
-<summary>Trivia: </summary>
+<summary>Trivia: Staying oriented in the specification</summary>
 
-The [Go language specification](https://go.dev/ref/spec) is unusually short for a programming language specification and is notable for fitting into a single HTML page. While C++ and Java specifications resemble thick dictionaries, Go’s specification was designed with the intention that it could be read through in a single afternoon.
+The [Go language specification](https://go.dev/ref/spec) contains its table of contents and sections in one HTML page. A parent section may contain only the grammar while detailed rules live in subsections. Sharing the exact section link—`#For_range` for this `range` example or `#Expression_switches` for the switch—lets every team member open the same evidence.
 
 </details>
 
@@ -92,4 +148,6 @@ The [Go language specification](https://go.dev/ref/spec) is unusually short for 
 
 ## Starting points for investigation
 
-- https://go.dev/ref/spec
+- [Go Documentation](https://go.dev/doc/)
+- [How to research 01-packages](../../README.md)
+- [Go language specification](https://go.dev/ref/spec)
