@@ -1,3 +1,5 @@
+[Workshop guide and scenario index](../../../README.md) | [How to research 02-features](../../README.md)
+
 # Add a Generic Method Helper to a Named Type
 
 You want to add a generic method to a named type. Let's investigate how to do that.
