@@ -17,6 +17,11 @@ QUESTION_RE = re.compile(r"(?m)^## 設問\s+(\d+)(?::|：|\s)")
 URL_RE = re.compile(r"https?://[^\s<>\]})]+")
 DETAIL_RE = re.compile(r"<details\b[^>]*>(.*?)</details>", re.IGNORECASE | re.DOTALL)
 FENCE_RE = re.compile(r"^\s*(?:>\s*)?(```|~~~)")
+LOCAL_PACKAGE_COMMAND_RE = re.compile(
+    r"`go\s+(?:run|build|test|vet)\b[^`\n]*(?:\./\.\.\.|(?<!\S)\.)(?:\s[^`\n]*)?`"
+)
+
+
 def emit(level: str, message: str, line: int | None = None) -> bool:
     location = f"line {line}: " if line is not None else ""
     print(f"{level}\t{location}{message}")
@@ -154,6 +159,18 @@ def main() -> int:
         emit("WARN", "Go code block exists without a Go Playground link; verify whether it is runnable")
     elif re.search(r"```go\b", text):
         emit("WARN", "Go code blocks found; compare each block with its individual Playground link")
+
+    local_commands = sorted({match.group(0).strip("`") for match in LOCAL_PACKAGE_COMMAND_RE.finditer(text)})
+    if local_commands:
+        go_files = sorted(path.parent.glob("*.go"))
+        if go_files:
+            emit("PASS", f"local package commands have {len(go_files)} sibling .go file(s)")
+        else:
+            emit(
+                "WARN",
+                "local package command is shown but the scenario directory has no .go files; "
+                "verify complete save/setup steps: " + ", ".join(local_commands),
+            )
 
     if "<summary>ヒント</summary>" in text or "### ヒント" in text:
         emit("WARN", "hint leakage still requires manual comparison against the answer")
