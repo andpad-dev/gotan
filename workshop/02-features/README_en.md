@@ -1,4 +1,4 @@
-[Back to Workshop](../README.md)
+[Scenario index (Japanese)](../SCENARIOS.md) | [Workshop guide (Japanese)](../README.md) | [Team guide (Japanese)](../TEAM_GUIDE.md)
 
 # How to Investigate 02-features (Reverse Lookup Guide)
 

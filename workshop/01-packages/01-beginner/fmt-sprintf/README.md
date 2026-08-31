@@ -1,4 +1,4 @@
-[進行ガイド・シナリオ一覧](../../../README.md) | [01-packages の調べ方](../../README.md)
+[シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [01-packages の調べ方](../../README.md)
 
 # fmt.Sprintf で文字列を組み立てよう
 

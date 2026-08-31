@@ -1,4 +1,4 @@
-[Workshop guide and scenario index](../../../README.md) | [How to research 02-features](../../README.md)
+[Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 02-features](../../README.md)
 
 # Read constant declarations using iota
 

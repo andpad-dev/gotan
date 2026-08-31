@@ -1,4 +1,4 @@
-[進行ガイド・シナリオ一覧](../../../README.md) | [02-features の調べ方](../../README.md)
+[シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [02-features の調べ方](../../README.md)
 
 # Go 1.27 の `goroutineleak` プロファイルは、なぜ「絶対に起きない goroutine」だけを教えてくれるのか
 

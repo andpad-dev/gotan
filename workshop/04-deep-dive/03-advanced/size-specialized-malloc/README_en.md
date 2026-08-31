@@ -1,4 +1,4 @@
-[Workshop guide and scenario index](../../../README.md) | [How to research 04-deep-dive](../../README.md)
+[Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 04-deep-dive](../../README.md)
 
 # Why Does Go 1.27's Faster Memory Allocation Stop at 80 Bytes?
 

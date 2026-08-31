@@ -1,3 +1,7 @@
+[Scenario index (Japanese)](../SCENARIOS.md) | [Workshop guide (Japanese)](../README.md) | [Team guide (Japanese)](../TEAM_GUIDE.md)
+
+[Scenario index (Japanese)](../SCENARIOS.md) | [Workshop guide (Japanese)](../README.md) | [Team guide (Japanese)](../TEAM_GUIDE.md)
+
 # How to Explore 03-cmd-tools (Reverse Search Guide)
 
 In this category, we investigate what the `go` command and its subcommands and tools (`go build`, `go run`, `go test`, `go vet`, `go generate`, `go doc`, `go tool trace`, `go tool pprof`, etc.) actually do by consulting official documentation and the cmd/go source code. When you get stuck, come back here first.

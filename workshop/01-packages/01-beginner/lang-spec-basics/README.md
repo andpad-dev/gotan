@@ -1,4 +1,4 @@
-[進行ガイド・シナリオ一覧](../../../README.md) | [01-packages の調べ方](../../README.md)
+[シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [01-packages の調べ方](../../README.md)
 
 # Go の for 文と switch 文を仕様書で調べよう
 

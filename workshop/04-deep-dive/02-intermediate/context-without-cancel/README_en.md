@@ -1,4 +1,4 @@
-[Workshop guide and scenario index](../../../README.md) | [How to research 04-deep-dive](../../README.md)
+[Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 04-deep-dive](../../README.md)
 
 # Intermediate: Preserve Audit Logs with a Deadline Using context.WithoutCancel
 

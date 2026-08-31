@@ -1,3 +1,7 @@
+[Scenario index (Japanese)](../SCENARIOS.md) | [Workshop guide (Japanese)](../README.md) | [Team guide (Japanese)](../TEAM_GUIDE.md)
+
+[Scenario index (Japanese)](../SCENARIOS.md) | [Workshop guide (Japanese)](../README.md) | [Team guide (Japanese)](../TEAM_GUIDE.md)
+
 # How to Explore 04-deep-dive (Reverse Search Guide)
 
 This category investigates Go language rules, standard-library implementations, and design history by following primary sources. Do not open an individual answer first: begin with the shared entry point, describe the observed phenomenon, and trace each claim to evidence.
