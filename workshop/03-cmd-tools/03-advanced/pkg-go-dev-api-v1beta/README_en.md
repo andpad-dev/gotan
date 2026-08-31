@@ -4,7 +4,7 @@
 
 Our team must choose an HTTP router library. We want to compare and sort candidates by import count and maintenance status, but the pkg.go.dev browser UI has no such feature.
 
-We considered scraping, but the **pkg.go.dev API**, released in beta in [June 2026](https://opensource.googleblog.com/2026/06/a-new-pkggodev-api-for-go.html), provides structured JSON directly. The initial documentation used `/v1beta`, while the current API starts at `/v1`. The old path returns a 301 redirect, but a search query can lose its query string and end at `missing query`, so the experiments use `/v1` directly.
+We considered scraping, but the **pkg.go.dev API**, released in beta in [June 2026](https://opensource.googleblog.com/2026/06/a-new-pkggodev-api-for-go.html), provides structured JSON directly.
 
 ## Question 1: How do I sort and filter search results?
 
