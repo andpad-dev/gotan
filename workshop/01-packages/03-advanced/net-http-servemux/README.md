@@ -1,10 +1,12 @@
+[シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [01-packages の調べ方](../../README.md)
+
 # http.ServeMux のルーティング規約を解読せよ
 
 管理画面向け API は `/reports/latest` と `/reports/{id}` を同じ `ServeMux` に登録しました。登録順に頼らず、より具体的なルートが選ばれ、誤ったメソッドには 405 を返します。なんでこうなってるの？背景を調べよう。
 
 次のコードを [Go Playground で動かす](https://go.dev/play/p/fbR5kWMHL2Z) と、リテラルな `latest`、ワイルドカード、メソッド不一致の振る舞いを観測できます。
 
-このシナリオには、Go 1.22 以降のルーティング規則を有効にする `go.mod` を同梱しています。ローカルで試すときは、このディレクトリでコードを実行してください。実行前に `go version`、`go env GOMOD`、`go env GODEBUG` も確認しましょう。
+このシナリオには、Go 1.22 以降のルーティング規則を有効にする `go.mod` と、上のコードを保存した `main.go` を同梱しています。ローカルではこのディレクトリで `go run .` を実行してください。実行前に `go version`、`go env GOMOD`、`go env GODEBUG` も確認しましょう。
 
 ```go
 package main
@@ -65,7 +67,8 @@ POST /reports/2026-08 -> 405
 
 1. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) の enhanced routing patterns を読む。
 2. [http.ServeMux](https://pkg.go.dev/net/http#ServeMux) の Patterns と Precedence を読む。
-3. [routing_tree.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/net/http/routing_tree.go;l=12) の探索順を確認する。
+3. [Go 1.27.0 の `routing_tree.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/routing_tree.go;l=154-198) で、リテラル、単一ワイルドカード、複数ワイルドカードの順に探索する処理を確認する。
+4. [Go 1.27.0 の `findHandler`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/server.go;l=2751-2764) で、パスに一致する別メソッドがあれば 404 ではなく 405 と `Allow` ヘッダーを返す処理を確認する。
 
 **答え**
 
@@ -120,7 +123,7 @@ func main() {
 2. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) の enhanced routing patterns を読み直し、重なるパターンの扱いを確認する。
 3. [http.ServeMux](https://pkg.go.dev/net/http#ServeMux) の Precedence と conflict の説明を読む。
 4. [Go, Backwards Compatibility, and GODEBUG](https://go.dev/doc/godebug) の `httpmuxgo121` を確認する。
-5. 「neither is more specific」の規則を確認し、[Go 1.27.0 の pattern.go にある `conflictsWith`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/pattern.go;l=219) を読む。
+5. 「neither is more specific」の規則を確認し、[Go 1.27.0 の pattern.go にある `conflictsWith`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/pattern.go;l=219-240) を読む。
 
 **答え**
 
@@ -153,7 +156,7 @@ Go 1.21 では `{id}` を含むパターンは特別なワイルドカードで�
 
 1. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) の互換性に関する段落を読む。
 2. [Go, Backwards Compatibility, and GODEBUG](https://go.dev/doc/godebug) の `httpmuxgo121` の説明を読む。
-3. [servemux121.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/net/http/servemux121.go;l=25) を読む。
+3. [Go 1.27.0 の `servemux121.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/servemux121.go;l=25-38) を読み、`httpmuxgo121=1` を起動時に一度だけ判定することを確認する。
 
 **答え**
 
@@ -185,7 +188,7 @@ Go 1.22 から、メソッド付きパターンと `{name}` / `{name...}` のワ
 1. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) の enhanced routing patterns を読み直す。
 2. [ServeMux 拡張の提案 Issue #61410](https://github.com/golang/go/issues/61410) の Precedence、Backwards Compatibility、Performance を読む。
 3. [Go Blog: Routing Enhancements for Go 1.22](https://go.dev/blog/routing-enhancements) を読む。
-4. [routing_tree.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/net/http/routing_tree.go;l=169) と [pattern.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/net/http/pattern.go;l=223) を読む。
+4. [Go 1.27.0 の `routing_tree.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/routing_tree.go;l=168-198) と [`pattern.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/pattern.go;l=219-240) を読み、具体的なパターンから探索する処理と登録時の衝突判定を対応付ける。
 
 **答え**
 
@@ -200,7 +203,7 @@ Go 1.22 から、メソッド付きパターンと `{name}` / `{name...}` のワ
 <details>
 <summary>こぼれ話</summary>
 
-`GET` パターンは `HEAD` にも一致します。`GET /` のような広いパターンを登録すると、別メソッドで一致しないリクエストもそちらへ届くため、405 の期待と合わせてルート全体をテストしましょう。
+[`GET` パターンは `HEAD` にも一致します](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/pattern.go;l=253-279)が、POST など他のメソッドには一致しません。`GET /` だけを登録した場合、`POST /anything` はそのハンドラーへ届かず、[`Allow: GET, HEAD` を伴う 405](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/server.go;l=2751-2764) になります。すべてのメソッドを同じハンドラーへ届けたい場合は、メソッドを省略した `/` を登録します。`GET` とメソッド省略を混同せず、405 と `Allow` ヘッダーも含めてルート全体をテストしましょう。
 
 </details>
 

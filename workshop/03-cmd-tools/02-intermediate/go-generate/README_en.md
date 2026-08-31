@@ -1,4 +1,4 @@
-[Back to the 03-cmd-tools research guide](../../README.md)
+[Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 03-cmd-tools](../../README.md)
 
 # Investigate What `go generate` Can Do and What It Should Do
 

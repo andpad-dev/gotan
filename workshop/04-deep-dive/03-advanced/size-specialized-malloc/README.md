@@ -1,3 +1,5 @@
+[シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [04-deep-dive の調べ方](../../README.md)
+
 # Go 1.27 の Faster Memory Allocation は、なんで 80 バイト以下だけなの？
 
 Go 1.27 のリリースノートを読んでいたら、「Faster Memory Allocation」という項目に、こう書いてありました。
@@ -6,6 +8,8 @@ Go 1.27 のリリースノートを読んでいたら、「Faster Memory Allocat
 
 小さいメモリ割り当てが速くなるのは嬉しい。でも、**なんで「80 バイト以下」に限定されている**のでしょう？
 128 バイトでも 256 バイトでも速くしてくれたらいいのに、と思いませんか。この `80` という数字がどこから来て、なぜそこで線を引いたのか、背景を調べてみましょう。
+
+リリースノートの要約は `<80 byte` と書いていますが、Go 1.27.0 の実装は `size > 80` を対象外にするため、**ちょうど 80 バイトの割り当ても対象**です。この問題では実装に合わせて「80 バイト以下」と表記します。
 
 対象になるのは、たとえば次のような「サイズがコンパイル時に確定している小さな割り当て」です。
 
@@ -16,6 +20,12 @@ p := new(Point) // サイズが分かっているので size-specialized の対�
 ```
 
 （Go Playground で動かす: https://go.dev/play/p/YnvY6u0c87E ）
+
+Go 1.27.0 での出力:
+
+```text
+{1 2}, size=16 bytes
+```
 
 ---
 
@@ -40,8 +50,8 @@ p := new(Point) // サイズが分かっているので size-specialized の対�
 
 1. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) の「Faster Memory Allocation」を読む。
 2. `cmd/compile` の変更 CL [cmd/compile: call generated size-specialized malloc functions directly](https://go-review.googlesource.com/c/go/+/707856) を読む。
-3. コンパイラ側の実装 [`cmd/compile/internal/ssagen/ssa.go` の `specializedMallocSym`](https://github.com/golang/go/blob/release-branch.go1.27/src/cmd/compile/internal/ssagen/ssa.go#L805) を読む。
-4. 呼び出し先の実体を生成している [`runtime/_mkmalloc/mkmalloc.go`](https://github.com/golang/go/blob/release-branch.go1.27/src/runtime/_mkmalloc/mkmalloc.go) を確認する。
+3. コンパイラ側の実装 [`cmd/compile/internal/ssagen/ssa.go` の `specializedMallocSym`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/compile/internal/ssagen/ssa.go;l=804) を読む。
+4. 呼び出し先の実体を生成している [`runtime/_mkmalloc/mkmalloc.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/_mkmalloc/mkmalloc.go) を確認する。
 
 **答え**
 
@@ -79,7 +89,8 @@ Go 1.27 のコンパイラは、**割り当てサイズがコンパイル時に�
 
 **調査ルート**
 
-1. コンパイラ側 [`ssa.go` の `specializedMallocSym`](https://github.com/golang/go/blob/release-branch.go1.27/src/cmd/compile/internal/ssagen/ssa.go#L808) で、上限を決めている定数を見つける。
+1. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) の `<80 byte` という要約を確認し、実装では境界がどう判定されるかを調べる問いを立てる。
+2. コンパイラ側 [`ssa.go` の `specializedMallocSym`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/compile/internal/ssagen/ssa.go;l=804) で、上限を決めている定数と `size > specializedMallocMax` の条件を見つける。
 
    ```go
    const specializedMallocMax = 80 // This must match the constant in mkmalloc.
@@ -88,7 +99,7 @@ Go 1.27 のコンパイラは、**割り当てサイズがコンパイル時に�
    }
    ```
 
-2. コメントの指示どおり、ランタイム側の同名定数 [`runtime/_mkmalloc/constants.go` の `specializedMallocMax`](https://github.com/golang/go/blob/release-branch.go1.27/src/runtime/_mkmalloc/constants.go#L30) を読む。ここに **理由そのもの** が書かれている。
+3. コメントの指示どおり、ランタイム側の同名定数 [`runtime/_mkmalloc/constants.go` の `specializedMallocMax`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/_mkmalloc/constants.go;l=25) を読む。ここに **理由そのもの** が書かれている。
 
 **答え**
 
@@ -165,7 +176,5 @@ Go 1.27 のコンパイラは、**割り当てサイズがコンパイル時に�
 
 - [Go 1.27 リリースノート「Faster Memory Allocation」](https://go.dev/doc/go1.27)
 - CL: [cmd/compile: call generated size-specialized malloc functions directly](https://go-review.googlesource.com/c/go/+/707856)
-- ソース: [`runtime/_mkmalloc/constants.go`（`specializedMallocMax = 80` の理由コメント）](https://github.com/golang/go/blob/release-branch.go1.27/src/runtime/_mkmalloc/constants.go#L25)
-- ソース: [`cmd/compile/internal/ssagen/ssa.go`（`specializedMallocSym`）](https://github.com/golang/go/blob/release-branch.go1.27/src/cmd/compile/internal/ssagen/ssa.go#L805)
-
-> ※ Go 1.27 はまだ正式タグ（`refs/tags/go1.27`）が切られていないため、ソースは `release-branch.go1.27` を参照しています。
+- ソース: [`runtime/_mkmalloc/constants.go`（`specializedMallocMax = 80` の理由コメント）](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/_mkmalloc/constants.go;l=25)
+- ソース: [`cmd/compile/internal/ssagen/ssa.go`（`specializedMallocSym`）](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/compile/internal/ssagen/ssa.go;l=804)

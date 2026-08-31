@@ -1,3 +1,5 @@
+[Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 03-cmd-tools](../../README.md)
+
 # Investigate what `go vet` checks
 
 You noticed that a senior colleague added `go vet ./...` to a CI job in a pull request. Let’s investigate what it does.

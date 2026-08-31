@@ -17,6 +17,12 @@ QUESTION_RE = re.compile(r"(?m)^## 設問\s+(\d+)(?::|：|\s)")
 URL_RE = re.compile(r"https?://[^\s<>\]})]+")
 DETAIL_RE = re.compile(r"<details\b[^>]*>(.*?)</details>", re.IGNORECASE | re.DOTALL)
 FENCE_RE = re.compile(r"^\s*(?:>\s*)?(```|~~~)")
+MARKDOWN_LINK_RE = re.compile(r"(?<!!)\[[^\]]*\]\(\s*<?([^\s>)]*)>?")
+LOCAL_PACKAGE_COMMAND_RE = re.compile(
+    r"`go\s+(?:run|build|test|vet)\b[^`\n]*(?:\./\.\.\.|(?<!\S)\.)(?:\s[^`\n]*)?`"
+)
+
+
 def emit(level: str, message: str, line: int | None = None) -> bool:
     location = f"line {line}: " if line is not None else ""
     print(f"{level}\t{location}{message}")
@@ -51,6 +57,19 @@ def first_route_url(block: str) -> str | None:
 def first_url(text: str) -> str | None:
     match = URL_RE.search(text)
     return match.group(0).rstrip(".,;:!?。 、」』）)]}\"'`") if match else None
+
+
+def local_markdown_targets(source: Path, text: str) -> set[Path]:
+    targets: set[Path] = set()
+    for match in MARKDOWN_LINK_RE.finditer(text):
+        parsed = urllib.parse.urlsplit(match.group(1))
+        if parsed.scheme or parsed.netloc or not parsed.path:
+            continue
+        target = (source.parent / urllib.parse.unquote(parsed.path)).resolve()
+        if target.is_dir() or parsed.path.endswith("/"):
+            target /= "README.md"
+        targets.add(target)
+    return targets
 
 
 def contains_markdown_heading(content: str) -> bool:
@@ -99,8 +118,38 @@ def main() -> int:
             failures += emit("FAIL", "category README lacks a usable reverse-search procedure")
 
     text = path.read_text(encoding="utf-8")
-    if not re.search(r"(?m)^#\s+\S", text):
+    title_match = re.search(r"(?m)^#\s+\S", text)
+    if not title_match:
         failures += emit("FAIL", "scenario title heading is missing")
+    else:
+        top_targets = local_markdown_targets(path, text[:title_match.start()])
+        workshop_dir = path.parents[3]
+        workshop_readme = workshop_dir / "README.md"
+        scenario_index = workshop_dir / "SCENARIOS.md"
+        if workshop_readme.resolve() not in top_targets:
+            failures += emit("FAIL", "link to workshop/README.md must appear before the scenario title")
+        else:
+            emit("PASS", "top navigation links to workshop/README.md")
+        if scenario_index.resolve() not in top_targets:
+            failures += emit("FAIL", "link to workshop/SCENARIOS.md must appear before the scenario title")
+        else:
+            emit("PASS", "top navigation links to workshop/SCENARIOS.md")
+        if category_readme.resolve() not in top_targets:
+            failures += emit("FAIL", "link to the category README must appear before the scenario title")
+        else:
+            emit("PASS", "top navigation links to the category README")
+
+        if not scenario_index.is_file():
+            failures += emit("FAIL", f"scenario index is missing: {scenario_index}")
+        else:
+            scenario_index_targets = local_markdown_targets(
+                scenario_index,
+                scenario_index.read_text(encoding="utf-8"),
+            )
+            if path.resolve() not in scenario_index_targets:
+                failures += emit("FAIL", "scenario is missing from workshop/SCENARIOS.md")
+            else:
+                emit("PASS", "scenario is linked from workshop/SCENARIOS.md")
     if "## 調査の入り口" not in text:
         failures += emit("FAIL", "## 調査の入り口 is missing")
 
@@ -154,6 +203,18 @@ def main() -> int:
         emit("WARN", "Go code block exists without a Go Playground link; verify whether it is runnable")
     elif re.search(r"```go\b", text):
         emit("WARN", "Go code blocks found; compare each block with its individual Playground link")
+
+    local_commands = sorted({match.group(0).strip("`") for match in LOCAL_PACKAGE_COMMAND_RE.finditer(text)})
+    if local_commands:
+        go_files = sorted(path.parent.glob("*.go"))
+        if go_files:
+            emit("PASS", f"local package commands have {len(go_files)} sibling .go file(s)")
+        else:
+            emit(
+                "WARN",
+                "local package command is shown but the scenario directory has no .go files; "
+                "verify complete save/setup steps: " + ", ".join(local_commands),
+            )
 
     if "<summary>ヒント</summary>" in text or "### ヒント" in text:
         emit("WARN", "hint leakage still requires manual comparison against the answer")

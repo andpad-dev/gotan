@@ -1,4 +1,4 @@
-[03-cmd-tools の調べ方に戻る](../../README.md)
+[シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [03-cmd-tools の調べ方](../../README.md)
 
 # 注文処理の 100ms を追え: `go tool trace`
 

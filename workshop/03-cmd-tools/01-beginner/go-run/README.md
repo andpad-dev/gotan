@@ -1,3 +1,5 @@
+[シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [03-cmd-tools の調べ方](../../README.md)
+
 # `go run` の裏側を覗いてみよう
 
 `go run` を見かけました。どんなものか調べてみましょう。
@@ -18,11 +20,12 @@ Go はコンパイル言語のはずですが、この理解で合っている�
 <summary>ヒント</summary>
 
 - `go help run` の説明文を 1 文ずつ読み、動詞に注目してみましょう。「解釈する・実行する」ではなく、別の動詞が使われていないでしょうか。
-- この [main.go](./main.go) に対して `go run -x main.go` を実行してみましょう。`-x` は「裏で実際に呼ばれた外部コマンドをそのまま表示する」フラグです。
+- この [main.go](./main.go) に対して `go run -a -x main.go` を実行してみましょう。`-x` は裏で呼ばれたコマンドを表示し、`-a` はキャッシュ済みのパッケージも含めてビルドし直すフラグです。
 - 出力される行を 1 行ずつ眺めて、次の 2 種類に仕分けしてみましょう。
   - 何かを新しく作っていそうな行（コマンド名に `compile` や `link` が含まれる行、`mkdir` の行）
   - すでに出来上がった何かを実行していそうな行（パスだけがポツンと書かれた行）
   - この仕分けができると、「何かを作ってから動かしている」のか「ソースコードをその場で読みながら動かしている」のか、判断する材料になります。
+- 続けて `-a` を外した `go run -x main.go` も実行し、表示される行が減るか比べてみましょう。
 
 </details>
 
@@ -33,11 +36,12 @@ Go はコンパイル言語のはずですが、この理解で合っている�
 
 1. https://go.dev/cmd/go/ を開き、`go` コマンドの公式ドキュメントから `go run` の説明を探す。
 2. `go help run`（= https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program ）を読む。「Run compiles and runs the named main Go package.」とあり、動詞は "compiles"（コンパイルする）。インタプリタなら "interprets" や "evaluates" のような動詞になるはずで、この時点で疑わしい。
-3. `go run -x main.go` を実行し、出力を「生成している行」と「実行している行」に仕分ける。
+3. `go run -a -x main.go` を実行し、出力を「生成している行」と「実行している行」に仕分ける。`-a` を付けると、直前に `go run` 済みでもコンパイルとリンクを観測できる。
+4. 続けて `go run -x main.go` を実行し、2 回目はビルドキャッシュ内の実行ファイルが直接起動されることを確認する。
 
 **答え**
 
-インタプリタではありません。実際に `-x` フラグを付けて実行すると、次のような出力になります（実際に `go run -x main.go` を実行した出力の抜粋）。
+インタプリタではありません。Go 1.27.0 で `-a -x` フラグを付けて実行すると、次のような出力になります（環境依存部分は省略しています）。
 
 ```
 WORK=/var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX
@@ -45,12 +49,21 @@ WORK=/var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX
 mkdir -p $WORK/b001/exe/
 .../compile ... # ソースをコンパイル
 .../link -o $WORK/b001/exe/main ... # 実行ファイルにリンク
+cp $WORK/b001/exe/main <GOCACHE>/.../main # ビルドキャッシュへ保存
 $WORK/b001/exe/main # できた実行ファイルを実行
 hello, gotan
 ```
 
 `$WORK` という一時ディレクトリを作り、その中でコンパイル・リンクして実行ファイルを組み立て、最後にその実行ファイルを実行しているだけです。
-`main.go` の中身を 1 行ずつ読みながら評価するような処理はどこにもなく、`go build` して一時ファイルとして出力 → その一時ファイルを実行、という 2 段階の処理を 1 コマンドにまとめたものだと分かります。
+`main.go` の中身を 1 行ずつ読みながら評価する処理ではなく、コンパイルとリンクで実行ファイルを作り、それを起動しています。
+
+Go 1.24 以降は `go run` の実行ファイルもビルドキャッシュに保存されます。そのため同じ条件で再実行した `go run -x main.go` では、`compile` と `link` が省略され、次のようにキャッシュ内の実行ファイルを直接起動することがあります。表示が短くても、インタプリタとして動いたという意味ではありません。
+
+```text
+WORK=/tmp/go-buildXXXXXXXXXX
+<GOCACHE>/.../main
+hello, gotan
+```
 
 `WORK` のパスやビルドIDは実行環境ごとに変わるため、上の出力では環境依存部分を `X` と `...` で省略しています。
 
@@ -66,9 +79,10 @@ hello, gotan
 <details>
 <summary>ヒント</summary>
 
-- `go run -x main.go` の出力の 1 行目 `WORK=/var/folders/.../go-buildXXXXXXXXXX` を控えておきましょう。
+- `go run -a -x main.go` の出力の 1 行目 `WORK=/var/folders/.../go-buildXXXXXXXXXX` と、`cp` 行に出るビルドキャッシュ側のパスを控えておきましょう。
 - コマンドの実行が終わった後、そのパスに対して `ls` や `find` を実行し、実際にまだ存在するか確認してみましょう。
 - `go help build` のフラグ一覧を眺め、一時ディレクトリに言及しているフラグを探してみましょう。見つけたフラグの説明文を読み、それが「デフォルトでは行われないことを追加で行う」フラグなのか、「デフォルトの動作を止める」フラグなのかを見分けてみましょう。
+- 見つけたフラグを試すときも `-a` を併用します。キャッシュが温まった状態では、ビルドを省略して空の `$WORK` だけが残ることがあるためです。
 
 </details>
 
@@ -78,17 +92,20 @@ hello, gotan
 **調査ルート**
 
 1. https://go.dev/cmd/go/ を開き、`go build` のドキュメントにある `-work` フラグの説明を探す。
-2. `go run -x main.go` で表示された `WORK=...` のパスを、コマンド終了後に `ls` してみる → ディレクトリごと消えている。
+2. `go run -a -x main.go` で表示された `WORK=...` のパスを、コマンド終了後に `ls` する。一時ディレクトリは消えているが、`cp` 行が示すビルドキャッシュ側の実行ファイルは残っていることを確認する。
 3. `go help build` を読むと `-work` フラグの説明に「print the name of the temporary work directory and do not delete it when exiting」とあり、"delete it when exiting" が **デフォルトの挙動である**ことが読み取れる。
+4. `go run -a -work main.go` を実行し、`$WORK/b001/exe/main` を確認する。`-a` を外した場合はキャッシュが使われ、`$WORK` が空になることも比較する。
+5. [Go 1.24 リリースノートの Go command 節](https://go.dev/doc/go1.24#go-command)を読み、`go run` の実行ファイルが Go 1.24 からビルドキャッシュに保存されるようになったことを確認する。
+6. リリースノートから [提案 Issue #69290](https://go.dev/issue/69290) を開き、繰り返し実行を速くする目的とキャッシュ容量のトレードオフを確認する。
 
 **答え**
 
-`$WORK` ディレクトリは実行が終わると自動的に削除されます。`go run` はこのディレクトリの中でコンパイル・リンクを行い、できた実行ファイルをすぐに実行しますが、後片付けとしてディレクトリごと消してしまうため、通常は存在に気づきません。
+`$WORK` ディレクトリと、その中にリンクされた実行ファイルは、通常は実行後に自動削除されます。ただし Go 1.24 以降では、リンク済み実行ファイルのコピーがビルドキャッシュに残ります。削除される一時ファイルと、再実行のために保存されるキャッシュを分けて考える必要があります。
 
-`-work` フラグを付けて実行すると削除されずに残るので、実際に確認できます。
+`-a -work` を付けるとビルドをやり直したうえで `$WORK` を残せるので、中間生成物を確認できます。
 
 ```
-$ go run -work main.go
+$ go run -a -work main.go
 WORK=/var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX
 hello, gotan
 $ find /var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX -maxdepth 3
@@ -101,7 +118,7 @@ $ find /var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX -maxdepth 3
 .../go-buildXXXXXXXXXX/b001/exe/main
 ```
 
-`b001/exe/main` が、実際に実行された実行ファイルの実体です。`-work` フラグを付けなければ、この一時ディレクトリごと自動的に削除されます。
+`b001/exe/main` が、この実行でリンクされて起動した実行ファイルです。`-work` を付けなければ `$WORK` とともに削除されますが、`-a -x` の `cp` 行で確認できるビルドキャッシュ側のコピーは残ります。次回はそのコピーを直接起動できるため、`-work` だけを付けても `$WORK` の中に生成物がない場合があります。
 
 </details>
 
@@ -109,7 +126,7 @@ $ find /var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX -maxdepth 3
 
 ## 設問 3: 「ディレクトリの作成」「ビルドの実行」「ビルドしたファイルの扱い」は、それぞれどこで行われている？
 
-設問 1・2 で、`go run` は ①一時ディレクトリを作り → ②その中でビルドし → ③できた実行ファイルを実行し → ④最後にディレクトリごと片付ける、という流れだと分かりました。
+設問 1・2 で、ビルドが必要な `go run` は ①一時ディレクトリを作り → ②その中でビルドし → ③実行ファイルをキャッシュにも保存し → ④実行ファイルを起動し → ⑤最後に一時ディレクトリを片付ける、と分かりました。キャッシュに同じ実行ファイルがあれば、①〜③を省略して直接起動します。
 では実際に、この 3 つの処理（ディレクトリの作成・ビルドの実行・ビルドしたファイルの扱い）は、`go` コマンド自身のソースコードのどこに書かれているのでしょうか。
 
 **前提知識: `go` のサブコマンドはソースコード上のどこにあるか**
@@ -121,7 +138,7 @@ $ find /var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX -maxdepth 3
 <details>
 <summary>ヒント 1: run.go を読んで、どこを掘り下げればよいか当たりをつける</summary>
 
-`cmd/go/internal/run` パッケージのエントリポイントとなる関数（https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go ）を開き、中で呼ばれている関数・型を上から順に眺めてみましょう。
+`cmd/go/internal/run` パッケージのエントリポイントとなる関数（https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/run/run.go ）を開き、中で呼ばれている関数・型を上から順に眺めてみましょう。
 
 - 1 つ 1 つの処理が、`run` パッケージ自身の中で定義されたものなのか、それとも別のパッケージのものなのかを見分けてみましょう（呼び出しの前についているパッケージ名がヒントになります）。
 - 別パッケージの処理が見つかったら、そのパッケージ名から「何を担当していそうか」を推測してみましょう。ビルドやリンクに関係していそうな名前のパッケージが見つかれば、そこが次に読むべき場所です。
@@ -147,17 +164,18 @@ $ find /var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX -maxdepth 3
 **調査ルート**
 
 1. https://go.dev/cmd/go/ を開き、`go run` が `cmd/go` の一部として実装されていることを確認する。
-2. https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go の `runRun` 関数（73 行目〜）を読む。
-3. `work.NewBuilder` の実体（https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/action.go の 281 行目〜）を読み、一時ディレクトリの作成箇所を確認する。
+2. https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/run/run.go の `runRun` 関数（77 行目〜）を読む。
+3. `work.NewBuilder` の実体（https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/action.go の 281 行目〜）を読み、一時ディレクトリの作成箇所を確認する。
 4. `LinkAction`（同ファイル 922 行目〜）と `CompileAction`（633 行目〜）で、パッケージごとのサブディレクトリ（`Objdir`）と実行ファイルのパス（`Target`）がどう決まるかを確認する。
-5. https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/exec.go の `Builder.build`（723 行目〜、コンパイル担当）と `Builder.link`（1591 行目〜、リンク担当）を読み、実際にコンパイラ・リンカを呼び出している場所を確認する。
-6. `Builder.Close`（action.go 340 行目〜）を読み、後片付けの実装を確認する。
+5. https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/exec.go の `Builder.build`（726 行目〜、コンパイル担当）と `Builder.link`（1628 行目〜、リンク担当）を読み、実際にコンパイラ・リンカを呼び出している場所を確認する。
+6. https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/buildid.go の 756 行目〜を読み、リンク済み実行ファイルをビルドキャッシュへ保存する条件を確認する。
+7. `Builder.Close`（action.go 340 行目〜）を読み、後片付けの実装を確認する。
 
 **答え**
 
 **① ディレクトリの作成はどこで行われるか**
 
-`runRun`（run.go 89 行目）が `work.NewBuilder("", ...)` を呼ぶと、その内部（action.go 281〜310 行目）で
+`runRun`（run.go 93 行目）が `work.NewBuilder("", ...)` を呼ぶと、その内部（action.go 281〜310 行目）で
 
 ```go
 tmp, err := os.MkdirTemp(cfg.Getenv("GOTMPDIR"), "go-build")
@@ -180,33 +198,35 @@ func (b *Builder) NewObjdir() string {
 
 **② ビルドの実行はどこで行われるか**
 
-`runRun`（run.go 170〜173 行目）に、次の 3 行があります。
+`runRun`（run.go 174〜177 行目）に、次の 4 行があります。
 
 ```go
-a1 := b.LinkAction(moduleLoaderState, work.ModeBuild, work.ModeBuild, p)
+a1 := b.LinkAction(moduleLoader, work.ModeBuild, work.ModeBuild, p)
 a1.CacheExecutable = true
 a := &work.Action{Mode: "go run", Actor: work.ActorFunc(buildRunProgram), Args: cmdArgs, Deps: []*work.Action{a1}}
 b.Do(ctx, a)
 ```
 
-`LinkAction`（action.go 922 行目〜）は「まずコンパイルし、それが終わったらリンクする」という依存関係を持った `Action`（`a1`）を組み立てているだけで、実際にコンパイラ・リンカを呼び出す処理はここには書かれていません。実際に外部コマンドを実行しているのは `work/exec.go` の `Builder.build`（723 行目〜、コンパイルを担当）と `Builder.link`（1591 行目〜、リンクを担当）です。`b.Do(ctx, a)` が依存関係をたどりながらこの 2 つの関数を順番に呼び出すことで、初めて `compile`・`link` が実際に動きます。つまり「何をビルドするかを組み立てる場所（`LinkAction`）」と「実際にビルドする場所（`Builder.build`/`Builder.link`）」は、コード上で分かれています。
+`LinkAction`（action.go 922 行目〜）は「まずコンパイルし、それが終わったらリンクする」という依存関係を持った `Action`（`a1`）を組み立てているだけで、実際にコンパイラ・リンカを呼び出す処理はここには書かれていません。実際に外部コマンドを実行しているのは `work/exec.go` の `Builder.build`（726 行目〜、コンパイルを担当）と `Builder.link`（1628 行目〜、リンクを担当）です。`b.Do(ctx, a)` が依存関係をたどりながらこの 2 つの関数を順番に呼び出すことで、初めて `compile`・`link` が実際に動きます。つまり「何をビルドするかを組み立てる場所（`LinkAction`）」と「実際にビルドする場所（`Builder.build`/`Builder.link`）」は、コード上で分かれています。
 
 **③ ビルドしたファイルはどのように扱われるか**
 
-`LinkAction`（action.go 955 行目）で、リンク後にできる実行ファイルのパスが
+`LinkAction`（action.go 955 行目）で、リンク後にできる一時実行ファイルのパスが
 
 ```go
 a.Target = a.Objdir + filepath.Join("exe", name) + cfg.ExeSuffix
 a.built = a.Target
 ```
 
-として `Action` の `built` フィールドに記録されます。`go run` が実際に実行する最後の一手である `buildRunProgram`（run.go 200 行目〜）は、この値を `a.Deps[0].BuiltTarget()` として取り出し、実行ファイルとして起動します。
+として `Action` の `built` フィールドに記録されます。さらに `runRun` は `CacheExecutable = true` を設定し、`buildid.go` の 756〜770 行目がリンク済み実行ファイルをビルドキャッシュへコピーします。
+
+`go run` が実際に実行する最後の一手である `buildRunProgram`（run.go 204 行目〜）は、`a.Deps[0].BuiltTarget()` を実行ファイルとして起動します。ビルド直後は `$WORK` 側、キャッシュが使える再実行ではビルドキャッシュ側のパスが返ります。
 
 ```go
 cmdline := str.StringList(work.FindExecCmd(), a.Deps[0].BuiltTarget(), a.Args)
 ```
 
-そして実行が終わったあと、`runRun`（run.go 90〜94 行目）が `defer` していた `Builder.Close()`（action.go 340 行目〜）が呼ばれ、
+そして実行が終わったあと、`runRun`（run.go 94〜98 行目）が `defer` していた `Builder.Close()`（action.go 340 行目〜）が呼ばれ、
 
 ```go
 if !cfg.BuildWork {
@@ -216,7 +236,16 @@ if !cfg.BuildWork {
 }
 ```
 
-という処理で `$WORK` ディレクトリ（＝実行ファイルを含む中間生成物すべて）がまとめて削除されます。つまりビルドされた実行ファイルは、「一時ディレクトリの中に作られる → パスだけを覚えておいて起動される → 実行後にディレクトリごと削除される」という、使い捨てのファイルとして扱われています。
+という処理で `$WORK` ディレクトリ（＝一時実行ファイルを含む中間生成物）がまとめて削除されます。ビルドキャッシュは `$WORK` の外にあるため削除対象ではありません。つまり、一時側は実行後に消えますが、同じプログラムを再実行するためのコピーはキャッシュに残ります。
+
+</details>
+
+---
+
+<details>
+<summary>こぼれ話: なぜ実行ファイルまでキャッシュするのか</summary>
+
+[提案 Issue #69290](https://go.dev/issue/69290) では、同じ版のツールを `go run package@version` や `go tool` で繰り返し起動する用途が主に議論されました。リンクを省略できる一方、大きな実行ファイルによってキャッシュ容量が増える点もトレードオフとして扱われています。
 
 </details>
 
@@ -237,6 +266,9 @@ if !cfg.BuildWork {
 
 - https://go.dev/cmd/go/
 - https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program
-- https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/run/run.go
-- https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/action.go
-- https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/go/internal/work/exec.go
+- https://go.dev/doc/go1.24#go-command
+- https://go.dev/issue/69290
+- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/run/run.go
+- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/action.go
+- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/exec.go
+- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/buildid.go

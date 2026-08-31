@@ -1,3 +1,5 @@
+[Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 01-packages](../../README.md)
+
 # Deliver an Encrypted File to the Audit Destination
 
 When submitting customer data to an external auditor, we want the sender to know only the auditor's public key and ensure that only the auditor can open the contents. Let's use `crypto/hpke`, added in Go 1.26, to deliver a message following the standard library example. Let's investigate how to do this.

@@ -1,10 +1,12 @@
+[Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 01-packages](../../README.md)
+
 # Track Old Notifications from `time.Timer` `Stop` / `Reset`
 
 An old incident report says that a retry job for a payment integration received a notification for the previous deadline immediately after stopping and resetting a timer. Current observations show that the channel capacity is 0. Why is it like this? Let's investigate the background.
 
 When you [run the following code in the Go Playground](https://go.dev/play/p/F4r40BDO4dv), you can confirm the current timer-channel capacity and the reset after stopping.
 
-This scenario includes a `go.mod` that enables the timer-channel behavior introduced in Go 1.23 and later. When trying it locally, run the code in this directory.
+This scenario includes the introductory code as `main.go` and a `go.mod` for Go 1.27. To try it locally, run `go run .` in this directory.
 
 ```go
 package main
@@ -54,7 +56,7 @@ Before Go 1.23, timer channels had a buffer capacity of 1. With the current sync
 
 1. Read “Timer changes” in the [Go 1.23 Release Notes](https://go.dev/doc/go1.23).
 2. Read the version-specific explanation in [time.NewTimer](https://pkg.go.dev/time#NewTimer).
-3. Read the comments in [sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=123).
+3. Read the comments in [Go 1.27.0's sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/time/sleep.go;l=77).
 
 **Answer**
 
@@ -70,7 +72,38 @@ The old channel with capacity 1 could retain an old notification, which made sto
 
 Previously, it was common to unconditionally receive from `timer.C` to empty it when `Stop` returned `false`; this was known as draining. With the new semantics since Go 1.23, why should that receive not be left unconditional? For a library that also supports older Go versions, what assumptions should be made explicit?
 
-When running comparison experiments, use the introductory Go Playground result as the baseline, and record `go version`, `go env GOMOD`, and `go env GODEBUG` locally as well. In particular, running without a `go.mod` or using a module below `go 1.23` can produce old timer-channel behavior even with the same Go compiler.
+This minimal experiment receives one timer notification, calls `Stop`, and then tries to drain another old value. [Run it in the Go Playground](https://go.dev/play/p/X_a-_2PuQoV) to observe that `Stop=false` does not mean a value remains available to receive.
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	timer := time.NewTimer(0)
+	<-timer.C
+	stopped := timer.Stop()
+	fmt.Printf("stop=%v cap=%d\n", stopped, cap(timer.C))
+	select {
+	case <-timer.C:
+		fmt.Println("drain received")
+	case <-time.After(20 * time.Millisecond):
+		fmt.Println("unconditional drain would block")
+	}
+}
+```
+
+Output:
+
+```text
+stop=false cap=0
+unconditional drain would block
+```
+
+When running comparison experiments, use the introductory Go Playground result as the baseline, and record `go version`, `go env GOMOD`, and `go env GODEBUG` locally as well. Switching to old behavior through the `go.mod` version or `asynctimerchan` was possible only through Go 1.26. In Go 1.27, specifying an old value does not restore capacity 1.
 
 <details>
 <summary>Hint</summary>
@@ -79,7 +112,7 @@ When running comparison experiments, use the introductory Go Playground result a
 - Distinguish between “a value remains in the channel” and “the timer has fired but the send has not completed.”
 - Confirm that even when `Stop` returns `false`, a value does not necessarily remain buffered. This includes the case where another goroutine received it first; observe unconditional receives with a `select` and a timeout.
 - The [minimal experiment](https://go.dev/play/p/X_a-_2PuQoV) receives the notification once, then calls `Stop` and tries a subsequent receive with a timeout. Do not equate `Stop=false` with “a receive from `C` is immediately available.”
-- Investigate the main program's `go.mod` `go` line and `GODEBUG=asynctimerchan` as the conditions that switch to the old behavior.
+- Investigate the main program's `go.mod` `go` line and `GODEBUG=asynctimerchan` as the conditions that selected the old behavior through Go 1.26. Then confirm that Go 1.27 removed the setting.
 
 </details>
 
@@ -88,15 +121,16 @@ When running comparison experiments, use the introductory Go Playground result a
 
 **Investigation path**
 
-1. Re-read Timer changes in the [Go 1.23 Release Notes](https://go.dev/doc/go1.23).
-2. Read the explanation of `Stop` / `Reset` in [time.NewTimer](https://pkg.go.dev/time#NewTimer).
-3. Confirm the background of capacity 0 and stale values in [Issue #37196](https://github.com/golang/go/issues/37196) and the [time package implementation comments](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=133).
+1. Run the [shared Go Playground program](https://go.dev/play/p/X_a-_2PuQoV) and observe that the receive after `Stop=false` times out.
+2. Re-read Timer changes in the [Go 1.23 Release Notes](https://go.dev/doc/go1.23).
+3. Read the explanation of `Stop` / `Reset` in [time.NewTimer](https://pkg.go.dev/time#NewTimer).
+4. Confirm the background of capacity 0 and stale values in [Issue #37196](https://github.com/golang/go/issues/37196) and the [Go 1.27.0 time package implementation comments](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/time/sleep.go;l=77).
 
 **Answer**
 
 With the new semantics, draining to receive an old time value is unnecessary. Even if `Stop` returns `false`, that does not mean that a value is buffered in the channel. With a synchronous channel, another goroutine may already have received the notification, or the old notification may have been invalidated, so an unconditional receive may wait indefinitely.
 
-The behavior differs when older Go versions are also supported. The library should make explicit the minimum supported Go version, the `go` line in the main program's `go.mod`, how to handle `GODEBUG=asynctimerchan`, and which goroutine owns receives from the timer channel. A drain for the old buffered channel is valid only under the old assumption that there is a single receiver. Rather than simply adding or removing the old idiom, confirm as part of the design which semantics the synchronization relies on.
+The behavior differs when toolchains through Go 1.26 are also supported. The library should make explicit the minimum supported Go version, the `go` line in the main program's `go.mod`, how to handle `GODEBUG=asynctimerchan`, and which goroutine owns receives from the timer channel. A drain for the old buffered channel is valid only under the old assumption that there is a single receiver. Rather than simply adding or removing the old idiom, confirm as part of the design which semantics the synchronization relies on.
 
 </details>
 
@@ -108,13 +142,21 @@ In Go 1.23, the module's `go` line was involved in enabling the new behavior. Ho
 
 In this question, first observe the “new behavior” through the `cap` / `len` of the channel from `time.NewTimer(0)`. For “compatibility settings,” distinguish the environment variable `GODEBUG`, the `godebug` directive in `go.mod`, and `//go:debug` in source code, and organize which execution conditions each one affects.
 
+The following Go 1.27.0 Playground observations are your starting point. Investigate why the third program fails before it can print the capacity.
+
+| Experiment | Result with Go 1.27.0 |
+| --- | --- |
+| [Default](https://go.dev/play/p/zAkeGmN14Q7) | `go1.27.0 0 0` |
+| [`//go:debug asynctimerchan=0`](https://go.dev/play/p/V8esF3Hmib8) | `go1.27.0 0 0` |
+| [`//go:debug asynctimerchan=1`](https://go.dev/play/p/o-pDN23HyaX) | `invalid //go:debug: removed GODEBUG "asynctimerchan" set to old value "1"` |
+
 <details>
 <summary>Hint</summary>
 
 - Find the conditions for enabling the new behavior in the Go 1.23 release notes.
 - Search for `asynctimerchan` in the Go 1.26 and Go 1.27 release notes.
-- Run the [default experiment](https://go.dev/play/p/zAkeGmN14Q7), the [experiment specifying the old behavior](https://go.dev/play/p/o-pDN23HyaX), and the [experiment specifying the new behavior](https://go.dev/play/p/V8esF3Hmib8) in order, and confirm the difference between `cap=0` and `cap=1`. If Go 1.27 has not been released or cannot be selected in the Playground, treat the release notes as the “planned specification” and do not mix them with execution results.
-- These Playgrounds use Go 1.26.5, and the expected outputs are `go1.26.5 0 0`, `go1.26.5 1 0`, and `go1.26.5 0 0`, respectively. If your local or event version differs, record the actual version and compare them.
+- Compare the presence and value of `//go:debug` in the three programs, then map them to the release-note rules.
+- Use the [GODEBUG section of the Go 1.27 release notes](https://go.dev/doc/go1.27#godebug) to confirm that the final default value is accepted while old values are rejected.
 
 </details>
 
@@ -124,14 +166,24 @@ In this question, first observe the “new behavior” through the `cap` / `len`
 **Investigation path**
 
 1. In the [Go 1.23 Release Notes](https://go.dev/doc/go1.23), read the explanation of modules at `go 1.23.0` or later and `asynctimerchan=1`.
-2. In the [Go 1.26 Release Notes](https://go.dev/doc/go1.26), confirm the planned change starting in Go 1.27.
-3. Read the Runtime and GODEBUG explanations in the [Go 1.27 Release Notes](https://go.dev/doc/go1.27).
+2. In the [Go 1.26 Release Notes](https://go.dev/doc/go1.26), confirm the removal in Go 1.27 that was announced at the time.
+3. Read the [GODEBUG](https://go.dev/doc/go1.27#godebug) and [Runtime](https://go.dev/doc/go1.27#runtime) sections of the Go 1.27 release notes to confirm the released behavior.
+4. Run the three Playground programs and record the results for the default, final value `0`, and old value `1`.
+5. Check the [list of removed GODEBUG settings in Go 1.27.0](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/internal/godebugs/table.go;l=100) and confirm that `1` and `2` are the old `asynctimerchan` values.
 
 **Answer**
 
 In Go 1.23, the new timer behavior was enabled when the main program's module had `go 1.23.0` or later, while `asynctimerchan=1` was a setting for restoring the old behavior during investigation or migration.
 
-In Go 1.27, this setting was permanently removed, and `time` timer channels are always synchronous and unbuffered. Therefore, instead of relying on a compatibility setting to hide incidents, fix old drain logic and dependencies on `len` / `cap` so that the code works correctly under the current semantics.
+In Go 1.27, this setting was permanently removed and `time` timer channels are fixed as synchronous and unbuffered. A main module with a `go` line below 1.23 no longer restores the old behavior. `asynctimerchan=0` is accepted as the final value without changing the behavior, while the old values `1` and `2` are rejected.
+
+The failure stage depends on where the value is specified. A `godebug` directive in `go.mod` and a `//go:debug` source directive are rejected by the `go` command before the build; the environment variable `GODEBUG=asynctimerchan=1` produces a fatal error at startup. None of them provides compatibility behavior with capacity 1. Therefore, instead of relying on a compatibility setting to hide incidents, fix old drain logic and dependencies on `len` / `cap` so that the code works correctly under the current semantics.
+
+| Location | Reproduction | Result with Go 1.27.0 |
+| --- | --- | --- |
+| Environment | `GODEBUG=asynctimerchan=1 go run .` | `fatal error` at startup |
+| `go.mod` | Add `godebug asynctimerchan=1`, then run `go run .` | Error while loading `go.mod` |
+| Source | [`//go:debug asynctimerchan=1` Playground](https://go.dev/play/p/o-pDN23HyaX) | Compile error |
 
 </details>
 
@@ -150,7 +202,7 @@ Now suppose that, during a Go 1.23–1.26 migration, the full test suite passes 
 
 - Read the former explanation at the beginning of the issue that a value might exist after `Stop`.
 - Look for `stale time values` in the implementation comments.
-- Read the old drain example at the beginning of [Issue #37196](https://github.com/golang/go/issues/37196) alongside the `Stop` / `NewTimer` comments in [Go 1.26.4's sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=105).
+- Read the old drain example at the beginning of [Issue #37196](https://github.com/golang/go/issues/37196) alongside the `Stop` / `NewTimer` comments in [Go 1.27.0's sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/time/sleep.go;l=77).
 - In the official wiki's “Debugging” section, read the diagnostic procedure and output shown after the whole-process compatibility switch.
 - In the research.swtch.com article, focus on “A New Trick” after the `git bisect` result and on why a flaky target is repeated. In the bisect documentation, look for the flag related to repeating trials.
 
@@ -163,7 +215,7 @@ Now suppose that, during a Go 1.23–1.26 migration, the full test suite passes 
 
 1. Confirm the overview of the timer changes in the [Go 1.23 Release Notes](https://go.dev/doc/go1.23).
 2. Read the problem statement and discussion in [Issue #37196](https://github.com/golang/go/issues/37196).
-3. Confirm the final guarantee in the implementation comments of [sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=133).
+3. Confirm the final guarantee in the implementation comments of [Go 1.27.0's sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/time/sleep.go;l=77).
 4. Read “Debugging” in the [Go Wiki's Timer Channel Changes](https://go.dev/wiki/Go123Timer). First confirm the behavior category with a whole-process switch, then see how `bisect` switches behavior by stack trace to narrow the dependency.
 5. Read the timer example in [Hash-Based Bisect Debugging in Compilers and Runtimes](https://research.swtch.com/bisect). Distinguish `git bisect`, which finds the introducing commit, from `bisect`, which searches call stacks where enabling a change makes the same program fail. Use the article, the [`golang.org/x/tools/cmd/bisect` documentation](https://pkg.go.dev/golang.org/x/tools/cmd/bisect), and the [v0.47.0 command source](https://cs.opensource.google/go/x/tools/+/refs/tags/v0.47.0:cmd/bisect/main.go) to distinguish the target command's `go test -count=N` from `bisect -count=N`.
 

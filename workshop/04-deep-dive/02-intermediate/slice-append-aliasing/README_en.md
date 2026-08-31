@@ -1,3 +1,5 @@
+[Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 04-deep-dive](../../README.md)
+
 # Intermediate: Separate Notification Targets with a Three-Index Slice
 
 A batch notifies the first two people in a shared assignment list and adds one on-call person. The notification view accidentally replaces the third person in the original project data. We must add the on-call person without changing the shared list.

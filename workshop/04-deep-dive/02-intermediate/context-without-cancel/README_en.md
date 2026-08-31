@@ -1,3 +1,5 @@
+[Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 04-deep-dive](../../README.md)
+
 # Intermediate: Preserve Audit Logs with a Deadline Using context.WithoutCancel
 
 An HTTP API updates order status and saves an audit log after returning its response. When the client closes the connection, `r.Context()` is canceled and the audit write stops. The log must retain the request ID, while a failed write must not continue forever.

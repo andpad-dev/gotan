@@ -1,3 +1,5 @@
+[Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 01-packages](../../README.md)
+
 # Split integration settings with strings.Cut
 
 Integration settings for an external SaaS arrive from an administration screen as `key=value` entries such as `region=asia-east1`. The implementer wants to split the settings safely first, so an input missing its delimiter is not mistaken for an input whose value is empty. You came across `strings.Cut` in the code. Let’s investigate what it does.

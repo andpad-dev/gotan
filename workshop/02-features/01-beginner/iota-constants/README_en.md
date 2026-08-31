@@ -1,3 +1,5 @@
+[Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 02-features](../../README.md)
+
 # Read constant declarations using iota
 
 You came across the following constant declaration in a senior colleague’s code.

@@ -1,3 +1,5 @@
+[シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [04-deep-dive の調べ方](../../README.md)
+
 # 初級: defer の引数評価と実行順を調べよう
 
 CSV インポートの処理で、開始・完了の状態を監査ログへ残しています。処理は完了しているのに、後片付けのログだけ `started` と出てしまいました。ログを確実に出すために `defer` を使っています。
@@ -22,7 +24,7 @@ func main() {
 }
 ```
 
-Go 1.26.4 での実行結果です。
+Go 1.27.0 での実行結果です。
 
 ```text
 closure: completed
@@ -65,7 +67,7 @@ Go 言語仕様で `defer` 文を探します。関数呼び出しそのもの�
 <details>
 <summary>ヒント</summary>
 
-設問 1 で確認した「関数値と引数」の規則を、無名関数の本体が変数を参照する場合と比べます。続けて、同じ仕様節で複数の `defer` の順番を確認しましょう。
+Go 言語仕様では、無名関数を `Function literals` と呼びます。この節で外側の変数をどう参照するかを調べ、設問 1 の「関数値と引数」の評価規則と分けて考えます。続けて `Defer statements` で、複数の `defer` の順番を確認しましょう。
 
 </details>
 
@@ -74,13 +76,13 @@ Go 言語仕様で `defer` 文を探します。関数呼び出しそのもの�
 
 **調査ルート**
 
-1. [Go 言語仕様の Defer statements](https://go.dev/ref/spec#Defer_statements) で、複数の遅延呼び出しが逆順に実行されることを確認する。
-2. [Go Blog: Defer, Panic, and Recover](https://go.dev/blog/defer-panic-and-recover) の遅延実行の例を、`status` を無名関数の本体で読むコードと比べる。
-3. [実行例](https://go.dev/play/p/XEEZ1ax4se2) の出力順と値を照合する。
+1. [Go 言語仕様の Function literals](https://go.dev/ref/spec#Function_literals) を開き、関数リテラルと外側の関数が参照する変数を共有する規則を確認する。
+2. [Go 言語仕様の Defer statements](https://go.dev/ref/spec#Defer_statements) で、複数の遅延呼び出しが逆順に実行されることを確認する。
+3. [Go Blog: Defer, Panic, and Recover](https://go.dev/blog/defer-panic-and-recover) の例と、[実行例](https://go.dev/play/p/XEEZ1ax4se2) の出力順・値を照合する。
 
 **答え**
 
-無名関数に `status` を引数として渡してはいないので、`closure` の本体は遅延呼び出しが実行される時点で変数を参照します。その時点では代入済みで `completed` です。また、遅延呼び出しは積み重ねた逆順に実行されるため、後から登録した無名関数が先に表示されます。
+関数リテラルは外側の関数と `status` 変数を共有します。無名関数に `status` を引数として渡して固定してはいないため、`closure` の本体は遅延呼び出しが実行される時点の変数を参照します。その時点では代入済みで `completed` です。また、遅延呼び出しは積み重ねた逆順に実行されるため、後から登録した無名関数が先に表示されます。
 
 つまり、冒頭の `direct` ログが古いのは「後片付けで出力したから」ではなく、引数が開始時に評価・保存されていたからです。完了時の状態を残す必要がある監査ログでは、値をいつ固定したいのかを決めて、無名関数か引数かを選びます。
 
@@ -92,4 +94,5 @@ Go 言語仕様で `defer` 文を探します。関数呼び出しそのもの�
 
 1. [04-deep-dive の調べ方](../../README.md)を開き、Go 言語仕様を起点にします。
 2. [Go 言語仕様: Defer statements](https://go.dev/ref/spec#Defer_statements) で評価時点と実行順を調べます。
-3. [Go Blog: Defer, Panic, and Recover](https://go.dev/blog/defer-panic-and-recover) で観測結果を照合します。
+3. [Go 言語仕様: Function literals](https://go.dev/ref/spec#Function_literals) で、無名関数が外側の変数を参照する規則を調べます。
+4. [Go Blog: Defer, Panic, and Recover](https://go.dev/blog/defer-panic-and-recover) で観測結果を照合します。

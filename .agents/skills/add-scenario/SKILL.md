@@ -66,6 +66,9 @@ README を書く前に、次のストーリーマップを scratchpad に作る�
 マージ済みなら該当ディレクトリの実ファイルを読む。特に本文の分量、設問の粒度、
 ヒントの隠し方を合わせる。
 
+`workshop/SCENARIOS.md` のシナリオ一覧と既存シナリオ冒頭のナビゲーションも読み、新しい
+シナリオを一覧のどこへ追加し、一覧、`workshop/README.md`、カテゴリ README へどう戻るかを確認する。
+
 カテゴリ README を読み、逆引きの検索手順があるか確認する。カテゴリ README が
 なければ作成を提案する。存在しても「まず f キーで検索する」などの共通手順がなければ、
 問題のヒントに重複して埋め込まず、カテゴリ README の更新を提案する。
@@ -110,6 +113,10 @@ README を書く前に、次のストーリーマップを scratchpad に作る�
 ### 5. README を作成する
 
 - <カテゴリ>/<難易度>/<問題名>/README.md を 1 枚作成する。
+- タイトルより前に `[シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [<カテゴリ> の調べ方](../../README.md)`
+  の形式で、一覧、`workshop/README.md`、カテゴリ README への戻り導線を置く。
+- `workshop/SCENARIOS.md` の該当カテゴリ・難易度へシナリオのリンクを追加する。新規 README だけを
+  作り、参加者が一覧から発見できない状態を完成としない。
 - 冒頭は職場の困りごとと、プレイヤーが最初に実行・観測できる手がかりにする。
 - 冒頭は、職場の状況・最初の観測・調べる目的が自然につながる文章にする。特定の定型句を
   付け足して文脈を分断したり、難易度を示すためだけの冗長な一文を加えたりしない。
@@ -134,7 +141,7 @@ README を書き終えたら、答えの details を閉じた別の scratchpad �
 
 #### 6.1 リンクを検査する
 
-- README、category README、コードコメント、details 内の Markdown リンク、裸の URL、
+- README、`workshop/SCENARIOS.md`、`workshop/README.md`、category README、コードコメント、details 内の Markdown リンク、裸の URL、
   アンカー、Go Playground をすべて抽出する。
 - 相対リンクは対象ファイルから解決し、ファイル・ディレクトリ・アンカーの存在を確認する。
 - HTTP URL は次でリダイレクト後の URL と status を確認する。
@@ -233,6 +240,8 @@ PR テンプレートのチェックリストに加え、次を 1 項目ずつ�
 - 上級: 設問数に無理がなく、一次資料の種類が段階的に深くなる。採用案と見送り案を区別し、
   最後に歴史と現在の挙動をつなげて説明できる。
 - 全レベル: 問題文だけで前提と目的が分かり、ヒントを使っても調査の発見が残る。
+- ナビゲーション: `workshop/SCENARIOS.md` の一覧から新規シナリオへ進め、シナリオタイトルより前の
+  リンクから一覧、`workshop/README.md`、カテゴリ README のすべてへ戻れる。
 - 導線: 最初の外部ページが go.dev で、category README・問題文・ヒントだけで答えの根拠まで辿れる。
 - リンク: すべての URL、相対リンク、アンカー、Playground が実在し、本文の説明と一致する。
 - ファクト: 技術的主張ごとに Go 一次ソースまたは実測があり、推測・不明が明示されている。
@@ -244,7 +253,7 @@ PR テンプレートのチェックリストに加え、次を 1 項目ずつ�
 ~~~bash
 git fetch origin
 git switch -c feature/scenario-<問題名> origin/main
-git add <カテゴリ>/<難易度>/<問題名>/README.md
+git add workshop/SCENARIOS.md <カテゴリ>/<難易度>/<問題名>/README.md
 git commit -m "feat: <難易度>問題「<タイトル>」を追加"
 git push -u origin feature/scenario-<問題名>
 gh pr create --draft --base main --label "<難易度>" --title "<難易度>: <タイトル>"
@@ -260,5 +269,5 @@ gh pr create --draft --base main --label "<難易度>" --title "<難易度>: <�
 ## 報告
 
 作成した Draft PR の URL、設問のストーリー（各設問の発見と次の検索）、難易度の判定、
-裏取りで確認した URL・実行出力、提案したカテゴリ README の有無を報告する。
+裏取りで確認した URL・実行出力、`workshop/SCENARIOS.md` への一覧登録、提案したカテゴリ README の有無を報告する。
 修正点や未完了の検証があれば、影響と次の対応を明記する。

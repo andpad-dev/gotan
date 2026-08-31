@@ -1,3 +1,5 @@
+[Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 01-packages](../../README.md)
+
 # Implement the `slog.Handler` Interface
 
 The team has decided that logs should be output in YAML format.

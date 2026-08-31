@@ -1,3 +1,5 @@
+[Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 03-cmd-tools](../../README.md)
+
 # Bring Existing Code Up to Date with go fix Modernizers
 
 We want to bring our team's Go code in line with current idioms. We heard that `go fix` was revamped in Go 1.26. Let us investigate how to use it, how it differs from `go vet`, and how it can help migrate our own APIs.

@@ -1,3 +1,5 @@
+[シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [01-packages の調べ方](../../README.md)
+
 # cmp.Or で通知先チャンネルを決めよう
 
 社内通知サービスでは、個人設定・チーム設定・全社既定の順に送信先チャンネルを選びます。設定されていない項目は空文字です。個人設定が空なのに、チーム設定の `#backend-alerts` が選ばれるコードを見て、`cmp.Or` を見かけました。どんなものか調べてみましょう。
@@ -51,7 +53,7 @@ all unavailable: ""
 
 1. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `cmp` パッケージを開く。
 2. [cmp.Or](https://pkg.go.dev/cmp#Or) の説明を読む。
-3. [cmp.go の実装](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmp/cmp.go;l=67) を開き、引数を先頭から比較する処理を確認する。
+3. [Go 1.27.0の `cmp.go` にある比較ループ](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmp/cmp.go;l=71-75) を開き、引数を先頭から比較して最初の非ゼロ値を返す処理を確認する。
 
 **答え**
 
@@ -83,7 +85,7 @@ all unavailable: ""
 
 1. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) の `cmp` の項目を読む。
 2. [cmp.Or](https://pkg.go.dev/cmp#Or) で、すべてゼロ値の場合の戻り値を確認する。
-3. [実装](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmp/cmp.go;l=69) で、最後に返す値を確認する。
+3. [Go 1.27.0の実装にある `return zero`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmp/cmp.go;l=76) で、非ゼロ値が見つからなかった場合に最後に返す値を確認する。
 
 **答え**
 
