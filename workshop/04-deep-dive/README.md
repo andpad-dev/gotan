@@ -54,6 +54,10 @@ Russ Cox は、[2008 年に Go の開発チームへ参加し、2 つのコン�
 
 research!rsc は Go プロジェクトの公式ドキュメントではありません。表の go.dev の入口で現在の仕様・対象版・実装を先に固定し、目次を記事の題名で Ctrl+F / Cmd+F して候補を開き、残りの題名・語をシリーズ内または記事内で検索します。最後にもう一度バージョン付きソースと実測へ戻ってください。
 
+[Go: A Documentary](https://golang.design/history/) は、言語設計、コンパイラ、ランタイム、標準ライブラリの歴史を、公開された設計文書・Issue・CL・講演から逆引きする索引として使えます。ただし、サイト自身が本文は公開情報に基づく主観的な理解であり誤りもあり得ると注意しており、項目が追加されても過去時点の役割や状況を述べた本文が残ることがあります。最近の状態を網羅する資料とはみなさず、リンク先の一次資料と対象版のソースへ進んでください。
+
+最近の実装を人から逆引きする場合は、リリースノートや proposal Issue で見つけた著者・実装者・reviewer を起点に、GitHub と Gerrit の直近の活動へ進みます。たとえば [Alan Donovan](https://github.com/adonovan) が起票した [golang/go#77549](https://github.com/golang/go/issues/77549) から、Generic Methods に追随する `x/tools` と外部ツールの作業を追えます。[Russ Cox](https://github.com/rsc) は過去の設計史を探す入口にはなりますが、過去に Go チームを率いた人物の現在の活動量だけから、現在の方針や担当を判断してはいけません。[Go Code Owners](https://dev.golang.org/owners) も担当候補と変更履歴の入口として使い、直近の Issue・CL・レビューで確かめます。
+
 | 調べたい課題 | go.dev から先に確認すること | research!rsc の目次で探す題名 → 次に探す題名・語 |
 | --- | --- | --- |
 | 浮動小数点の出力を変えずに、文字列化の内部実装を置き換えられる理由を追いたい | [`strconv.FormatFloat`](https://go.dev/pkg/strconv/#FormatFloat) で現在の契約を確認し、[Go 1.26.0](https://cs.opensource.google/go/go/+/refs/tags/go1.26.0:src/internal/strconv/ftoa.go) と [Go 1.27.0](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/internal/strconv/ftoa.go) のタグ付きソースと変更履歴を比較する。リリースノートに記載がなくても「変更なし」とは結論しない | `Floating Point Formatting` → `Floating-Point Printing and Parsing Can Be Simple And Fast` → `Shortest-Width Printing` → [シリーズ目次](https://research.swtch.com/fp-all) |

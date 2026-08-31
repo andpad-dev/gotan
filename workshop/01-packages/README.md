@@ -42,6 +42,10 @@ Russ Cox は、[2008 年に Go の開発チームへ参加し、2 つのコン�
 
 research!rsc は Go プロジェクトの公式ドキュメントではありません。記事が公開された時点の説明を現在の API 契約として扱わないよう、先に表の go.dev の入口から現行ドキュメントと対象バージョンを確認してください。その後、目次を記事の題名で Ctrl+F / Cmd+F して候補を開き、残りの題名・語をシリーズ内または記事内で検索します。
 
+[Go: A Documentary](https://golang.design/history/) は、言語、標準ライブラリ、ツールチェーンなどの歴史を、公開された設計文書・Issue・CL・講演から逆引きする索引として使えます。ただし、サイト自身が本文は公開情報に基づく主観的な理解であり誤りもあり得ると注意しており、項目が追加されても過去時点の役割や状況を述べた本文が残ることがあります。最近の状態を網羅する資料とはみなさず、必ずリンク先の一次資料と対象版のソースへ進んでください。
+
+現在の実装を誰が扱っているか探すときは、[Go Code Owners](https://dev.golang.org/owners) をパッケージ名で検索すると、レビューの primary / secondary owner と Gerrit の変更履歴への入口が得られます。これは探索の手掛かりであって、現在の担当を証明する名簿ではありません。owner や個人の GitHub プロフィールを見つけた後は、直近の Issue・CL・レビューとバージョン付きソースで結論を確認します。
+
 | 調べたい課題 | go.dev から先に確認すること | research!rsc の目次で探す題名 → 次に探す題名・語 |
 | --- | --- | --- |
 | `fmt` や `strconv` が浮動小数点数をどう文字列化し、どこで丸めるのか | [Go Documentation](https://go.dev/doc) → [`strconv.FormatFloat`](https://go.dev/pkg/strconv/#FormatFloat) で現在の契約を確認し、[Go 1.26.0](https://cs.opensource.google/go/go/+/refs/tags/go1.26.0:src/internal/strconv/ftoa.go) と [Go 1.27.0](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/internal/strconv/ftoa.go) のタグ付きソースと変更履歴を比較する | `Floating Point Formatting` → `Floating-Point Printing and Parsing Can Be Simple And Fast` → `Shortest-Width Printing` → [シリーズ目次](https://research.swtch.com/fp-all) |
