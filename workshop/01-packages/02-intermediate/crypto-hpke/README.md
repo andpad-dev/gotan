@@ -72,7 +72,7 @@ different info rejected: true
 
 1. [Go 1.26 Release Notes](https://go.dev/doc/go1.26) で `crypto/hpke` が新しい標準パッケージであることを確認する。
 2. [package crypto/hpke](https://pkg.go.dev/crypto/hpke) の Overview と各型を読む。
-3. [hpke.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/crypto/hpke/hpke.go;l=183) と [標準ライブラリの例](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/crypto/hpke/hpke_test.go;l=21) を読む。
+3. [Go 1.27.0 のワンショット API](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/crypto/hpke/hpke.go;l=180-193) と [標準ライブラリの例](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/crypto/hpke/hpke_test.go;l=21-66) を読み、KEM・KDF・AEAD がどこで選ばれているか対応付ける。
 
 **答え**
 
@@ -102,8 +102,9 @@ HPKE の暗号スイートは KEM（鍵カプセル化方式）、KDF（鍵導�
 
 **調査ルート**
 
-1. [Seal](https://pkg.go.dev/crypto/hpke#Seal) と [Open](https://pkg.go.dev/crypto/hpke#Open) のシグネチャを確認する。
-2. [hpke.go の `Seal`](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/crypto/hpke/hpke.go;l=183) と [`Open`](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/crypto/hpke/hpke.go;l=224) のコメントを読む。
+1. [Go Documentation](https://go.dev/doc/) から標準ライブラリの `crypto/hpke` を開く。
+2. [Seal](https://pkg.go.dev/crypto/hpke#Seal) と [Open](https://pkg.go.dev/crypto/hpke#Open) のシグネチャを確認する。
+3. [Go 1.27.0 の `Seal`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/crypto/hpke/hpke.go;l=180-193) と [`Open`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/crypto/hpke/hpke.go;l=221-235) のコメントと実装を読み、公開鍵・秘密鍵・`info` がどこへ渡るかを追う。
 
 **答え**
 
@@ -123,7 +124,8 @@ HPKE の暗号スイートは KEM（鍵カプセル化方式）、KDF（鍵導�
 <summary>ヒント</summary>
 
 - `KEM.NewPublicKey` の説明で、バイト列を何として解釈するかを探す。
-- `MLKEM768X25519` を別の KEM に取り替えた場合を考える。
+- Go のソースで `MLKEM768X25519` を検索し、返している具体的な KEM から `NewPublicKey` の実装を探す。
+- `MLKEM768X25519` を別の KEM に取り替えた場合、たどり着く `NewPublicKey` がどう変わるかを考える。
 - `NewPublicKey` に KDF や AEAD を渡していないことにも注目し、暗号スイートが公開鍵バイト列から自動的に復元されるかを確認する。
 - 同じバイト列でも、別の KEM で読むと別の形式として扱われます。一方、KDF と AEAD は別途選ぶ部品です。この2つの違いを、鍵の形式と暗号スイートの設定表に分けて整理してみましょう。
 
@@ -134,13 +136,19 @@ HPKE の暗号スイートは KEM（鍵カプセル化方式）、KDF（鍵導�
 
 **調査ルート**
 
-1. [KEM](https://pkg.go.dev/crypto/hpke#KEM) の `NewPublicKey` を読む。
-2. [kem.go の実装](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/crypto/hpke/kem.go;l=215) で、KEM が自分の形式で公開鍵を復元することを確認する。
-3. [Go 1.26 の `crypto/hpke` 説明](https://go.dev/doc/go1.26) に戻る。
+1. [Go Documentation](https://go.dev/doc/) から標準ライブラリの `crypto/hpke` を開く。
+2. [KEM](https://pkg.go.dev/crypto/hpke#KEM) の `NewPublicKey` が公開鍵をバイト列から復元するメソッドであることを確認する。
+3. [Go 1.27.0 の `MLKEM768X25519`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/crypto/hpke/pq.go;l=20-43) を開き、返される `mlkem768X25519` が `*hybridKEM` であることを確認する。
+4. [その `hybridKEM.NewPublicKey`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/crypto/hpke/pq.go;l=164-180) で、公開鍵全体の長さを検証してから ML-KEM 部と楕円曲線部に分け、それぞれを復元している処理を追う。
+5. 対比として [DHKEM の `NewPublicKey`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/crypto/hpke/kem.go;l=215-221) を開き、選んだ KEM によって復元処理が異なることを確認する。
 
 **答え**
 
-公開鍵のバイト列は、単独で意味が決まるものではありません。`KEM.NewPublicKey` は、選択済みの KEM に従ってその列を公開鍵として復元・検証します。ここで指定しているのは KEM の鍵形式であり、KDF や AEAD の選択を復元・交渉しているわけではありません。
+公開鍵のバイト列は、単独で意味が決まるものではありません。`KEM.NewPublicKey` は、選択済みの KEM に従ってその列を公開鍵として復元・検証します。
+
+サンプルの `MLKEM768X25519()` が返すのは `*hybridKEM` です。その `NewPublicKey` は、受け取った長さが ML-KEM の公開鍵 1184 バイトと X25519 の公開鍵 32 バイトの合計 1216 バイトかを検証し、前半を ML-KEM、後半を X25519 の処理へ渡します。一方、DHKEM を選べば `dhKEM.NewPublicKey` が楕円曲線の公開鍵として復元します。したがって、サンプルの呼び出しを追う根拠は `dhKEM` ではなく `hybridKEM` の実装です。
+
+ここで指定しているのは KEM の鍵形式であり、KDF や AEAD の選択を復元・交渉しているわけではありません。
 
 送受信者は、公開鍵をどの KEM でエンコードしたかと、KEM/KDF/AEAD の暗号スイートを別々のプロトコル情報として取り決めます。受信したバイト列を別の方式の鍵として推測して扱いません。方式の選択や鍵の配布を場当たり的に混ぜないことが、ライブラリ API を正しく使う前提です。
 
