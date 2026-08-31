@@ -16,13 +16,13 @@ type Slice[T any] struct {
 func (s Slice[T]) Map[F any](f func(T) F) Slice[F] { ... }
 ```
 
-When you try to compile this code with the Go 1.26.4 you are currently using, the compiler objects:
+When compiled with Go 1.26.4, the compiler rejects this code:
 
 ```
 syntax error: method must have no type parameters
 ```
 
-Apparently, “generic methods” are coming in Go 1.27. Let's first use primary sources to establish:
+Go 1.27 officially supports generic methods. Compare Go 1.26 and Go 1.27 while using primary sources to establish:
 
 - what changed in the specification
 - why this could not be written through Go 1.26
@@ -43,6 +43,7 @@ Identify exactly what became possible to write in a `method` in Go 1.27 using th
 - There should be a paragraph about “generic methods” in the Changes to the language section.
 - The release notes' HTML contains a related issue embedded in the form `go.dev/issue/<number>` (you can find it by viewing the source with developer tools).
 - On the specification side, open the `Method declarations` section and compare how its EBNF differs from the older version.
+- Also confirm that the specification identifies itself as `Language version go1.27`, so the release notes, specification, and execution environment refer to the same release.
 
 </details>
 
@@ -54,6 +55,7 @@ Identify exactly what became possible to write in a `method` in Go 1.27 using th
 1. Open the [Changes to the language section of the Go 1.27 release notes](https://go.dev/doc/go1.27#language) and read the paragraph about `generic methods`.
 2. Open the embedded `go.dev/issue/77273` and jump to the Proposal section of [proposal #77273 “spec: generic methods for Go”](https://go.dev/issue/77273). The old and new EBNF are shown side by side.
 3. Check the adopted EBNF in the specification's [Method declarations](https://go.dev/ref/spec#Method_declarations) section.
+4. Confirm that `go version` locally and the version shown by the Playground are Go 1.27 or later.
 
 **Answer**
 
@@ -106,7 +108,7 @@ func main() {
 }
 ```
 
-(Run it on the Go Playground: https://go.dev/play/p/Lqn-PC8jg9E?v=gotip , and select Dev/gotip before running.)
+([Run it on the Go Playground](https://go.dev/play/p/Lqn-PC8jg9E))
 
 <details>
 <summary>Hint</summary>
@@ -124,8 +126,9 @@ func main() {
 
 1. Read the Background section of [proposal #77273](https://go.dev/issue/77273) to understand the historical reason for the prohibition and the idea behind “A change of view.”
 2. Check the relationship between `Reader.Read[E any]` and `io.Reader` in the Examples section of the same proposal.
-3. Compile the example locally with `gotip` or in the Playground and inspect the compiler's error message.
-4. For a deeper dive: read the historical discussion in the [No parameterized methods section of the Type Parameters Proposal](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#No-parameterized-methods).
+3. Confirm the current rule in the specification's [Interface types](https://go.dev/ref/spec#Interface_types) section.
+4. Compile the example with Go 1.27 or later locally or in the Playground and inspect the compiler's error message.
+5. For a deeper dive: read the historical discussion in the [No parameterized methods section of the Type Parameters Proposal](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#No-parameterized-methods).
 
 **Answer**
 
@@ -155,7 +158,7 @@ The Examples section of the proposal gives the answer directly:
 > ```
 > does not implement `io.Reader`, even though it might if there were some way to instantiate the method as `(*Reader).Read[byte]` (which there is not, and we are not proposing it).
 
-When compiled, the gotip compiler says the same thing:
+When compiled with Go 1.27.0, the compiler says the same thing:
 
 ```
 ./main.go:10:20: cannot use (*Reader)(nil) (value of type *Reader) as io.Reader value in variable declaration: *Reader does not implement io.Reader (wrong type for method Read)
@@ -171,14 +174,14 @@ The interface's `Read` requires a signature with no type parameters, `Read([]byt
 
 ## Question 3: Write and Run It — Add `Map[F any]` to `Slice[T]`
 
-Now that you understand the behavior from primary sources, complete the `Slice[T].Map[F any]` from the introduction and run it with `gotip` or in the Playground (`?v=gotip`). Also check whether type inference works, so that the caller does not need to specify the type argument explicitly.
+Now that you understand the behavior from primary sources, complete the `Slice[T].Map[F any]` from the introduction and run it with Go 1.27 or later locally or in the Playground. Also check whether type inference works, so that the caller does not need to specify the type argument explicitly.
 
 <details>
 <summary>Hint</summary>
 
-- To try it locally, run `go install golang.org/dl/gotip@latest && gotip download`, followed by `gotip run .`.
-- Add `?v=gotip` to the Playground URL, or select “Dev branch” from the Go version selector in the Playground.
-- Set `go 1.27` in `go.mod` (`go 1.26` will produce the error from Question 1).
+- Run `go version` locally, confirm Go 1.27 or later, then run `go run .`.
+- Check the Go version shown by the Playground as well.
+- Set `go 1.27` in `go.mod`. With a Go 1.27 toolchain and `go 1.26` in the module, the compiler instead reports `generic method requires go1.27 or later` because the module selects the older language version.
 - At the call site, you can write `s.Map(func(n int) string { ... })` (type argument `F` is inferred from the function literal).
 
 </details>
@@ -189,7 +192,7 @@ Now that you understand the behavior from primary sources, complete the `Slice[T
 **Investigation route**
 
 1. Recall the EBNF from Question 1 and put `[F any]` immediately after the method name.
-2. Run `gotip run .` locally or run it with Dev/gotip in the Playground, then check the output.
+2. Confirm `go version` and `go 1.27` in `go.mod`, then run `go run .` locally or use the Playground and check the output.
 3. Type inference works as described in [Type inference in the specification](https://go.dev/ref/spec#Type_inference). `F` is inferred from the function argument.
 
 **Answer**
@@ -226,7 +229,7 @@ func main() {
 }
 ```
 
-(Run it on the Go Playground: https://go.dev/play/p/ZlBpqqdQJvd?v=gotip )
+([Run it on the Go Playground](https://go.dev/play/p/ZlBpqqdQJvd))
 
 The output is:
 
@@ -265,7 +268,7 @@ func main() {
 }
 ```
 
-(Run it on the Go Playground: https://go.dev/play/p/HQD1EdC7pL6?v=gotip )
+([Run it on the Go Playground](https://go.dev/play/p/HQD1EdC7pL6))
 
 Output:
 
@@ -286,4 +289,4 @@ The [math/rand/v2 section](https://go.dev/doc/go1.27#minor_library_changes) of t
 - Language specification: [Method declarations](https://go.dev/ref/spec#Method_declarations) / [Type parameter declarations](https://go.dev/ref/spec#Type_parameter_declarations)
 - Proposal: [#77273 spec: generic methods for Go](https://go.dev/issue/77273)
 - Earlier discussion: [#49085 proposal: spec: allow type parameters in methods](https://go.dev/issue/49085) / [No parameterized methods section of the Type Parameters Proposal](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#No-parameterized-methods)
-- Try it locally: `go install golang.org/dl/gotip@latest && gotip download` / Playground's `?v=gotip`
+- Execution environment: check `go version` and `go 1.27` in `go.mod`, then use local `go run .` or the Go Playground.
