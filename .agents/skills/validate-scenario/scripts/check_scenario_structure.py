@@ -17,6 +17,7 @@ QUESTION_RE = re.compile(r"(?m)^## 設問\s+(\d+)(?::|：|\s)")
 URL_RE = re.compile(r"https?://[^\s<>\]})]+")
 DETAIL_RE = re.compile(r"<details\b[^>]*>(.*?)</details>", re.IGNORECASE | re.DOTALL)
 FENCE_RE = re.compile(r"^\s*(?:>\s*)?(```|~~~)")
+MARKDOWN_LINK_RE = re.compile(r"(?<!!)\[[^\]]*\]\(\s*<?([^\s>)]*)>?")
 LOCAL_PACKAGE_COMMAND_RE = re.compile(
     r"`go\s+(?:run|build|test|vet)\b[^`\n]*(?:\./\.\.\.|(?<!\S)\.)(?:\s[^`\n]*)?`"
 )
@@ -56,6 +57,19 @@ def first_route_url(block: str) -> str | None:
 def first_url(text: str) -> str | None:
     match = URL_RE.search(text)
     return match.group(0).rstrip(".,;:!?。 、」』）)]}\"'`") if match else None
+
+
+def local_markdown_targets(source: Path, text: str) -> set[Path]:
+    targets: set[Path] = set()
+    for match in MARKDOWN_LINK_RE.finditer(text):
+        parsed = urllib.parse.urlsplit(match.group(1))
+        if parsed.scheme or parsed.netloc or not parsed.path:
+            continue
+        target = (source.parent / urllib.parse.unquote(parsed.path)).resolve()
+        if target.is_dir() or parsed.path.endswith("/"):
+            target /= "README.md"
+        targets.add(target)
+    return targets
 
 
 def contains_markdown_heading(content: str) -> bool:
@@ -104,8 +118,32 @@ def main() -> int:
             failures += emit("FAIL", "category README lacks a usable reverse-search procedure")
 
     text = path.read_text(encoding="utf-8")
-    if not re.search(r"(?m)^#\s+\S", text):
+    title_match = re.search(r"(?m)^#\s+\S", text)
+    if not title_match:
         failures += emit("FAIL", "scenario title heading is missing")
+    else:
+        top_targets = local_markdown_targets(path, text[:title_match.start()])
+        workshop_readme = path.parents[3] / "README.md"
+        if workshop_readme.resolve() not in top_targets:
+            failures += emit("FAIL", "link to workshop/README.md must appear before the scenario title")
+        else:
+            emit("PASS", "top navigation links to workshop/README.md")
+        if category_readme.resolve() not in top_targets:
+            failures += emit("FAIL", "link to the category README must appear before the scenario title")
+        else:
+            emit("PASS", "top navigation links to the category README")
+
+        if not workshop_readme.is_file():
+            failures += emit("FAIL", f"workshop README is missing: {workshop_readme}")
+        else:
+            workshop_targets = local_markdown_targets(
+                workshop_readme,
+                workshop_readme.read_text(encoding="utf-8"),
+            )
+            if path.resolve() not in workshop_targets:
+                failures += emit("FAIL", "scenario is missing from the workshop/README.md index")
+            else:
+                emit("PASS", "scenario is linked from workshop/README.md")
     if "## 調査の入り口" not in text:
         failures += emit("FAIL", "## 調査の入り口 is missing")
 

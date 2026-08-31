@@ -1,6 +1,6 @@
 ---
 name: validate-scenario
-description: 既存の Go Conference ワークショップ問題 README を監査し、リンク切れ・Playground共有ソースとの不一致、category README と go.dev とヒントだけでの到達可能性、Go 一次ソースによるファクト、版と実測出力の再現性、未知の明記、ヒントの答え漏洩、調査ルートの順序を検証する。修正が必要な場合は問題単位の Draft PR まで行うときに使用する。
+description: 既存の Go Conference ワークショップ問題 README を監査し、問題一覧との双方向ナビゲーション、リンク切れ・Playground共有ソースとの不一致、category README と go.dev とヒントだけでの到達可能性、Go 一次ソースによるファクト、版と実測出力の再現性、未知の明記、ヒントの答え漏洩、調査ルートの順序を検証する。修正が必要な場合は問題単位の Draft PR まで行うときに使用する。
 ---
 
 # validate-scenario
@@ -10,6 +10,7 @@ description: 既存の Go Conference ワークショップ問題 README を監�
 ## 不変条件
 
 - リポジトリ直下の `AGENTS.md` と参照されている指示を先に読む。既存の未コミット変更を混ぜず、対象外の差分を消さない。
+- `workshop/README.md` の問題一覧から対象シナリオへ進め、対象 README のタイトルより前から問題一覧と category README の両方へ戻れることを確認する。
 - 問題の調査ルートの最初の外部ページは `https://go.dev/...` にする。`pkg.go.dev`、`cs.opensource.google`、GitHub issue から始まる場合は、内容が正しくても導線違反として報告する。
 - `go.dev` の入口から、category 直下の README の検索手順、問題文の観測、ヒント、各ページで見つかるリンクだけを順番に使って、答えの根拠へ到達できることを確認する。答え欄にだけ現れる URL や検索語を前提にしない。
 - 技術的主張は記憶・検索スニペット・ブログの要約だけで判定しない。必ず Go の一次情報を辿り、必要ならバージョン付きの Go 本体ソースと周辺文脈を読む。
@@ -23,9 +24,10 @@ description: 既存の Go Conference ワークショップ問題 README を監�
 対象を一つの `<category>/<difficulty>/<topic>/README.md` として特定し、次を読む。
 
 1. `AGENTS.md` とリポジトリ内の追加指示。
-2. 対象 category の `README.md`。逆引き手順、共通検索操作、入口 URL を記録する。
-3. 対象シナリオの全文。設問、ヒント、答え、こぼれ話、調査の入り口、コードブロック、すべてのリンクを対象にする。
-4. `.github/pull_request_template.md` と `check-scenarios` workflow。修正 PR の構造と CI の前提を確認する。
+2. `workshop/README.md`。対象シナリオが該当カテゴリ・難易度の一覧にあり、リンク先が対象 README と一致するか確認する。
+3. 対象 category の `README.md`。逆引き手順、共通検索操作、入口 URL を記録する。
+4. 対象シナリオの全文。タイトル前の戻り導線、設問、ヒント、答え、こぼれ話、調査の入り口、コードブロック、すべてのリンクを対象にする。
+5. `.github/pull_request_template.md` と `check-scenarios` workflow。修正 PR の構造と CI の前提を確認する。
 
 問題のパス、難易度、設問数、導入の文脈が `AGENTS.md` の方針に沿っているかを確認する。導入に
 固定の定型句がないこと自体はエラーにしない。職場の状況・最初の観測・調べる目的が自然につながり、
@@ -45,14 +47,14 @@ python3 .agents/skills/validate-scenario/scripts/check_scenario_structure.py \
   workshop/<category>/<difficulty>/<topic>/README.md
 ```
 
-この preflight が `FAIL` を出したら、手動調査で上書きせず不合格として記録する。`WARN` は自動判定できないため、後続の一次ソース・ヒント・Playground の手動検査で解消する。特に `調査ルート` の最初の URL が `go.dev` でない場合は導線不合格であり、答え欄の別のリンクから補ってはいけない。
+この preflight が `FAIL` を出したら、手動調査で上書きせず不合格として記録する。`WARN` は自動判定できないため、後続の一次ソース・ヒント・Playground の手動検査で解消する。preflight は、対象が `workshop/README.md` の一覧からリンクされ、シナリオタイトルより前に問題一覧と category README へのリンクがあることも検査する。特に `調査ルート` の最初の URL が `go.dev` でない場合は導線不合格であり、答え欄の別のリンクから補ってはいけない。
 
 次に、機械的なリンク候補抽出を行う。
 
 ```bash
 python3 .agents/skills/validate-scenario/scripts/check_markdown_links.py \
   --network workshop/<category>/<difficulty>/<topic>/README.md \
-  workshop/<category>/README.md
+  workshop/<category>/README.md workshop/README.md
 
 python3 .agents/skills/validate-scenario/scripts/check_playground_sources.py \
   --network workshop/<category>/<difficulty>/<topic>/README.md
@@ -201,6 +203,7 @@ README から主張を一文ずつ抽出し、次のような証拠台帳を作�
 
 | 検査 | 判定 | 根拠 | 必要な対応 |
 | --- | --- | --- | --- |
+| 一覧・戻り導線 | ... | workshop README とタイトル前リンク | ... |
 | リンク | ... | URL と HTTP/内容 | ... |
 | 到達可能性 | ... | 手順 1 → 2 → 3 | ... |
 | ファクト | ... | Go ソース/仕様/実測 | ... |
@@ -234,6 +237,7 @@ README から主張を一文ずつ抽出し、次のような証拠台帳を作�
 検証を終える前に、対象ごとに次を満たす。
 
 - すべてのリンク、コード、出力、アンカーを確認した。
+- `workshop/README.md` の一覧と対象 README のタイトル前リンクを往復し、ファイルツリーを経由せず移動できた。
 - `go.dev` から始まる調査ルートを、答え欄に頼らず再現した。
 - 事実を Go 一次ソースと実測に結び付けた。
 - 環境依存の主張では、主モジュール・ツールチェーン・関連設定を記録し、既知の互換・実験モードを切り分けた。
