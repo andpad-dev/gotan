@@ -1,4 +1,4 @@
-[03-cmd-tools の調べ方に戻る](../../README.md)
+[進行ガイド・シナリオ一覧](../../../README.md) | [03-cmd-tools の調べ方](../../README.md)
 
 # バッチ処理の 600ms を追え: `go tool pprof`
 

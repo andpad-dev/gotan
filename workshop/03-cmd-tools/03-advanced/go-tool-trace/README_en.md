@@ -1,4 +1,4 @@
-[Back to the 03-cmd-tools research guide](../../README.md)
+[Workshop guide and scenario index](../../../README.md) | [How to research 03-cmd-tools](../../README.md)
 
 # Track Down the 100 ms Order Process: `go tool trace`
 
@@ -81,10 +81,13 @@ ok   	example.com/trace-demo	0.469s
 
 Four operations are started with `go`, but the test takes about 100 ms. Explain from primary sources why a CPU profile alone is insufficient and what `go test -trace=order.trace` can observe.
 
+First establish the current contract in the [Go diagnostics guide](https://go.dev/doc/diagnostics), then read Russ Cox's account of pprof's sampling design, [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof). Treat its 2013 implementation details as history, not as the current runtime specification, and explain what limitation follows from counting periodically sampled stacks when the latency is spent waiting.
+
 <details>
 <summary>Hint</summary>
 
 - Compare Profiling and the Execution tracer in the [Go diagnostics guide](https://go.dev/doc/diagnostics).
+- In the research.swtch.com article, compare “Profiling with pprof” and “Interpreting the data” with the runtime-event timeline provided by a trace.
 - Read the `-trace` entry in `go help testflag`.
 - See the trace-file generation paths in the [official trace documentation](https://go.dev/cmd/trace/).
 
@@ -95,13 +98,14 @@ Four operations are started with `go`, but the test takes about 100 ms. Explain 
 
 **Investigation route**
 
-1. Use the [diagnostics guide](https://go.dev/doc/diagnostics) to distinguish CPU profiles from execution traces.
-2. Use `go help testflag` to confirm that `-trace trace.out` writes an execution trace before the test exits.
-3. Read the [trace documentation](https://go.dev/cmd/trace/) and the [Go 1.26.4 `cmd/trace` source](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/trace/doc.go).
+1. Use the [diagnostics guide](https://go.dev/doc/diagnostics) to distinguish time actively consuming CPU cycles from execution-trace observations of latency and goroutine behavior.
+2. Read “Profiling with pprof” and “Interpreting the data” in [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof). Use its explanation of periodically sampled stacks as design history, but do not treat details such as the fixed-size tables in the 2013 implementation as evidence of today's implementation.
+3. Use `go help testflag` to confirm that `-trace trace.out` writes an execution trace before the test exits.
+4. Read the [trace documentation](https://go.dev/cmd/trace/) and the [Go 1.26.4 `cmd/trace` source](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/trace/doc.go).
 
 **Answer**
 
-A CPU profile is good at finding expensive CPU paths, but time spent waiting for a lock may not be prominent in it. An execution trace records runtime events over time, including goroutine creation, blocking and unblocking, scheduling, syscalls, GC, and heap size. `go test -trace=order.trace` records those events while the reproducible test runs, allowing us to see when the four goroutines ran, stopped, and became serialized instead of assuming the lock was the cause from the duration alone.
+A CPU profile is good at finding expensive CPU paths. The current diagnostics guide explicitly distinguishes active CPU consumption from sleeping or I/O waiting, and the research.swtch.com article explains the underlying sampling model: a CPU profile counts stacks observed periodically while code is executing. A goroutine blocked on a lock is not consuming CPU during that wait, so its waiting duration may not be prominent in a CPU profile. An execution trace instead records runtime events over time, including goroutine creation, blocking and unblocking, scheduling, syscalls, GC, and heap size. `go test -trace=order.trace` records those events while the reproducible test runs, allowing us to see when the four goroutines ran, stopped, and became serialized instead of assuming the lock was the cause from the duration alone.
 
 </details>
 
@@ -239,8 +243,9 @@ In Go 1.27, the port-only form `-http=:6060` is restricted to localhost, matchin
 ## Research starting points
 
 1. [Go diagnostics guide](https://go.dev/doc/diagnostics)
-2. [Official trace documentation](https://go.dev/cmd/trace/)
-3. `go help testflag`, `go tool trace -h`, `go tool pprof -h`, and [Go 1.26.4 `cmd/trace` source](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/trace/doc.go)
-4. [Go 1.21 release notes](https://go.dev/doc/go1.21) and [Go 1.22 release notes](https://go.dev/doc/go1.22)
-5. [Execution tracer overhaul design](https://go.googlesource.com/proposal/+/refs/heads/master/design/60773-execution-tracer-overhaul.md) and [Issue #63185](https://github.com/golang/go/issues/63185)
-6. [Go 1.27 release notes](https://go.dev/doc/go1.27)
+2. [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof)
+3. [Official trace documentation](https://go.dev/cmd/trace/)
+4. `go help testflag`, `go tool trace -h`, `go tool pprof -h`, and [Go 1.26.4 `cmd/trace` source](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/trace/doc.go)
+5. [Go 1.21 release notes](https://go.dev/doc/go1.21) and [Go 1.22 release notes](https://go.dev/doc/go1.22)
+6. [Execution tracer overhaul design](https://go.googlesource.com/proposal/+/refs/heads/master/design/60773-execution-tracer-overhaul.md) and [Issue #63185](https://github.com/golang/go/issues/63185)
+7. [Go 1.27 release notes](https://go.dev/doc/go1.27)

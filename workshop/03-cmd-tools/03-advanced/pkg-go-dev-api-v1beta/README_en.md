@@ -1,3 +1,5 @@
+[Workshop guide and scenario index](../../../README.md) | [How to research 03-cmd-tools](../../README.md)
+
 # Use the pkg.go.dev API (v1beta)
 
 Our team must choose an HTTP router library. We want to compare and sort candidates by import count and maintenance status, but the pkg.go.dev browser UI has no such feature.

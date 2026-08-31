@@ -1,18 +1,21 @@
-[ワークショップに戻る](../README.md)
+[進行ガイド・シナリオ一覧](../README.md) | [チームでの進め方](../TEAM_GUIDE.md)
 
 # 01-packages の調べ方（逆引き手順）
 
-このカテゴリでは、標準パッケージのドキュメント（pkg.go.dev）を読み解いて課題に取り組みます。
+このカテゴリでは、標準パッケージのドキュメント（pkg.go.dev）を中心に、必要に応じて言語仕様も読み解いて課題に取り組みます。
 困ったときは、まずここに戻ってきてください。
+
+調査は [Go Documentation](https://go.dev/doc) を入口にします。標準パッケージの API 契約へ進むときは、そこから package documentation を辿るか、以下の逆引き手順で pkg.go.dev を開いてください。
 
 ## 関数・型・メソッドが何か知りたい
 
-1. Goパッケージ全体から検索したい場合は https://pkg.go.dev/ を開きます。
-2. 探すパッケージがわかっている場合は `https://pkg.go.dev/<パッケージ名>` を開きます（例: https://pkg.go.dev/fmt ）。
+1. [Go の公式ドキュメント](https://go.dev/doc/) を入口にし、Packages からパッケージドキュメントへ進みます。
+2. Goパッケージ全体から検索したい場合は https://pkg.go.dev/ を開きます。
+3. 探すパッケージがわかっている場合は `https://pkg.go.dev/<パッケージ名>` を開きます（例: https://pkg.go.dev/fmt ）。
     - 標準パッケージの場合は、https://pkg.go.dev/std からパッケージ一覧を開くと便利です。
     - また標準パッケージの場合はリダイレクトも充実しています。例えば、`slog` のパッケージは `log/slog` が正解ですが、https://pkg.go.dev/slog でも自動的にリダイレクトされます。
-3. `f` キーを押すと検索ダイアログが出るので、識別子名を打ち込んでジャンプします。
-4. まず名前と説明の最初の 1 文でざっくりと予想を立てます。英語が難しければ翻訳しても構いません。最初からすべてを読む必要はありません。
+4. `f` キーを押すと検索ダイアログが出るので、識別子名を打ち込んでジャンプします。
+5. まず名前と説明の最初の 1 文でざっくりと予想を立てます。英語が難しければ翻訳しても構いません。最初からすべてを読む必要はありません。
 
 ## パッケージ全体の使い方・約束事を知りたい
 
@@ -22,17 +25,33 @@
 
 - **Examples** セクション（`#pkg-examples`）を見ます。Example はページ上の Run ボタンでその場で実行できます。
 
+## 言語構文・仕様を知りたい
+
+1. [Go 言語仕様](https://go.dev/ref/spec)を開きます。
+2. 目次またはブラウザ内検索で、シナリオ本文に出てきた構文名を探します。例えば `range` なら **For statements** から下位の **For statements with range clause** へ進みます。
+3. 親の節が構文定義だけで終わる場合は、直後の下位節まで確認します。
+
 ## 挙動を確かめたい
 
-- 手元で `go run` します。手元に環境がなければ Go Playground（ https://go.dev/play/ ）に貼って実行します。
-- 実行結果が資料や問題文と違うときは、まず `go version`、`go env GOMOD`、`go env GODEBUG` を記録します。Go のバージョンだけでなく、メインモジュールの `go` 行や `GODEBUG` が挙動を切り替える機能があります。
-- バージョン依存の挙動は、問題文に示された Go Playground の実行結果を基準にします。ローカルで比較する場合は一時モジュールの `go` 行を明示し、Playground と同じ条件を作れない場合は無理に結論を出さず Playground で確認します。
+- 手元で `go run` します。手元に環境がなければ [Go Playground](https://go.dev/play/) に貼って実行します。班へ渡すときは Share で URL を作ります。
+- 実行結果が資料やシナリオ本文と違うときは、まず `go version`、`go env GOMOD`、`go env GODEBUG` を記録します。Go のバージョンに加え、メインモジュールの `go` 行や `GODEBUG` が挙動を切り替える機能があります。
+- バージョン依存の挙動は、シナリオ本文に示された Go Playground の実行結果を基準にします。ローカルで比較する場合は一時モジュールの `go` 行を明示し、Playground と同じ条件を作れない場合は無理に結論を出さず Playground で確認します。
 
 ## ドキュメントに書いていないことを知りたい
 
 - 識別子の宣言部分のリンクをクリックすると、実装のソースコードへジャンプできます。
 - Go 本体のソースをまとめて読むなら https://cs.opensource.google/go/go を使います。
 - https://cs.opensource.google/go/go の調査の仕方は [04-deep-dive](../04-deep-dive/README.md) を参照してください。
+
+## 設計・実装の背景を research.swtch.com から逆引きしたい
+
+[research!rsc の目次](https://research.swtch.com/) には、Go の設計史や実装を解説した Russ Cox の記事がまとまっています。記事が公開された時点の説明を現在の API 契約として扱わないよう、先に表の go.dev の入口から現行ドキュメントと対象バージョンを確認してください。その後、目次を記事の題名で Ctrl+F / Cmd+F して候補を開き、残りの題名・語をシリーズ内または記事内で検索します。
+
+| 調べたい課題 | go.dev から先に確認すること | research!rsc の目次で探す題名 → 次に探す題名・語 |
+| --- | --- | --- |
+| `fmt` や `strconv` が浮動小数点数をどう文字列化し、どこで丸めるのか | [Go Documentation](https://go.dev/doc) → [`strconv.FormatFloat`](https://go.dev/pkg/strconv/#FormatFloat) で現在の契約を確認し、[Go 1.26.0](https://cs.opensource.google/go/go/+/refs/tags/go1.26.0:src/internal/strconv/ftoa.go) と [Go 1.27.0](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/internal/strconv/ftoa.go) のタグ付きソースと変更履歴を比較する | `Floating Point Formatting` → `Floating-Point Printing and Parsing Can Be Simple And Fast` → `Shortest-Width Printing` → [シリーズ目次](https://research.swtch.com/fp-all) |
+| Go の版で標準パッケージの挙動が変わり、古い挙動に依存する呼び出し箇所を絞り込みたい | 対象版のリリースノートと、たとえば [Go 1.23 の Timer Channel Changes](https://go.dev/wiki/Go123Timer) で変更条件を固定する | `Hash-Based Bisect Debugging` → `runtime`、`GODEBUG` → [記事](https://research.swtch.com/bisect) |
+| パッケージの API 例や境界条件のテストを、小さく読みやすく組み立てたい | [Add a test](https://go.dev/doc/tutorial/add-a-test) → [`testing`](https://pkg.go.dev/testing) の順に、現在のテスト API と実行方法を確認する | `Go Testing By Example` → `testdata`、`test failures` → [記事](https://research.swtch.com/testing) |
 
 ## pkg.go.dev の小技
 

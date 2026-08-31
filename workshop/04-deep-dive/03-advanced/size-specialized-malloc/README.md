@@ -1,3 +1,5 @@
+[進行ガイド・シナリオ一覧](../../../README.md) | [04-deep-dive の調べ方](../../README.md)
+
 # Go 1.27 の Faster Memory Allocation は、なんで 80 バイト以下だけなの？
 
 Go 1.27 のリリースノートを読んでいたら、「Faster Memory Allocation」という項目に、こう書いてありました。

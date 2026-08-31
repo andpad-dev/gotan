@@ -1,3 +1,5 @@
+[Workshop guide and scenario index](../../../README.md) | [How to research 01-packages](../../README.md)
+
 # Track Old Notifications from `time.Timer` `Stop` / `Reset`
 
 An old incident report says that a retry job for a payment integration received a notification for the previous deadline immediately after stopping and resetting a timer. Current observations show that the channel capacity is 0. Why is it like this? Let's investigate the background.
@@ -137,11 +139,13 @@ In Go 1.27, this setting was permanently removed, and `time` timer channels are 
 
 ---
 
-## Question 4: Why was this change discussed for so long?
+## Question 4: How do you locate the code affected by a long-debated change?
 
 The problem of receiving an old notification is not merely about API appearance; it concerns the invariants required to use `Stop` / `Reset` correctly. Read the proposal issue and implementation comments, then explain to the team in one minute what difficulty the Go team was trying to reduce.
 
 For example, consider what happens if another goroutine receives from `timer.C` while the sequence “stop the timer -> empty the old notification -> set the deadline again” is in progress. Compare what users previously had to remember to avoid confusing an old notification with a new one against the guarantees of the current API.
+
+Now suppose that, during a Go 1.23–1.26 migration, the full test suite passes with the old behavior and fails with the new behavior. A process-wide `GODEBUG` switch does not identify which `time.NewTimer` call depends on the old semantics. Follow [Go 1.23 Timer Channel Changes](https://go.dev/wiki/Go123Timer) and Russ Cox's timer-failure case study, [Hash-Based Bisect Debugging in Compilers and Runtimes](https://research.swtch.com/bisect). Explain what `git bisect` and `bisect` each search, and what a flaky test changes about the investigation.
 
 <details>
 <summary>Hint</summary>
@@ -149,6 +153,8 @@ For example, consider what happens if another goroutine receives from `timer.C` 
 - Read the former explanation at the beginning of the issue that a value might exist after `Stop`.
 - Look for `stale time values` in the implementation comments.
 - Read the old drain example at the beginning of [Issue #37196](https://github.com/golang/go/issues/37196) alongside the `Stop` / `NewTimer` comments in [Go 1.26.4's sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=105).
+- In the official wiki's “Debugging” section, read the diagnostic procedure and output shown after the whole-process compatibility switch.
+- In the research.swtch.com article, focus on “A New Trick” after the `git bisect` result and on why a flaky target is repeated. In the bisect documentation, look for the flag related to repeating trials.
 
 </details>
 
@@ -160,12 +166,18 @@ For example, consider what happens if another goroutine receives from `timer.C` 
 1. Confirm the overview of the timer changes in the [Go 1.23 Release Notes](https://go.dev/doc/go1.23).
 2. Read the problem statement and discussion in [Issue #37196](https://github.com/golang/go/issues/37196).
 3. Confirm the final guarantee in the implementation comments of [sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=133).
+4. Read “Debugging” in the [Go Wiki's Timer Channel Changes](https://go.dev/wiki/Go123Timer). First confirm the behavior category with a whole-process switch, then see how `bisect` switches behavior by stack trace to narrow the dependency.
+5. Read the timer example in [Hash-Based Bisect Debugging in Compilers and Runtimes](https://research.swtch.com/bisect). Distinguish `git bisect`, which finds the introducing commit, from `bisect`, which searches call stacks where enabling a change makes the same program fail. Use the article, the [`golang.org/x/tools/cmd/bisect` documentation](https://pkg.go.dev/golang.org/x/tools/cmd/bisect), and the [v0.47.0 command source](https://cs.opensource.google/go/x/tools/+/refs/tags/v0.47.0:cmd/bisect/main.go) to distinguish the target command's `go test -count=N` from `bisect -count=N`.
 
 **Answer**
 
 Previously, an old deadline value could remain buffered after stopping or resetting. Correctness required carefully combining return values, draining, and the possibility of another goroutine receiving the value, which made the situation easy to misuse.
 
 The new design gives the API a strong guarantee that an old value cannot be received later. This reduces the need for users to guess whether a notification just received belongs to before or after the reset, making the timer lifecycle simpler to handle.
+
+For a large migration test, switching the whole process between `GODEBUG=asynctimerchan=0` and `=1` can confirm that the timer-semantics change is involved, but it cannot identify the dependent call site. `git bisect` searches repository history. In contrast, `golang.org/x/tools/cmd/bisect` repeats the same test and uses `GODEBUG` hash patterns to narrow the set of call stacks where old or new behavior is enabled.
+
+The search assumes consistent trial results. On the target-command side, `go test -count=N` makes an intermittent failure easier to observe. In contrast, `bisect -count=N` repeats each bisect trial and detects inconsistent results; it does not merely increase the failure rate. As Question 3 established, Go 1.27 removed `asynctimerchan`, so this is a migration diagnostic for Go 1.23–1.26. The lasting fix is to remove the old draining or timing dependency and rely on the current API guarantee.
 
 </details>
 
@@ -183,5 +195,7 @@ Code that checks the `len` or `cap` of a timer channel to determine whether it c
 ## Investigation starting points
 
 - [Go 1.27 Release Notes](https://go.dev/doc/go1.27)
+- [Go Wiki: Go 1.23 Timer Channel Changes](https://go.dev/wiki/Go123Timer)
+- [Hash-Based Bisect Debugging in Compilers and Runtimes](https://research.swtch.com/bisect)
 - [How to investigate 01-packages](../../README.md)
 - [package time](https://pkg.go.dev/time)

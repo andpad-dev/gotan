@@ -1,3 +1,5 @@
+[進行ガイド・シナリオ一覧](../../../README.md) | [03-cmd-tools の調べ方](../../README.md)
+
 # pkg.go.dev API(v1beta)を活用する
 
 チームで使う HTTP ルーターライブラリを選定することになりました。

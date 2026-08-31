@@ -1,3 +1,5 @@
+[Workshop guide and scenario index](../../../README.md) | [How to research 04-deep-dive](../../README.md)
+
 # Why Do Standard Go Errors Not Include Stack Traces?
 
 Go developers often log an error and still wonder where it occurred. Unlike Java or Python exceptions, standard Go errors do not automatically carry a stack trace. Investigate the design philosophy and history of error wrapping.

@@ -1,3 +1,5 @@
+[Workshop guide and scenario index](../../../README.md) | [How to research 04-deep-dive](../../README.md)
+
 # Why Can't `slog.Value` Be Compared with `==`?
 
 The following code does not compile:
