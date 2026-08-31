@@ -1,3 +1,5 @@
+[Workshop guide and scenario index](../../../README.md) | [How to research 01-packages](../../README.md)
+
 # Build strings with fmt.Sprintf
 
 You came across the following line in a senior colleague’s code, building a string by inserting values.

@@ -1,3 +1,5 @@
+[Workshop guide and scenario index](../../../README.md) | [How to research 04-deep-dive](../../README.md)
+
 # Investigate nil and empty slices in encoding/json
 
 While reviewing the response from a project-details API with the frontend team, you found that projects without assignees returned only `{"assignees":null}`. The frontend always wants to process an array, so the contract requires `{"assignees":[]}` when the list is empty.
