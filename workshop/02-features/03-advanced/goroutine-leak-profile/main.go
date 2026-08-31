@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
 	"runtime/pprof"
 	"time"
 )
@@ -41,6 +42,7 @@ func processWorkItems(ids []int) ([]int, error) {
 }
 
 func main() {
+	fmt.Println("go version:", runtime.Version())
 	_, err := processWorkItems([]int{0, 1, 2, 3, 4})
 	fmt.Fprintln(os.Stderr, "processWorkItems err:", err)
 

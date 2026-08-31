@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
 	"runtime/pprof"
 	"time"
 )
@@ -53,6 +54,7 @@ func processWorkItems(ids []int) ([]int, error) {
 }
 
 func main() {
+	fmt.Println("go version:", runtime.Version())
 	_, err := processWorkItems([]int{0, 1, 2, 3, 4})
 	fmt.Fprintln(os.Stderr, "processWorkItems err:", err)
 
@@ -65,28 +67,29 @@ func main() {
 }
 ```
 
-Playground: <https://go.dev/play/p/baiTvOMwD2C>
+Playground: [Go のバージョンも表示する共有コード](https://go.dev/play/p/UwYB3wyRxe9)
 
-`go1.27.0 run main.go` で実測すると、こう出ます（アドレスは環境ごとに変わります）。
+`GOTOOLCHAIN=go1.27.0 go run main.go` で実測すると、こう出ます（アドレスや絶対パスは環境ごとに変わります）。
 
 ```
+go version: go1.27.0
 processWorkItems err: boom
 === goroutine profile ===
 goroutine profile: total 5
 4 @ 0x... 0x... 0x... 0x... 0x...
-#	0x...	main.processWorkItems.func1+0x9b	./main.go:29
+#	0x...	main.processWorkItems.func1+0x9b	./main.go:30
 
 1 @ 0x... 0x... 0x... 0x... 0x... 0x... 0x... 0x...
 #	0x...	runtime/pprof.writeRuntimeProfile+0xb3	GOROOT/src/runtime/pprof/pprof.go:848
 #	0x...	runtime/pprof.writeGoroutine+0x4f	GOROOT/src/runtime/pprof/pprof.go:781
 #	0x...	runtime/pprof.(*Profile).WriteTo+0x143	GOROOT/src/runtime/pprof/pprof.go:405
-#	0x...	main.main+0xff	./main.go:50
+#	0x...	main.main+0x15b	./main.go:52
 #	0x...	runtime.main+0x37f	GOROOT/src/runtime/proc.go:302
 
 === goroutineleak profile ===
 goroutineleak profile: total 4
 4 @ 0x... 0x... 0x... 0x... 0x...
-#	0x...	main.processWorkItems.func1+0x9b	./main.go:29
+#	0x...	main.processWorkItems.func1+0x9b	./main.go:30
 ```
 
 同じ瞬間のスナップショットのはずなのに、`goroutine` は total 5、`goroutineleak` は total 4。  
@@ -132,8 +135,8 @@ goroutineleak profile: total 4
 1. 同期プリミティブ（channel、`sync.Mutex`、`sync.Cond` など）でブロックしている
 2. **もう二度と起きられない**
 
-冒頭の実測を当てはめると、`goroutine` プロファイル total 5 のうち 4 個は `chan send`（`./main.go:29`）でブロックしていて、残りの 1 個はプロファイルを書き出している最中の `main` goroutine です。  
-`goroutineleak` プロファイルはそこから 4 個だけ抽出しました。  
+冒頭の実測を当てはめると、`goroutine` プロファイル total 5 のうち 4 個は `chan send`（`./main.go:30`）でブロックしていて、残りの 1 個はプロファイルを書き出している最中の `main` goroutine です。
+`goroutineleak` プロファイルはそこから 4 個だけ抽出しました。
 差の 1 個は「まだ生きて動いている main は leak ではない」という当たり前の話です。
 
 問題はここからで、条件 2 の「二度と起きられない」を、ランタイムはどう判定しているのでしょうか。
@@ -218,9 +221,10 @@ Go 1.27 リリースノートの `Goroutine leak profile` 節には、実は次�
 
 **調査ルート**
 
-1. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) の `Goroutine leak profile` 節で、到達可能性に由来する現在の検出限界を確認する。
+1. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) の `Goroutine leak profile` 節で、到達可能性に基づくため検出できない例があるという但し書きを確認する。
 2. [Go 1.26 リリースノート](https://go.dev/doc/go1.26) の experiment 版から proposal issue [#74609](https://go.dev/issue/74609) を開き、設計文書 [`74609-goroutine-leak-detection-gc.md`](https://go.googlesource.com/proposal/+/master/design/74609-goroutine-leak-detection-gc.md) の `Rationale` 節へ進む。
-3. 設計文書 `Background` 節から、Uber Saioc らの学術論文（`10.1145/3676641.3715990`）へのリンクを辿り、"partial deadlock" の定義と検出可能性の議論を確認する（このページはブラウザで開くと 200 が返る一方、`curl` 等では 403 が返るため、参考文献として補助的に扱う）。
+3. 設計文書 [`74609-goroutine-leak-detection-gc.md`](https://go.googlesource.com/proposal/+/master/design/74609-goroutine-leak-detection-gc.md) の `Rationale` 節を読む。
+4. 設計文書 `Background` 節から、Uber Saioc らの学術論文（`10.1145/3676641.3715990`）へのリンクを辿り、"partial deadlock" の定義と検出可能性の議論を確認する（このページはブラウザで開くと 200 が返る一方、`curl` 等では 403 が返るため、参考文献として補助的に扱う）。
 
 **答え**
 
@@ -321,4 +325,4 @@ Go でメインループを止める慣用イディオムに `select{}`（case �
 - [`runtime/pprof` パッケージドキュメント](https://pkg.go.dev/runtime/pprof)（`type Profile` docstring の予約プロファイル名一覧）
 - [`net/http/pprof` パッケージドキュメント](https://pkg.go.dev/net/http/pprof)（`/debug/pprof/goroutineleak` エンドポイントの登録）
 
-> ※ 実測は `go1.27.0`（`go install golang.org/dl/go1.27.0@latest` で導入）で行った。Go Playground の既定バージョンが Go 1.27 未満の場合、`Lookup("goroutineleak")` が `nil` を返して panic する可能性があるため、Playground 上で試すときはバージョンセレクタで Go 1.27 以降を選ぶ。
+> ※ 2026-08-31 にローカルの Go 1.27.0 と Go Playground の両方で実行し、先頭行が `go version: go1.27.0`、プロファイル件数が 5 と 4 になることを確認した。共有コード自身が実行版を表示するため、後日試す場合は先頭行も結果と一緒に記録する。
