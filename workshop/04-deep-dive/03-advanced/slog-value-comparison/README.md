@@ -1,4 +1,4 @@
-[進行ガイド・シナリオ一覧](../../../README.md) | [04-deep-dive の調べ方](../../README.md)
+[シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [04-deep-dive の調べ方](../../README.md)
 
 # slog.Value はなぜ == で比較できないのか
 

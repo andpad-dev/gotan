@@ -1,4 +1,4 @@
-[進行ガイド・シナリオ一覧](../../../README.md) | [04-deep-dive の調べ方](../../README.md)
+[シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [04-deep-dive の調べ方](../../README.md)
 
 # 初級: encoding/json の nil スライスと空スライスを調べよう
 

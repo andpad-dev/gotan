@@ -1,4 +1,4 @@
-[Workshop guide and scenario index](../../../README.md) | [How to research 01-packages](../../README.md)
+[Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 01-packages](../../README.md)
 
 # Decode the Routing Rules of `http.ServeMux`
 

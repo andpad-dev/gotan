@@ -1,4 +1,4 @@
-[Workshop guide and scenario index](../../../README.md) | [How to research 04-deep-dive](../../README.md)
+[Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 04-deep-dive](../../README.md)
 
 # Beginner: Investigate defer argument evaluation and execution order
 

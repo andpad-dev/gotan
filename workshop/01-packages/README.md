@@ -1,4 +1,4 @@
-[進行ガイド・シナリオ一覧](../README.md) | [チームでの進め方](../TEAM_GUIDE.md)
+[シナリオ一覧](../SCENARIOS.md) | [ワークショップ進行ガイド](../README.md) | [チームでの進め方](../TEAM_GUIDE.md)
 
 # 01-packages の調べ方（逆引き手順）
 

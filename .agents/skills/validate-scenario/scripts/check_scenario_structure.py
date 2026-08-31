@@ -123,27 +123,33 @@ def main() -> int:
         failures += emit("FAIL", "scenario title heading is missing")
     else:
         top_targets = local_markdown_targets(path, text[:title_match.start()])
-        workshop_readme = path.parents[3] / "README.md"
+        workshop_dir = path.parents[3]
+        workshop_readme = workshop_dir / "README.md"
+        scenario_index = workshop_dir / "SCENARIOS.md"
         if workshop_readme.resolve() not in top_targets:
             failures += emit("FAIL", "link to workshop/README.md must appear before the scenario title")
         else:
             emit("PASS", "top navigation links to workshop/README.md")
+        if scenario_index.resolve() not in top_targets:
+            failures += emit("FAIL", "link to workshop/SCENARIOS.md must appear before the scenario title")
+        else:
+            emit("PASS", "top navigation links to workshop/SCENARIOS.md")
         if category_readme.resolve() not in top_targets:
             failures += emit("FAIL", "link to the category README must appear before the scenario title")
         else:
             emit("PASS", "top navigation links to the category README")
 
-        if not workshop_readme.is_file():
-            failures += emit("FAIL", f"workshop README is missing: {workshop_readme}")
+        if not scenario_index.is_file():
+            failures += emit("FAIL", f"scenario index is missing: {scenario_index}")
         else:
-            workshop_targets = local_markdown_targets(
-                workshop_readme,
-                workshop_readme.read_text(encoding="utf-8"),
+            scenario_index_targets = local_markdown_targets(
+                scenario_index,
+                scenario_index.read_text(encoding="utf-8"),
             )
-            if path.resolve() not in workshop_targets:
-                failures += emit("FAIL", "scenario is missing from the workshop/README.md index")
+            if path.resolve() not in scenario_index_targets:
+                failures += emit("FAIL", "scenario is missing from workshop/SCENARIOS.md")
             else:
-                emit("PASS", "scenario is linked from workshop/README.md")
+                emit("PASS", "scenario is linked from workshop/SCENARIOS.md")
     if "## 調査の入り口" not in text:
         failures += emit("FAIL", "## 調査の入り口 is missing")
 

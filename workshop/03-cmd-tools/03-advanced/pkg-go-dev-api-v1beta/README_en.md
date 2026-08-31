@@ -1,4 +1,4 @@
-[Workshop guide and scenario index](../../../README.md) | [How to research 03-cmd-tools](../../README.md)
+[Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 03-cmd-tools](../../README.md)
 
 # Use the pkg.go.dev API (v1)
 

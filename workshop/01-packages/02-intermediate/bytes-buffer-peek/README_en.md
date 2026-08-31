@@ -1,4 +1,4 @@
-[Workshop guide and scenario index](../../../README.md) | [How to research 01-packages](../../README.md)
+[Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 01-packages](../../README.md)
 
 # Peek Ahead at the Header of an Incoming Message
 
