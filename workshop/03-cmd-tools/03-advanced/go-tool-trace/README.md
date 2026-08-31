@@ -89,10 +89,13 @@ ok  	example.com/trace-demo	0.469s
 
 この現象を最初に CPU profile だけで調べるのが不十分な理由と、`go test -trace=order.trace` が観測できる事実を、一次情報から説明してください。
 
+その際、まず [Go の診断ツール案内](https://go.dev/doc/diagnostics) で現在の公式な契約を確認し、その後に pprof のサンプリング設計を説明した Russ Cox の [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof) も読みます。2013 年当時の実装詳細を現在のランタイム仕様として扱わず、周期的に得たスタックの標本を数える考え方が、待機時間の調査にどんな限界を持つかを整理してください。
+
 <details>
 <summary>ヒント</summary>
 
 - まず [Go の診断ツール案内](https://go.dev/doc/diagnostics) で Profiling と Execution tracer を見比べます。
+- research.swtch.com の記事では「Profiling with pprof」と「Interpreting the data」を読み、CPU が動いている瞬間のスタック標本と、runtime event の時系列を比べます。
 - `go help testflag` の `-trace` を確認しましょう。
 - trace ファイルを作れる経路は [trace の公式ドキュメント](https://go.dev/cmd/trace/) にも載っています。
 
@@ -103,13 +106,14 @@ ok  	example.com/trace-demo	0.469s
 
 **調査ルート**
 
-1. [Go の診断ツール案内](https://go.dev/doc/diagnostics) を読み、CPU profile は CPU を使っている高コストなコードパス、execution tracer はレイテンシー・利用率・goroutine の動きを調べるものだと区別する。
-2. 手元で `go help testflag` を実行し、`-trace trace.out` がテスト終了前に execution trace をファイルへ書くことを確認する。
-3. [trace の公式ドキュメント](https://go.dev/cmd/trace/) を読み、`go test -trace`、`runtime/trace.Start`、`net/http/pprof` が trace ファイルの生成経路であることを確認する。続けて [Go 1.26.4 の `cmd/trace` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/trace/doc.go) でも同じ用途と profile type を裏取りする。
+1. [Go の診断ツール案内](https://go.dev/doc/diagnostics) を読み、CPU profile は CPU サイクルを実際に消費している時間を、execution tracer はレイテンシー・利用率・goroutine の動きを調べるものだと区別する。
+2. [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof) の「Profiling with pprof」と「Interpreting the data」を読み、周期的に取得したスタックトレースごとの観測回数が profile の基礎になることを確認する。記事は 2013 年の実装解説なので、固定サイズの表などの詳細は現在実装の根拠にせず、設計の説明として読む。
+3. 手元で `go help testflag` を実行し、`-trace trace.out` がテスト終了前に execution trace をファイルへ書くことを確認する。
+4. [trace の公式ドキュメント](https://go.dev/cmd/trace/) を読み、`go test -trace`、`runtime/trace.Start`、`net/http/pprof` が trace ファイルの生成経路であることを確認する。続けて [Go 1.26.4 の `cmd/trace` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/trace/doc.go) でも同じ用途と profile type を裏取りする。
 
 **答え**
 
-- CPU profile は、CPU サイクルを使った場所を見つけるのに向いています。しかし今回の遅さは、CPU で計算している時間より「処理がロックを待っている時間」かもしれません。待機時間は CPU profile だけでは主役になりません。
+- CPU profile は、CPU サイクルを使った場所を見つけるのに向いています。公式案内も、sleep や I/O 待ちではなく、CPU を実際に消費している時間を示すものだと区別しています。research.swtch.com の記事が説明するように、CPU profile は実行中に周期的に得たスタックの標本を数えます。そのため、ロックでブロックされて CPU を使っていない goroutine の待機時間は、CPU profile だけでは主役になりません。
 - execution trace は goroutine の生成・ブロック・解除、スケジューリング、syscall、GC、ヒープサイズなどの runtime event を時系列で記録します。そのため「4 人がいつ走れ、いつ止まり、どれだけ直列化されたか」を観測できます。
 - `go test -trace=order.trace` は、再現テストを走らせながらその時系列の記録を残します。ここでは「100ms だからロック競合だ」と決めつけず、まず trace を採ることが次の検索の手がかりになります。
 
@@ -262,8 +266,9 @@ Go 1.27 で変わった `go tool trace -http=:6060` の扱いと、全アドレ�
 ## 調査の入り口
 
 1. [Go の診断ツール案内](https://go.dev/doc/diagnostics)
-2. [trace の公式ドキュメント](https://go.dev/cmd/trace/)
-3. 手元の `go help testflag`、`go tool trace -h`、`go tool pprof -h` と [Go 1.26.4 の `cmd/trace` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/trace/doc.go)
-4. [Go 1.21 リリースノート](https://go.dev/doc/go1.21) と [Go 1.22 リリースノート](https://go.dev/doc/go1.22)
-5. [execution tracer overhaul の設計文書](https://go.googlesource.com/proposal/+/refs/heads/master/design/60773-execution-tracer-overhaul.md) と [Issue #63185](https://github.com/golang/go/issues/63185)
-6. [Go 1.27 リリースノート](https://go.dev/doc/go1.27)
+2. [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof)
+3. [trace の公式ドキュメント](https://go.dev/cmd/trace/)
+4. 手元の `go help testflag`、`go tool trace -h`、`go tool pprof -h` と [Go 1.26.4 の `cmd/trace` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/trace/doc.go)
+5. [Go 1.21 リリースノート](https://go.dev/doc/go1.21) と [Go 1.22 リリースノート](https://go.dev/doc/go1.22)
+6. [execution tracer overhaul の設計文書](https://go.googlesource.com/proposal/+/refs/heads/master/design/60773-execution-tracer-overhaul.md) と [Issue #63185](https://github.com/golang/go/issues/63185)
+7. [Go 1.27 リリースノート](https://go.dev/doc/go1.27)

@@ -169,11 +169,13 @@ Go 1.27 ではこの設定は恒久的に削除され、`time` のタイマー�
 
 ---
 
-## 設問 4: なぜこの変更は長く議論された？
+## 設問 4: 長く議論された変更の影響箇所をどう突き止める？
 
 古い通知を受信してしまう問題は、単なる API の見た目ではなく、`Stop` / `Reset` を正しく使う不変条件に関わります。提案 Issue と実装コメントを読んで、Go チームがどのような困難を減らそうとしたのか、1 分でチームへ説明してください。
 
 例えば「タイマーを止める → 古い通知を空にする → 期限を設定し直す」という処理の途中で、別の goroutine が `timer.C` を受信すると何が起きるかを考えます。古い通知と新しい通知を取り違えないために、利用側が何を覚えておく必要があったのかを、現在のAPI保証と比べてください。
+
+さらに Go 1.23〜1.26 への移行中、テストスイート全体では旧挙動なら成功し、新挙動なら失敗することまで分かったとします。`GODEBUG` の全体切り替えだけでは、どの `time.NewTimer` 呼び出しが旧挙動に依存しているかは分かりません。[Go 1.23 の Timer Channel Changes](https://go.dev/wiki/Go123Timer) と、実際のタイマー障害を題材にした Russ Cox の [Hash-Based Bisect Debugging in Compilers and Runtimes](https://research.swtch.com/bisect) を辿り、`git bisect` と `bisect` がそれぞれ何を二分探索するのか、揺らぐテストでは何に注意するのかも説明してください。
 
 <details>
 <summary>ヒント</summary>
@@ -181,6 +183,8 @@ Go 1.27 ではこの設定は恒久的に削除され、`time` のタイマー�
 - Issue の冒頭にある、`Stop` 後に値があるかもしれないという従来の説明を読む。
 - 実装コメントにある `stale time values` を探す。
 - [Issue #37196](https://github.com/golang/go/issues/37196) の冒頭にある従来のドレイン例と、[Go 1.26.4のsleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=105) の `Stop` / `NewTimer` のコメントを並べて読む。
+- 公式 Wiki の「Debugging」で、互換設定を全体へ切り替えた後に示される診断手順と、その出力例を読む。
+- research.swtch.com の記事では、`git bisect` の結果の次に始まる「A New Trick」と、揺らぐ対象を繰り返す理由に注目する。bisect のドキュメントでは、試行の反復に関する flag を探す。
 
 </details>
 
@@ -192,12 +196,18 @@ Go 1.27 ではこの設定は恒久的に削除され、`time` のタイマー�
 1. [Go 1.23 Release Notes](https://go.dev/doc/go1.23) でタイマー変更の概要を確認する。
 2. [Issue #37196](https://github.com/golang/go/issues/37196) の問題提起と議論を読む。
 3. 最終的な保証を [sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/time/sleep.go;l=133) の実装コメントで確認する。
+4. [Go Wiki の Timer Channel Changes](https://go.dev/wiki/Go123Timer) の「Debugging」を読み、旧・新挙動の全体切り替えで原因の種類を確認した後、`bisect` がスタックトレースごとに挙動を切り替えて依存箇所を絞る手順を確認する。
+5. [Hash-Based Bisect Debugging in Compilers and Runtimes](https://research.swtch.com/bisect) のタイマー障害の実例を読み、`git bisect` は変更を導入したコミットを、`bisect` は同じプログラム内で変更を有効にする呼び出しスタックを探索する、という探索軸の違いを整理する。揺らぐ失敗に対しては、記事、[`golang.org/x/tools/cmd/bisect` のドキュメント](https://pkg.go.dev/golang.org/x/tools/cmd/bisect)、[v0.47.0 のコマンドソース](https://cs.opensource.google/go/x/tools/+/refs/tags/v0.47.0:cmd/bisect/main.go) を読み、対象コマンドの `go test -count=N` と `bisect -count=N` の役割も区別する。
 
 **答え**
 
 従来は停止や再設定の後に、以前の期限の値がバッファに残る可能性がありました。正しさのために、返り値、ドレイン、他 goroutine の受信を細かく組み合わせる必要があり、誤用しやすい状態でした。
 
 新しい設計は、古い値を後から受け取らないという強い保証を API に持たせます。これにより、利用側が「いま届いた通知は再設定前か」を推測する必要を減らし、タイマーのライフサイクルをより単純に扱えるようにしました。
+
+移行時の大きなテストで失敗した場合、`GODEBUG=asynctimerchan=0` と `=1` をプロセス全体で切り替えれば、タイマー意味論の変更が失敗に関係するかを確認できます。しかし、それだけでは問題のある呼び出し箇所までは特定できません。`git bisect` がリポジトリのコミット履歴を探索するのに対し、`golang.org/x/tools/cmd/bisect` は同じテストを繰り返し、`GODEBUG` のハッシュパターンを使って新旧挙動を適用する呼び出しスタックの集合を絞ります。
+
+この探索は試行結果が一貫していることを前提にします。対象コマンド側の `go test -count=N` は揺らぐ失敗を観測しやすくする一方、`bisect -count=N` は bisect の各試行を複数回実行し、結果の不一致を検出します。後者は単に失敗率を上げる指定ではありません。Go 1.27 では設問 3 のとおり `asynctimerchan` 自体が削除されたため、この切り分けは Go 1.23〜1.26 の移行期間に使う診断手段です。最終的には、冒頭の障害報告にある旧来のドレインやタイミング依存を、現在の API 保証に合わせて修正します。
 
 </details>
 
@@ -215,5 +225,7 @@ Go 1.27 ではこの設定は恒久的に削除され、`time` のタイマー�
 ## 調査の入り口
 
 - [Go 1.27 Release Notes](https://go.dev/doc/go1.27)
+- [Go Wiki: Go 1.23 Timer Channel Changes](https://go.dev/wiki/Go123Timer)
+- [Hash-Based Bisect Debugging in Compilers and Runtimes](https://research.swtch.com/bisect)
 - [01-packages の調べ方](../../README.md)
 - [package time](https://pkg.go.dev/time)
