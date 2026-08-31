@@ -2,6 +2,16 @@
 
 このカテゴリでは、Go の言語仕様や標準ライブラリの実装、設計の背景を一次情報の順番に沿って調べます。個別の問題の答えを先に開かず、まず共通の入口から観測した現象を言葉にし、根拠を一つずつたどってください。
 
+## Deep Dive したい目的から逆引きする
+
+| 知りたいこと | 最初に開く入口 | 判断・経緯・実装までの追い方 |
+| --- | --- | --- |
+| 新しい言語機能、ツール、標準ライブラリ API や既存関数の変更を知りたい | [Release History](https://go.dev/doc/devel/release) から対象版のリリースノートを開く | 変更の節 → 表示リンクまたは HTML コメントの Issue / CL → Issue の議論と決定 → CL の差分・レビュー → 対象タグの実装 → 実測 |
+| Proposal review meeting で最近どの提案が検討され、どう判断されたか知りたい | [Proposal meeting minutes](https://go.dev/s/proposal-minutes) の最新コメントを開く | meeting minutes に並ぶ Issue 番号と状態 → 興味のある Proposal Issue の全議論 → design document → 関連 CL → 対象タグの実装。minutes は議論の索引として使い、判断理由は各 Issue で確認する |
+| 関心のあるトピックについて、採用前・見送りを含む Proposal を探したい | `golang/go` Issues の [`Proposal` ラベル](https://github.com/golang/go/issues?q=is%3Aissue%20label%3AProposal)を開く | 機能名・パッケージ名で絞る → Issue の Description・全コメント・状態 → meeting minutes と design document → 採用なら実装 CL と対象タグ、見送りなら最終判断コメント |
+
+[Go proposal process](https://go.dev/s/proposal) では、Proposal は `Proposal` ラベルの付いた GitHub Issue として始まり、必要な場合に design document が作られます。proposal review meeting の記録は PR ではなく、[meeting minutes Issue](https://go.dev/s/proposal-minutes) のコメントとして公開されています。design document の変更や実装は CL でレビューされるため、Issue、design document、CL を別の資料として追ってください。
+
 ## 1. まず言語仕様を読む
 
 構文、型、比較可能性、メモリサイズ、エラー処理などのルールを調べるときは、最初に [The Go Programming Language Specification](https://go.dev/ref/spec) を開きます。
