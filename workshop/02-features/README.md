@@ -107,6 +107,10 @@ Russ Cox は、[2008 年に Go の開発チームへ参加し、2 つのコン�
 
 research!rsc は Go プロジェクトの公式ドキュメントではありません。まず go.dev で現在の仕様と対象バージョンを確認し、次に目次を記事の題名で Ctrl+F / Cmd+F して候補を開き、残りの題名・語をシリーズ内または記事内で検索します。過去の記事の説明と現在の仕様・実装は分けて記録してください。
 
+[Go: A Documentary](https://golang.design/history/) は、Go の言語設計を、公開された設計文書・Issue・CL・講演から年代や論点で逆引きする索引として使えます。ただし、サイト自身が本文は公開情報に基づく主観的な理解であり誤りもあり得ると注意しており、項目が追加されても過去時点の役割や状況を述べた本文が残ることがあります。最近の状態を網羅する資料とはみなさず、リンク先の一次資料と対象版のリリースノート・仕様・実装で結論を更新してください。
+
+最近の変更では、機能名だけでなく関係する開発者から追うと、周辺ツールまで含む作業を見つけられることがあります。たとえば [Alan Donovan のプロフィール](https://github.com/adonovan) から、Generic Methods 採用後の `x/tools`、gopls、vulncheck などの追随作業を整理した [golang/go#77549](https://github.com/golang/go/issues/77549) へ進めます。逆に [Russ Cox のプロフィール](https://github.com/rsc) は過去の設計史を探す入口にはなりますが、過去に Go チームを率いた人物の現在の活動量だけから、Go プロジェクトの現在の方針や担当を判断してはいけません。[Go Code Owners](https://dev.golang.org/owners) も担当候補と Gerrit 履歴を探す手掛かりとして使い、最後は直近の Issue・CL・レビューで確認します。
+
 | 調べたい課題 | go.dev から先に確認すること | research!rsc の目次で探す題名 → 次に探す題名・語 |
 | --- | --- | --- |
 | goroutine 間の読み書きが、どの同期によって順序付けられるのか | [The Go Memory Model](https://go.dev/ref/mem) で `synchronized before`、`happens before`、`data race` の定義を確認する | `Memory Models` → `Hardware Memory Models`、`Programming Language Memory Models`、`Updating the Go Memory Model` → [シリーズ目次](https://research.swtch.com/mm) |
