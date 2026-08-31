@@ -1,3 +1,5 @@
+[Workshop guide and scenario index](../../../README.md) | [How to research 01-packages](../../README.md)
+
 # Investigate `for` syntax in the specification
 
 You are coding in Go again after a very long break.

@@ -1,3 +1,5 @@
+[Workshop guide and scenario index](../../../README.md) | [How to research 04-deep-dive](../../README.md)
+
 # Beginner: Investigate defer argument evaluation and execution order
 
 An import process records its started and completed states in an audit log. Although the process has completed, the cleanup log shows only `started`. You are using `defer` to ensure that the log is written.

@@ -1,3 +1,5 @@
+[Workshop guide and scenario index](../../../README.md) | [How to research 03-cmd-tools](../../README.md)
+
 # Check test coverage
 
 You saw `coverage: 66.7%` in the results of a CI test. Let’s investigate what it means.

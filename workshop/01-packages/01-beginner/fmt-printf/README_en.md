@@ -1,3 +1,5 @@
+[Workshop guide and scenario index](../../../README.md) | [How to research 01-packages](../../README.md)
+
 # Investigate fmt.Printf verbs
 
 You came across format verbs in a senior colleague’s `fmt.Printf` code. Let’s investigate what they do.

@@ -1,3 +1,5 @@
+[Workshop guide and scenario index](../../../README.md) | [How to research 01-packages](../../README.md)
+
 # Choose a notification channel with cmp.Or
 
 An internal notification service selects a destination channel in the order of personal settings, team settings, and the company default. Unconfigured fields are empty strings. While looking at code where the team setting `#backend-alerts` was selected even though the personal setting was empty, you noticed `cmp.Or`. Let’s investigate what it does.

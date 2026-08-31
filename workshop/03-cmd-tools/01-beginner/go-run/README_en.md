@@ -1,3 +1,5 @@
+[Workshop guide and scenario index](../../../README.md) | [How to research 03-cmd-tools](../../README.md)
+
 # Look behind `go run`
 
 You came across `go run`. Let’s investigate what it does.
