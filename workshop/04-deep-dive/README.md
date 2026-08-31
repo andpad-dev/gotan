@@ -9,10 +9,17 @@
 | 知りたいこと | 最初に開く入口 | 判断・経緯・実装までの追い方 |
 | --- | --- | --- |
 | 新しい言語機能、ツール、標準ライブラリ API や既存関数の変更を知りたい | [Release History](https://go.dev/doc/devel/release) から対象版のリリースノートを開く | 変更の節 → 表示リンクまたは HTML コメントの Issue / CL → Issue の議論と決定 → CL の差分・レビュー → 対象タグの実装 → 実測 |
-| Proposal review meeting で最近どの提案が検討され、どう判断されたか知りたい | [Proposal meeting minutes](https://go.dev/s/proposal-minutes) の最新コメントを開く | meeting minutes に並ぶ Issue 番号と状態 → 興味のある Proposal Issue の全議論 → design document → 関連 CL → 対象タグの実装。minutes は議論の索引として使い、判断理由は各 Issue で確認する |
-| 関心のあるトピックについて、採用前・見送りを含む Proposal を探したい | `golang/go` Issues の [`Proposal` ラベル](https://github.com/golang/go/issues?q=is%3Aissue%20label%3AProposal)を開く | 機能名・パッケージ名で絞る → Issue の Description・全コメント・状態 → meeting minutes と design document → 採用なら実装 CL と対象タグ、見送りなら最終判断コメント |
+| Proposal review meeting で最近どの提案が検討され、どう判断されたか知りたい | [Proposal review meeting minutes](https://go.dev/s/proposal-minutes) の最新コメントを開く | 毎週投稿される minutes に並ぶ Issue 番号と状態 → 興味のある Proposal Issue の全議論 → design document → 関連 CL → 対象タグの実装。minutes は議論の索引として使い、判断理由は各 Issue で確認する |
+| 関心のあるトピックについて、採用前・見送りを含む Proposal を探したい | `golang/go` Issues の [`Proposal` ラベル](https://github.com/golang/go/issues?q=is%3Aissue%20label%3AProposal)を開く | 機能名・パッケージ名で絞る → Issue の Description・全コメント・状態 → meeting minutes → 必要なら design document とそのレビュー CL → 採用なら実装 CL と対象タグ、見送りなら最終判断コメント |
 
-[Go proposal process](https://go.dev/s/proposal) では、Proposal は `Proposal` ラベルの付いた GitHub Issue として始まり、必要な場合に design document が作られます。proposal review meeting の記録は PR ではなく、[meeting minutes Issue](https://go.dev/s/proposal-minutes) のコメントとして公開されています。design document の変更や実装は CL でレビューされるため、Issue、design document、CL を別の資料として追ってください。
+Proposal の資料は、次のように役割を分けて使います。
+
+- **手続き**: [Go proposal process](https://go.dev/s/proposal) で、提案、議論、Design doc、採否決定の流れを確認する。Proposal は `Proposal` ラベルの付いた GitHub Issue として始まり、必要な場合にだけ Design doc が作られる。
+- **週次のレビュー結果**: [Proposal review meeting minutes](https://go.dev/s/proposal-minutes) のコメントから、その週に状態が動いた Issue を見つける。会議はおおむね毎週開かれ、結果は会議後に投稿される。minutes だけで理由を推測せず、リンク先 Issue の全コメントを読む。
+- **Design doc の実体**: [Go proposal repository](https://cs.opensource.google/go/proposal/+/master:README.md) でリポジトリと README を確認し、[design ディレクトリ](https://github.com/golang/proposal/tree/master/design) から `design/<Issue番号>-<名前>.md` を探す。
+- **Design doc の変更とレビュー**: Gerrit の [`project:proposal` 検索](https://go-review.googlesource.com/q/project:proposal)で、Design doc を変更した CL、patch set、レビューコメント、状態を追う。設計内容の議論は Proposal Issue、文書の修正履歴は Gerrit と役割が異なる。
+
+Proposal Issue、Design doc、その文書を変更した CL、採用後の実装 CL は別の資料です。Issue 番号、Design doc のファイル名、各 CL の commit message にある相互参照を使って接続してください。
 
 ## 1. まず言語仕様を読む
 
