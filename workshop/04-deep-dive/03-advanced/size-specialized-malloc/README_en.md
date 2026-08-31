@@ -4,6 +4,8 @@
 
 The Go 1.27 release notes say: “The compiler now generates calls to size-specialized memory allocation routines, reducing the cost of some small (<80 byte) memory allocations by up to 30%.” Why 80 bytes rather than 128 or 256?
 
+The release-note summary says `<80 byte`, but the Go 1.27.0 implementation rejects only `size > 80`; an allocation of exactly 80 bytes is therefore eligible. This scenario uses “80 bytes or less” to match the implementation.
+
 ```go
 type Point struct{ X, Y int } // 16 bytes = no more than 80 bytes
 
@@ -11,6 +13,12 @@ p := new(Point) // The size is known and may use a size-specialized routine
 ```
 
 ([Run it in the Go Playground](https://go.dev/play/p/YnvY6u0c87E))
+
+Output with Go 1.27.0:
+
+```text
+{1 2}, size=16 bytes
+```
 
 ---
 
@@ -24,7 +32,7 @@ p := new(Point) // The size is known and may use a size-specialized routine
 
 1. Read [Go 1.27 release notes](https://go.dev/doc/go1.27).
 2. Read [the compiler change](https://go-review.googlesource.com/c/go/+/707856).
-3. Inspect [`specializedMallocSym`](https://github.com/golang/go/blob/release-branch.go1.27/src/cmd/compile/internal/ssagen/ssa.go#L805) and the generated [mkmalloc implementation](https://github.com/golang/go/blob/release-branch.go1.27/src/runtime/_mkmalloc/mkmalloc.go).
+3. Inspect [`specializedMallocSym`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/compile/internal/ssagen/ssa.go;l=804) and the generated [mkmalloc implementation](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/_mkmalloc/mkmalloc.go).
 
 **Answer**
 
@@ -42,8 +50,9 @@ Previously, `new(T)` used generic `runtime.newobject` and `mallocgc`, which repe
 
 **Investigation route**
 
-1. Read [`specializedMallocSym`](https://github.com/golang/go/blob/release-branch.go1.27/src/cmd/compile/internal/ssagen/ssa.go#L808).
-2. Read [`specializedMallocMax`](https://github.com/golang/go/blob/release-branch.go1.27/src/runtime/_mkmalloc/constants.go#L30).
+1. Start with the `<80 byte` summary in the [Go 1.27 release notes](https://go.dev/doc/go1.27), then ask how the implementation tests the boundary.
+2. Read [`specializedMallocSym`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/compile/internal/ssagen/ssa.go;l=804), including the `size > specializedMallocMax` condition.
+3. Read [`specializedMallocMax`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/_mkmalloc/constants.go;l=25).
 
 **Answer**
 
@@ -85,5 +94,5 @@ The first runtime CL, [specialized malloc functions up to 512 bytes](https://go.
 
 - [Go 1.27 release notes](https://go.dev/doc/go1.27)
 - [Compiler CL](https://go-review.googlesource.com/c/go/+/707856)
-- [`runtime/_mkmalloc/constants.go`](https://github.com/golang/go/blob/release-branch.go1.27/src/runtime/_mkmalloc/constants.go#L25)
-- [`cmd/compile/internal/ssagen/ssa.go`](https://github.com/golang/go/blob/release-branch.go1.27/src/cmd/compile/internal/ssagen/ssa.go#L805)
+- [`runtime/_mkmalloc/constants.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/_mkmalloc/constants.go;l=25)
+- [`cmd/compile/internal/ssagen/ssa.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/compile/internal/ssagen/ssa.go;l=804)
