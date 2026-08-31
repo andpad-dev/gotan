@@ -283,10 +283,24 @@ Go 1.27 リリースノートの [math/rand/v2 節](https://go.dev/doc/go1.27#mi
 
 ---
 
+<details>
+<summary>こぼれ話: 最近の対応を「人」から追う</summary>
+
+言語機能が入った後は、コンパイラだけでなく gopls、解析ライブラリ、デバッガなども新しい構文へ追随します。proposal #77273 の Libraries and tools 節は、過去の経験からツールが追随するまで 1、2 リリースかかる可能性に触れています。では、Go 1.27 の Generic Methods では実際に誰が何を追っていたのでしょうか。
+
+まず [Go 1.27 リリースノート](https://go.dev/doc/go1.27#language) と [proposal #77273](https://go.dev/issue/77273) で対象機能と版を固定します。次に GitHub の `golang/go` Issues で `"generic methods"` を検索し、`Tools` ラベルと `Go1.27` milestone で絞ると、Alan Donovan が起票した [#77549 x/tools: plan for generic methods](https://github.com/golang/go/issues/77549) に到達できます。この Issue は、`x/tools` 全体を監査し、gopls、vulncheck、外部ツールなどの追随作業を集めるための追跡 Issue です。
+
+ここで [Alan Donovan のプロフィール](https://github.com/adonovan) を開くと、同じ人物が最近扱っている Issue やリポジトリを別方向から探せます。ただし、プロフィールの活動量は実装の完了や現在の担当を証明しません。機能名と人物名で見つけた候補から、対象版の Issue、関連 CL、レビュー、バージョン付きソースへ戻って結論を確認します。[Go Code Owners](https://dev.golang.org/owners) もパッケージごとの担当候補と Gerrit 履歴を探す入口ですが、同じく直近の変更履歴で再確認してください。
+
+</details>
+
+---
+
 ## 調査の入り口
 
 - リリースノート: [Go 1.27 Release Notes #language](https://go.dev/doc/go1.27#language)
 - 言語仕様: [Method declarations](https://go.dev/ref/spec#Method_declarations) / [Type parameter declarations](https://go.dev/ref/spec#Type_parameter_declarations)
 - Proposal: [#77273 spec: generic methods for Go](https://go.dev/issue/77273)
+- ツールの追随作業: [#77549 x/tools: plan for generic methods](https://github.com/golang/go/issues/77549) / [Go Code Owners](https://dev.golang.org/owners)
 - 先行議論: [#49085 proposal: spec: allow type parameters in methods](https://go.dev/issue/49085) / [Type Parameters Proposal の No parameterized methods 節](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#No-parameterized-methods)
 - 実行環境: `go version` と `go.mod` の `go 1.27` を確認し、手元の `go run .` または Go Playground で実行する
