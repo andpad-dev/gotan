@@ -100,3 +100,13 @@
 
 - **手元で挙動を試したい**
   * Go Playground（ https://go.dev/play/ ）を利用する。開発版（Dev版）や過去のバージョンに切り替えて挙動を比較・検証する。
+
+## 設計・歴史を research.swtch.com から逆引きしたい
+
+[research!rsc の目次](https://research.swtch.com/) は、言語機能の背景を探す補助線として使えます。まず go.dev で現在の仕様と対象バージョンを確認し、次に目次を記事の題名で Ctrl+F / Cmd+F して候補を開き、残りの題名・語をシリーズ内または記事内で検索します。過去の記事の説明と現在の仕様・実装は分けて記録してください。
+
+| 調べたい課題 | go.dev から先に確認すること | research!rsc の目次で探す題名 → 次に探す題名・語 |
+| --- | --- | --- |
+| goroutine 間の読み書きが、どの同期によって順序付けられるのか | [The Go Memory Model](https://go.dev/ref/mem) で `synchronized before`、`happens before`、`data race` の定義を確認する | `Memory Models` → `Hardware Memory Models`、`Programming Language Memory Models`、`Updating the Go Memory Model` → [シリーズ目次](https://research.swtch.com/mm) |
+| 言語機能の変更が、どの提案と議論を経て採用・見送りになったのか | [Go proposal process](https://go.dev/s/proposal) から proposal Issue と決定を確認し、採用された変更だけ対象版のリリースノート・仕様・実装へ進む | `Go Proposals` → `Enabling Experiments`、`Representation` → [シリーズ目次](https://research.swtch.com/proposals) |
+| channel を待つ goroutine の扱いが、過去の説明から現在の診断機能までどう変わったのか | [Go 1.27 リリースノート](https://go.dev/doc/go1.27) とリンク先の Issue・実装で現在の機能を固定する | `A Tour of Go` → Q&A の `goroutine`、`channel` → [記事](https://research.swtch.com/gotour) |

@@ -47,3 +47,15 @@
 ## 調査の進め方
 
 観測した現象 → 公式ドキュメント → 言語仕様または API 契約 → 設計議論 → バージョン付き実装ソース → 実測、の順に進めます。一次資料で結論を固定できない場合は、断定せず「不明」または「ここからは推測」と明記してください。
+
+## 設計史・実装を research.swtch.com から逆引きする
+
+[research!rsc の目次](https://research.swtch.com/) は、観測した現象から設計史へ進むための索引として使います。表の go.dev の入口で現在の仕様・対象版・実装を先に固定し、目次を記事の題名で Ctrl+F / Cmd+F して候補を開き、残りの題名・語をシリーズ内または記事内で検索します。最後にもう一度バージョン付きソースと実測へ戻ってください。
+
+| 調べたい課題 | go.dev から先に確認すること | research!rsc の目次で探す題名 → 次に探す題名・語 |
+| --- | --- | --- |
+| 浮動小数点の出力を変えずに、文字列化の内部実装を置き換えられる理由を追いたい | [`strconv.FormatFloat`](https://go.dev/pkg/strconv/#FormatFloat) で現在の契約を確認し、[Go 1.26.0](https://cs.opensource.google/go/go/+/refs/tags/go1.26.0:src/internal/strconv/ftoa.go) と [Go 1.27.0](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/internal/strconv/ftoa.go) のタグ付きソースと変更履歴を比較する。リリースノートに記載がなくても「変更なし」とは結論しない | `Floating Point Formatting` → `Floating-Point Printing and Parsing Can Be Simple And Fast` → `Shortest-Width Printing` → [シリーズ目次](https://research.swtch.com/fp-all) |
+| goroutine 間の読み書きを順序付ける規則を、ハードウェア・言語・Go の各層から追いたい | [The Go Memory Model](https://go.dev/ref/mem) で現在の保証を確認し、具体例を race detector と実測で照合する | `Memory Models` → `Hardware Memory Models`、`Programming Language Memory Models`、`Updating the Go Memory Model` → [シリーズ目次](https://research.swtch.com/mm) |
+| 言語・標準ライブラリ・ランタイムの設計案が、どの手続きを経て採用または見送りになったのか | [Go proposal process](https://go.dev/s/proposal) から proposal Issue と決定を確認し、採用された変更だけ対象版のリリースノートと実装へ進む | `Go Proposals` → `Enabling Experiments`、`Representation` → [シリーズ目次](https://research.swtch.com/proposals) |
+| クリーンなコンパイラソースと、手元のコンパイラをどこまで信頼できるのか | [Go compiler](https://go.dev/cmd/compile/) → [Installing Go from source](https://go.dev/doc/install/source#go14) → [Reproducible Go toolchains](https://go.dev/blog/rebuild) の順に、現在のブートストラップと再現可能性を確認する | `Reflections on Trusting Trust` → `bootstrap`、`reproducible` → [実演記事](https://research.swtch.com/nih)。`Open Source Supply Chain Security` → [講演・参考資料の入口](https://research.swtch.com/acmscored) |
+| 依存モジュールへの攻撃に対して、Go の版選択・検証・取得経路がどこを守るのか | [How Go Mitigates Supply Chain Attacks](https://go.dev/blog/supply-chain) → [Go Modules Reference](https://go.dev/ref/mod) の順に、現在の仕組みと限界を確認する | `Open Source Supply Chain Security` → [講演・参考資料の入口](https://research.swtch.com/acmscored)。`Colors Attack` → `dependency`、`latest` → [比較記事](https://research.swtch.com/npm-colors) |
