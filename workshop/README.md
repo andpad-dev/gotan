@@ -48,13 +48,13 @@ Go Playground ではコードを貼って **Run** を押すと実行できます
 
 - 初級: [`go run`](03-cmd-tools/01-beginner/go-run/README.md) / [`go tool cover`](03-cmd-tools/01-beginner/go-tool-cover/README.md) / [`go vet`](03-cmd-tools/01-beginner/go-vet-basics/README.md)
 - 中級: [`go fix`](03-cmd-tools/02-intermediate/go-fix-modernize/README.md) / [`go generate`](03-cmd-tools/02-intermediate/go-generate/README.md) / [`go tool pprof`](03-cmd-tools/02-intermediate/go-tool-pprof/README.md)
-- 上級: [`go tool trace`](03-cmd-tools/03-advanced/go-tool-trace/README.md) / [pkg.go.dev API](03-cmd-tools/03-advanced/pkg-go-dev-api-v1beta/README.md)
+- 上級: [cmd/go の script tests](03-cmd-tools/03-advanced/go-script-tests/README.md) / [`go tool trace`](03-cmd-tools/03-advanced/go-tool-trace/README.md) / [pkg.go.dev API](03-cmd-tools/03-advanced/pkg-go-dev-api-v1beta/README.md)
 
 ### 04-deep-dive — [仕様・実装・設計背景の調べ方](04-deep-dive/README.md)
 
 - 初級: [`defer` の評価](04-deep-dive/01-beginner/defer-evaluation/README.md) / [`encoding/json` の nil スライス](04-deep-dive/01-beginner/json-nil-slice/README.md)
 - 中級: [`context.WithoutCancel`](04-deep-dive/02-intermediate/context-without-cancel/README.md) / [3 添字スライス](04-deep-dive/02-intermediate/slice-append-aliasing/README.md)
-- 上級: [error とスタックトレース](04-deep-dive/03-advanced/error-stacktrace/README.md) / [size-specialized malloc](04-deep-dive/03-advanced/size-specialized-malloc/README.md) / [`slog.Value` の比較](04-deep-dive/03-advanced/slog-value-comparison/README.md)
+- 上級: [error とスタックトレース](04-deep-dive/03-advanced/error-stacktrace/README.md) / [浮動小数点の文字列変換](04-deep-dive/03-advanced/float-formatting/README.md) / [Go toolchain の信頼](04-deep-dive/03-advanced/go-toolchain-trust/README.md) / [size-specialized malloc](04-deep-dive/03-advanced/size-specialized-malloc/README.md) / [`slog.Value` の比較](04-deep-dive/03-advanced/slog-value-comparison/README.md)
 
 ## タイムテーブル（予定: 90分）
 
