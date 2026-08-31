@@ -8,7 +8,7 @@ description: >
 metadata:
   author: ANDPAD
   category: investigation
-  version: "1.7.1"
+  version: "1.7.2"
   globs: "workshop/**/README.md"
   language:
     - go
@@ -78,6 +78,9 @@ metadata:
 7. README がシナリオディレクトリでのローカルコマンドを案内する場合、`rg --files <シナリオディレクトリ>` で必要な `.go`、
    `go.mod`、テストデータ、プロファイルなどが追跡されているか確認する。コードブロックだけがあり、ファイル名・保存手順がなく、
    clone 後にREADME記載外の準備が必要な場合は、その準備時間と実行不能箇所を参加者体験の欠陥として記録する。
+8. Go 1.25以降の `go tool` は事前ビルドされていないbuiltin toolを初回にビルドする。`no such tool` が出た場合は、対象版の
+   `$GOROOT/src/cmd/<tool>` を確認し、空のタスク専用 `GOCACHE` で再試行する。初回ビルドの待ち時間はセットアップ時間として残すが、
+   既存キャッシュだけが原因ならシナリオの事実誤認と断定しない。
 
 ## 全体プレイテストの監査
 
