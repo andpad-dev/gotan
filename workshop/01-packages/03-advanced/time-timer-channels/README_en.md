@@ -1,3 +1,5 @@
+[Workshop guide and scenario index](../../../README.md) | [How to research 01-packages](../../README.md)
+
 # Track Old Notifications from `time.Timer` `Stop` / `Reset`
 
 An old incident report says that a retry job for a payment integration received a notification for the previous deadline immediately after stopping and resetting a timer. Current observations show that the channel capacity is 0. Why is it like this? Let's investigate the background.
