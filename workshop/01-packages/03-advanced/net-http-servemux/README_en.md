@@ -6,7 +6,7 @@ The administration API registers `/reports/latest` and `/reports/{id}` in the sa
 
 When you [run the following code in the Go Playground](https://go.dev/play/p/fbR5kWMHL2Z), you can observe the behavior of the literal `latest`, the wildcard, and a method mismatch.
 
-This scenario includes a `go.mod` that enables the routing rules introduced in Go 1.22 and later. When trying it locally, run the code in this directory.
+This scenario includes a `go.mod` that enables the routing rules introduced in Go 1.22 and later, plus a `main.go` containing the code above. To try it locally, run `go run .` in this directory. Before running it, also check `go version`, `go env GOMOD`, and `go env GODEBUG`.
 
 ```go
 package main
@@ -67,7 +67,8 @@ Regardless of whether `GET /reports/latest` is registered before or after `GET /
 
 1. Read about enhanced routing patterns in the [Go 1.22 Release Notes](https://go.dev/doc/go1.22).
 2. Read Patterns and Precedence in [http.ServeMux](https://pkg.go.dev/net/http#ServeMux).
-3. Confirm the traversal order in [routing_tree.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/net/http/routing_tree.go;l=12).
+3. In Go 1.27.0, confirm that [`routing_tree.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/routing_tree.go;l=154-198) tries literal, single-wildcard, and multi-wildcard segments in that order.
+4. Read [`findHandler`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/server.go;l=2751-2764) and confirm that a path matching another method produces 405 and an `Allow` header instead of 404.
 
 **Answer**
 
@@ -81,7 +82,27 @@ Regardless of whether `GET /reports/latest` is registered before or after `GET /
 
 ## Question 2: Why do these two patterns conflict when registered?
 
-An API developer is trying to register `GET /reports/{id}` and `/reports/latest`. Both match some GET requests, but why can neither always be called “more specific,” causing `HandleFunc` to panic?
+Using this scenario's `go.mod` (`go 1.22`) without `httpmuxgo121`, an API developer tries to register `GET /reports/{id}` and `/reports/latest`. Both match some GET requests, but why can neither always be called “more specific,” causing `HandleFunc` to panic?
+
+First, run the actual registration code in the [Go Playground](https://go.dev/play/p/iMHQSYKMgpE). With the standard Go 1.22-or-later routing behavior, the second `HandleFunc` call panics and `registered` is not printed.
+
+```go
+package main
+
+import (
+	"fmt"
+	"net/http"
+)
+
+func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /reports/{id}", func(http.ResponseWriter, *http.Request) {})
+	mux.HandleFunc("/reports/latest", func(http.ResponseWriter, *http.Request) {})
+	fmt.Println("registered")
+}
+```
+
+If it does not panic locally, inspect `go version`, `go env GOMOD`, and `go env GODEBUG`. Compare the standard result with `GODEBUG=httpmuxgo121=1`, and explain the condition that causes the difference.
 
 <details>
 <summary>Hint</summary>
@@ -89,6 +110,7 @@ An API developer is trying to register `GET /reports/{id}` and `/reports/latest`
 - One has a narrower method and a broader path, while the other has a broader method and a narrower path.
 - Consider sets of method-and-path pairs. Confirm that omitting the method matches all methods and that `GET` also matches `HEAD`.
 - Check the definition of a `ServeMux` conflict.
+- Check which condition makes `GODEBUG` select the previous routing behavior.
 
 </details>
 
@@ -97,15 +119,19 @@ An API developer is trying to register `GET /reports/{id}` and `/reports/latest`
 
 **Investigation path**
 
-1. Re-read the enhanced routing patterns section of the [Go 1.22 Release Notes](https://go.dev/doc/go1.22).
-2. Read the explanation of Precedence and conflicts in [http.ServeMux](https://pkg.go.dev/net/http#ServeMux).
-3. Confirm the “neither is more specific” rule and read [`conflictsWith` in pattern.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/net/http/pattern.go;l=219).
+1. Run the [shared Go Playground code](https://go.dev/play/p/iMHQSYKMgpE) with the standard behavior and observe the panic at the second registration and the absence of `registered`.
+2. Re-read the enhanced routing patterns section of the [Go 1.22 Release Notes](https://go.dev/doc/go1.22).
+3. Read the explanation of Precedence and conflicts in [http.ServeMux](https://pkg.go.dev/net/http#ServeMux).
+4. Check `httpmuxgo121` in [Go, Backwards Compatibility, and GODEBUG](https://go.dev/doc/godebug).
+5. Confirm the “neither is more specific” rule in [`conflictsWith` in Go 1.27.0](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/pattern.go;l=219-240).
 
 **Answer**
 
 `GET /reports/{id}` accepts only GET but accepts any ID, while `/reports/latest` accepts any method but only accepts `latest`. `GET /reports/latest` matches both, but one pattern is narrower only in its method and the other only in its path.
 
 Neither matching set is a strict subset of the other, so precedence cannot be determined. The design panics during registration to expose the ambiguity early. If both patterns are needed, align their methods or paths so that one is clearly narrower.
+
+With `GODEBUG=httpmuxgo121=1`, however, it does not panic. That compatibility setting restores the old `ServeMux` behavior, where the newer method and wildcard syntax is not interpreted. Reproducing the panic therefore requires checking not only the toolchain version but also the main module's `go` line and `GODEBUG`.
 
 </details>
 
@@ -130,7 +156,7 @@ In Go 1.21, a pattern containing `{id}` was not a special wildcard. What changed
 
 1. Read the compatibility-related paragraph in the [Go 1.22 Release Notes](https://go.dev/doc/go1.22).
 2. Read the explanation of `httpmuxgo121` in [Go, Backwards Compatibility, and GODEBUG](https://go.dev/doc/godebug).
-3. Read [servemux121.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/net/http/servemux121.go;l=25).
+3. Read [`servemux121.go` in Go 1.27.0](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/servemux121.go;l=25-38) and confirm that `httpmuxgo121=1` is checked once at startup.
 
 **Answer**
 
@@ -162,7 +188,7 @@ Trace the proposal issue and implementation, then explain what benefits order-in
 1. Re-read the enhanced routing patterns section of the [Go 1.22 Release Notes](https://go.dev/doc/go1.22).
 2. Read Precedence, Backwards Compatibility, and Performance in [ServeMux extension proposal Issue #61410](https://github.com/golang/go/issues/61410).
 3. Read [Go Blog: Routing Enhancements for Go 1.22](https://go.dev/blog/routing-enhancements).
-4. Read [routing_tree.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/net/http/routing_tree.go;l=169) and [pattern.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/net/http/pattern.go;l=223).
+4. Read [`routing_tree.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/routing_tree.go;l=168-198) and [`pattern.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/pattern.go;l=219-240) in Go 1.27.0, and connect the specific-first traversal with registration-time conflict detection.
 
 **Answer**
 
@@ -177,7 +203,7 @@ At the same time, overlapping patterns that cannot be compared are not left hidd
 <details>
 <summary>Further note</summary>
 
-`GET` patterns also match `HEAD`. If you register a broad pattern such as `GET /`, requests that do not match another method may also reach it, so test the complete set of routes together with your expectations for 405 responses.
+[`GET` patterns also match `HEAD`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/pattern.go;l=253-279), but they do not match methods such as POST. If only `GET /` is registered, `POST /anything` does not reach that handler; [`findHandler` returns 405 with `Allow: GET, HEAD`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/server.go;l=2751-2764). To send every method to the same handler, register `/` without a method. Test both 405 and the `Allow` header without confusing `GET` with a methodless pattern.
 
 </details>
 
