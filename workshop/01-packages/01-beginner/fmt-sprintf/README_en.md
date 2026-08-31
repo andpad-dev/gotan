@@ -2,13 +2,30 @@
 
 # Build strings with fmt.Sprintf
 
-You came across the following line in a senior colleague’s code, building a string by inserting values.
+You came across the following code in a senior colleague’s work, building a string by inserting values.
 
 ```go
-msg := fmt.Sprintf("User %s has %d points", name, points)
+package main
+
+import "fmt"
+
+func main() {
+	name := "gopher"
+	points := 42
+	msg := fmt.Sprintf("User %s has %d points", name, points)
+	fmt.Println(msg)
+	fmt.Printf("%T\n", msg)
+}
 ```
 
-(Run it in the Go Playground: https://go.dev/play/p/uDdRXVMggVb )
+([Run it in the Go Playground](https://go.dev/play/p/u99kEiMPNJA))
+
+Output:
+
+```text
+User gopher has 42 points
+string
+```
 
 Let’s investigate what `fmt.Sprintf` does.
 
@@ -29,9 +46,10 @@ Let’s investigate what `fmt.Sprintf` does.
 
 **Investigation path**
 
-1. Open https://pkg.go.dev/fmt, open the search dialog with `f`, enter `Sprintf`, and jump to the function.
-2. Check the signature `func Sprintf(format string, a ...any) string` and confirm that the return type is `string`.
-3. Return to the “Printing” section near the beginning of the Overview and check the meanings of `%s` and `%d` in the verb table.
+1. Start at [Go Documentation](https://go.dev/doc/) and open the standard library's `fmt` package.
+2. Open https://pkg.go.dev/fmt, open the search dialog with `f`, enter `Sprintf`, and jump to the function.
+3. Check the signature `func Sprintf(format string, a ...any) string` and confirm that the return type is `string`.
+4. Return to the “Printing” section near the beginning of the Overview and check the meanings of `%s` and `%d` in the verb table.
 
 **Answer**
 
@@ -60,6 +78,34 @@ It is useful to remember the pair this way: `fmt.Printf(...)` formats and prints
 
 Logs and reports often need numbers to have the same width, to be zero-padded like `007`, or to have a fixed number of digits after the decimal point. Find out how to specify width and precision for `%d` and `%f`.
 
+Run this code first and relate each requested width or precision to the observed output before looking up the syntax.
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println(fmt.Sprintf("[%5d]", 42))
+	fmt.Println(fmt.Sprintf("[%-5d]", 42))
+	fmt.Println(fmt.Sprintf("[%05d]", 42))
+	fmt.Println(fmt.Sprintf("[%.2f]", 3.14159))
+	fmt.Println(fmt.Sprintf("[%8.2f]", 3.14159))
+}
+```
+
+([Run it in the Go Playground](https://go.dev/play/p/SMFWIRANv3B))
+
+Output:
+
+```text
+[   42]
+[42   ]
+[00042]
+[3.14]
+[    3.14]
+```
+
 <details>
 <summary>Hint</summary>
 
@@ -73,8 +119,9 @@ Logs and reports often need numbers to have the same width, to be zero-padded li
 
 **Investigation path**
 
-1. Find the “Width and precision” section in the Overview at https://pkg.go.dev/fmt.
-2. Confirm that width follows `%`, precision follows `.`, `0` produces zero padding, and `-` produces left alignment.
+1. Start at [Go Documentation](https://go.dev/doc/) and open the standard library's `fmt` package.
+2. Find the “Width and precision” section in the Overview at https://pkg.go.dev/fmt.
+3. Confirm that width follows `%`, precision follows `.`, `0` produces zero padding, and `-` produces left alignment.
 
 **Answer**
 
@@ -119,4 +166,5 @@ The final `f` means that the function takes a format string, while `ln` means th
 
 ## Starting points for investigation
 
+- [Go Documentation](https://go.dev/doc/)
 - https://pkg.go.dev/fmt

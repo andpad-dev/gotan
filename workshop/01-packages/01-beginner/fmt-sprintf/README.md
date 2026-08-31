@@ -2,13 +2,30 @@
 
 # fmt.Sprintf で文字列を組み立てよう
 
-先輩のコードで、値を埋め込んで文字列を作っている次の 1 行を見かけました。
+先輩のコードで、値を埋め込んで文字列を作っている次のコードを見かけました。
 
 ```go
-msg := fmt.Sprintf("ユーザー %s のポイントは %d です", name, points)
+package main
+
+import "fmt"
+
+func main() {
+	name := "gopher"
+	points := 42
+	msg := fmt.Sprintf("ユーザー %s のポイントは %d です", name, points)
+	fmt.Println(msg)
+	fmt.Printf("%T\n", msg)
+}
 ```
 
 （Go Playground で動かす: https://go.dev/play/p/uDdRXVMggVb ）
+
+実行結果:
+
+```
+ユーザー gopher のポイントは 42 です
+string
+```
 
 `fmt.Sprintf` がどんなものか調べてみましょう。
 
@@ -30,9 +47,10 @@ msg := fmt.Sprintf("ユーザー %s のポイントは %d です", name, points)
 
 **調査ルート**
 
-1. https://pkg.go.dev/fmt を開き、`f` キーで検索ダイアログを出して `Sprintf` を打ち込み、関数のところへジャンプする。
-2. シグネチャ `func Sprintf(format string, a ...any) string` を見て、戻り値が `string` であることを確認する。
-3. Overview 冒頭の「Printing」セクションに戻り、`%s` と `%d` の意味を verb の一覧表で確認する。
+1. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `fmt` パッケージを開く。
+2. https://pkg.go.dev/fmt を開き、`f` キーで検索ダイアログを出して `Sprintf` を打ち込み、関数のところへジャンプする。
+3. シグネチャ `func Sprintf(format string, a ...any) string` を見て、戻り値が `string` であることを確認する。
+4. Overview 冒頭の「Printing」セクションに戻り、`%s` と `%d` の意味を verb の一覧表で確認する。
 
 **答え**
 
@@ -62,6 +80,34 @@ fmt.Printf("%T\n", msg)
 ログや帳票では、数値の幅を揃えたり、`007` のようにゼロ埋めしたり、小数点以下の桁数を固定したりしたくなります。
 `%d` や `%f` に幅や精度をどう指定すればよいか調べてみましょう。
 
+次のコードを実行して、指定した幅・精度と実際の出力を対応付けてから、書式の指定方法を調べましょう。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println(fmt.Sprintf("[%5d]", 42))
+	fmt.Println(fmt.Sprintf("[%-5d]", 42))
+	fmt.Println(fmt.Sprintf("[%05d]", 42))
+	fmt.Println(fmt.Sprintf("[%.2f]", 3.14159))
+	fmt.Println(fmt.Sprintf("[%8.2f]", 3.14159))
+}
+```
+
+（[Go Playground で動かす](https://go.dev/play/p/SMFWIRANv3B)）
+
+実行結果:
+
+```
+[   42]
+[42   ]
+[00042]
+[3.14]
+[    3.14]
+```
+
 <details>
 <summary>ヒント</summary>
 
@@ -75,8 +121,9 @@ fmt.Printf("%T\n", msg)
 
 **調査ルート**
 
-1. https://pkg.go.dev/fmt の Overview で「Width and precision」セクションを探す。
-2. 幅は `%` の直後、精度は `.` に続けて書くこと、`0` フラグでゼロ埋めになること、`-` フラグで左寄せになることを確認する。
+1. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `fmt` パッケージを開く。
+2. https://pkg.go.dev/fmt の Overview で「Width and precision」セクションを探す。
+3. 幅は `%` の直後、精度は `.` に続けて書くこと、`0` フラグでゼロ埋めになること、`-` フラグで左寄せになることを確認する。
 
 **答え**
 
@@ -122,4 +169,5 @@ fmt.Println(fmt.Sprintf("%d%%", 50))       // 50%
 
 ## 調査の入り口
 
+- [Go Documentation](https://go.dev/doc/)
 - https://pkg.go.dev/fmt
