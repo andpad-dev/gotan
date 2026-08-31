@@ -1,3 +1,5 @@
+[Workshop guide and scenario index](../../../README.md) | [How to research 01-packages](../../README.md)
+
 # Decode the Routing Rules of `http.ServeMux`
 
 The administration API registers `/reports/latest` and `/reports/{id}` in the same `ServeMux`. The more specific route is selected without relying on registration order, and a wrong method returns 405. Why does this happen? Let's investigate the background.

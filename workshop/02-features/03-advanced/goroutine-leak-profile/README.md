@@ -1,3 +1,5 @@
+[進行ガイド・シナリオ一覧](../../../README.md) | [02-features の調べ方](../../README.md)
+
 # Go 1.27 の `goroutineleak` プロファイルは、なぜ「絶対に起きない goroutine」だけを教えてくれるのか
 
 運用しているサービスで、`/debug/pprof/goroutine` を眺めていると goroutine の数が時間経過とともにじりじり増えています。  
