@@ -1,4 +1,4 @@
-[ワークショップに戻る](../README.md)
+[進行ガイド・シナリオ一覧](../README.md) | [チームでの進め方](../TEAM_GUIDE.md)
 
 # 02-features の調べ方（逆引き手順）
 
@@ -88,12 +88,12 @@
     - ツールやパッケージ関連: Alan Donovan, Damien Neil
     - 新しいバージョンのリリース: Go team
 
-- **最新バージョンの機能を調査したい知りたい**
+- **最新バージョンの機能を調査したい**
   - `go.dev/doc/go1.<version>` (version は Go のマイナーバージョン)でリリースノートにアクセスできます。
   - Go 1.27 の場合はリリースノート https://go.dev/doc/go1.27 を参照。
   - リリースノート内の内容から議論をたどりたい場合、開発者ツールでHTMLソースコードを参照しましょう。
     - `go.dev/issue/<Issue番号>` のような形で 関連する GitHub Issue番号 が埋め込まれています。
-    - `https://go.dev/issues/<Issue番号>` を開き、関連するissueを開きましょう。
+    - `https://go.dev/issue/<Issue番号>` を開き、関連する Issue の本文と議論を読みましょう。
 
 - **実際の挙動・実装詳細を知りたい**
   - `pkg.go.dev` のリンクから Go 本体のソースコード検索（ https://cs.opensource.google/go/go ）へ遷移し、標準ライブラリやランタイムの実装コードを読み込む。
