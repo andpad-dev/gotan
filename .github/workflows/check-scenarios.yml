@@ -4,6 +4,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
 
+env:
+  # 問題ディレクトリを置くルート. 構成を変える場合はここだけ変更する.
+  # 1 階層であることを difficulty-label の cut が前提にしている.
+  WORKSHOP_DIR: workshop
+
 jobs:
   # 問題ディレクトリの構成 (<カテゴリ>/<難易度>/<問題名>/README.md) を検証する.
   structure:
@@ -15,7 +20,7 @@ jobs:
           set -euo pipefail
           bad=0
           # 難易度ディレクトリ名の検証.
-          for d in [0-9][0-9]-*/*/; do
+          for d in "${WORKSHOP_DIR}"/[0-9][0-9]-*/*/; do
             [ -d "${d}" ] || continue
             level=$(basename "${d}")
             case "${level}" in
@@ -27,13 +32,22 @@ jobs:
             esac
           done
           # 問題ディレクトリ直下に README.md があるか検証.
-          for d in [0-9][0-9]-*/[0-9][0-9]-*/*/; do
+          found=0
+          for d in "${WORKSHOP_DIR}"/[0-9][0-9]-*/[0-9][0-9]-*/*/; do
             [ -d "${d}" ] || continue
+            found=$((found + 1))
             if [ ! -f "${d}README.md" ]; then
               echo "::error::${d} に README.md がありません"
               bad=1
             fi
           done
+          # 問題が 1 つも見つからないなら、検査そのものが空振りしている.
+          # ディレクトリ構成を変えたときに、検査が黙って素通りするのを防ぐ.
+          if [ "${found}" -eq 0 ]; then
+            echo "::error::${WORKSHOP_DIR} 配下に問題ディレクトリが見つかりません. WORKSHOP_DIR の設定を確認してください"
+            bad=1
+          fi
+          echo "問題ディレクトリを ${found} 件検査しました"
           exit "${bad}"
 
   # Markdown 内のリンク切れを検証する.
@@ -67,9 +81,10 @@ jobs:
           # 難易度ディレクトリ直下の .gitkeep 等は含めない.
           # HEAD ではなく PR ブランチ先端 (HEAD_SHA) を使うことで、
           # main に新しいコミットがマージされた後でも正確に PR の差分だけを比較する.
+          # cut の -f3 は WORKSHOP_DIR が 1 階層であることを前提にしている.
           levels=$(git diff --name-only "${BASE_SHA}...${HEAD_SHA}" \
-            | { grep -E '^[0-9]{2}-[a-z-]+/(01-beginner|02-intermediate|03-advanced)/[^/]+/' || true; } \
-            | cut -d/ -f2 | sort -u)
+            | { grep -E "^${WORKSHOP_DIR}/[0-9]{2}-[a-z-]+/(01-beginner|02-intermediate|03-advanced)/[^/]+/" || true; } \
+            | cut -d/ -f3 | sort -u)
           if [ -z "${levels}" ]; then
             echo "問題ディレクトリの変更がないためスキップします"
             exit 0
