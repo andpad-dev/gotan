@@ -13,6 +13,15 @@ Goで開発していると、こうしたシーンに何度もぶつかります
 **Go探無比** は、「Goの探索」と「豪胆無比」をかけたネーミングです。
 かつて開催された、Goの研究や質実剛健をテーマにしたイベント「[質実Go研](https://github.com/goken/goken)」にリスペクトを込め、「わからないことに直面しても、豪胆無比にドキュメントの海を探索し自走できるGopherになろう」という思いが込められています。
 
+## ライセンス
+
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) で公開しています。
+出典を示していただければ、ワークショップの再開催、翻訳、改変を自由に行えます。
+
+The creator:
+
+* ANDPAD Inc.
+
 
 ------------------------------------------------------------------
 
@@ -31,3 +40,12 @@ This workshop is not a one-way lecture where the instructor explains everything.
 ## The Origin of "Go探無比"
 **Go探無比** is a name that combines "exploring Go" with the Japanese expression "豪胆無比," meaning unparalleled boldness.
 It was inspired by and pays tribute to the former event [質実Go研](https://github.com/goken/goken), which focused on Go research and steadfast craftsmanship. The name reflects our hope that participants will become self-reliant Gophers who boldly explore the sea of documentation whenever they encounter something they do not understand.
+
+## License
+
+Licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+You are free to re-run, translate, and adapt this workshop as long as you give appropriate credit.
+
+The creator:
+
+* ANDPAD Inc.
