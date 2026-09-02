@@ -43,7 +43,7 @@ description: 既存の Go Conference ワークショップ問題 README を監�
 最初に、機械的に判定できる構造と導線の前提を確認する。
 
 ```bash
-python3 .agents/skills/validate-scenario/scripts/check_scenario_structure.py \
+.agents/skills/validate-scenario/scripts/run check_scenario_structure \
   workshop/<category>/<difficulty>/<topic>/README.md
 ```
 
@@ -52,16 +52,16 @@ python3 .agents/skills/validate-scenario/scripts/check_scenario_structure.py \
 次に、機械的なリンク候補抽出を行う。
 
 ```bash
-python3 .agents/skills/validate-scenario/scripts/check_markdown_links.py \
+.agents/skills/validate-scenario/scripts/run check_markdown_links \
   --network workshop/<category>/<difficulty>/<topic>/README.md \
   workshop/<category>/README.md workshop/SCENARIOS.md workshop/README.md
 
-python3 .agents/skills/validate-scenario/scripts/check_playground_sources.py \
+.agents/skills/validate-scenario/scripts/run check_playground_sources \
   --network workshop/<category>/<difficulty>/<topic>/README.md
 ```
 
 このスクリプトは URL の行番号、相対リンクの存在、ローカルアンカー、HTTP 応答の一次スキャンを行う。終了コード `1` はリンク不合格、`2` はネットワーク障害または判定不能なアンカーを含む `INCONCLUSIVE`、`0` は機械的な失敗なしを表す。`SKIP` は外部 URL を未確認という意味であり、合格ではない。意味が正しいか、ページ内アンカーが狙った見出しを指すかは必ず目視で追加確認する。
-`check_playground_sources.py` は共有URLの `.go` ソースを取得し、HTTP応答・ソースのハッシュ・サイズを記録する。これは内容一致の自動判定ではないため、出力されたソースをREADMEのコードと目視で比較する。
+`check_playground_sources` は共有URLの `.go` ソースを取得し、HTTP応答・ソースのハッシュ・サイズを記録する。これは内容一致の自動判定ではないため、出力されたソースをREADMEのコードと目視で比較する。
 ネットワークを指定しない場合やネットワーク障害がある場合は `INCONCLUSIVE`（終了コード `2`）として扱う。
 
 各 URL について、少なくとも次を確認する。

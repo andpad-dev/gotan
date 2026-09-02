@@ -1,0 +1,26 @@
+#!/bin/sh
+
+set -eu
+
+if [ "$#" -lt 1 ]; then
+	echo "usage: $0 <command> [args...]" >&2
+	exit 2
+fi
+
+command_name=$1
+shift
+
+case "$command_name" in
+	check_markdown_links|check_playground_sources|check_scenario_structure) ;;
+	*)
+		echo "unknown command: $command_name" >&2
+		exit 2
+		;;
+esac
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+binary=$(mktemp "${TMPDIR:-/tmp}/gotan-${command_name}.XXXXXX")
+trap 'rm -f "$binary"' EXIT HUP INT TERM
+
+go build -C "$script_dir" -o "$binary" "./$command_name"
+"$binary" "$@"
