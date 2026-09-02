@@ -24,19 +24,22 @@ Goで開発していると、こうしたシーンに何度もぶつかります
 
 ## ライセンス
 
-[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) で公開しています。
+[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) で公開しています。
 
-**作成元を明示していただければ、どなたでもこの教材を使ってワークショップを開催できます。**
-翻訳しても、自分のコミュニティに合わせて設問を差し替えても構いません。社内の勉強会や研修での利用も歓迎します。
+**作成元を明示していただければ、どなたでも営利目的以外でこの教材を使ってワークショップを開催できます。**
+翻訳しても、自分のコミュニティに合わせて設問を差し替えても構いません。社内の勉強会での利用も歓迎します。
 
 表示の例です。そのままコピーして使ってください。
 
 ```text
-「Go探無比 (gotan)」© ANDPAD Inc. / CC BY 4.0
+「Go探無比 (gotan)」© ANDPAD Inc. / CC BY-NC 4.0
 https://github.com/andpad-dev/gotan
 ```
 
 内容を改変した場合は、改変した旨も併せて記載してください。
+
+参加費や受講料を取るイベント、有償の研修、販売を伴う書籍やコンテンツへの利用は、このライセンスの範囲外です。
+そうした用途をご希望の場合は、[Issue](https://github.com/andpad-dev/gotan/issues) でご相談ください。
 
 The creator:
 
@@ -72,19 +75,22 @@ This workshop was created by [ANDPAD Inc.](https://andpad.co.jp/)
 
 ## License
 
-Licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+Licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
 
-**Anyone may run this workshop, as long as you credit the creator.**
-You are also free to translate it, or to swap in your own scenarios to fit your community. Use inside your company for study groups or training is welcome too.
+**Anyone may run this workshop for non-commercial purposes, as long as you credit the creator.**
+You are also free to translate it, or to swap in your own scenarios to fit your community. Use inside your company for study groups is welcome too.
 
 Here is a credit line you can copy as is.
 
 ```text
-"Go探無比 (gotan)" © ANDPAD Inc. / CC BY 4.0
+"Go探無比 (gotan)" © ANDPAD Inc. / CC BY-NC 4.0
 https://github.com/andpad-dev/gotan
 ```
 
 If you modify the material, please also state that changes were made.
+
+Paid events, commercial training, and books or content sold for a fee fall outside this license.
+If you have such a use in mind, please reach out on [Issues](https://github.com/andpad-dev/gotan/issues).
 
 The creator:
 
