@@ -27,9 +27,20 @@ Goで開発していると、こうしたシーンに何度もぶつかります
 [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) で公開しています。
 
 **作成元を明示していただければ、どなたでも営利目的以外でこの教材を使ってワークショップを開催できます。**
-翻訳しても、自分のコミュニティに合わせて設問を差し替えても構いません。社内の勉強会での利用も歓迎します。
+翻訳しても、自分のコミュニティに合わせて設問を差し替えても構いません。
 
-表示の例です。そのままコピーして使ってください。
+### 歓迎する利用
+
+次のような使い方は歓迎します。事前の連絡は不要です。
+
+- 社内外の勉強会、読書会、もくもく会でそのまま使う
+- 地域のコミュニティや学生サークルのイベントとして開催する
+- 設問を差し替える、翻訳する、自分たちのテーマを足す
+- 会場費や懇親会費などの実費を賄うための参加費を集める（実費の範囲であれば、営利目的とはみなしません）
+
+### 表示のしかた
+
+そのままコピーして使ってください。
 
 ```text
 「Go探無比 (gotan)」© ANDPAD Inc. / CC BY-NC 4.0
@@ -38,8 +49,10 @@ https://github.com/andpad-dev/gotan
 
 内容を改変した場合は、改変した旨も併せて記載してください。
 
-参加費や受講料を取るイベント、有償の研修、販売を伴う書籍やコンテンツへの利用は、このライセンスの範囲外です。
-そうした用途をご希望の場合は、[Issue](https://github.com/andpad-dev/gotan/issues) でご相談ください。
+### 個別の相談が必要な利用
+
+受講料を収益とする研修、販売を伴う書籍やコンテンツなど、営利を目的とした利用はこのライセンスの範囲外です。
+そうした用途をご希望の場合や、歓迎する利用にあてはまるか判断に迷う場合は、[Issue](https://github.com/andpad-dev/gotan/issues) で聞いてください。
 
 The creator:
 
@@ -78,9 +91,20 @@ This workshop was created by [ANDPAD Inc.](https://andpad.co.jp/)
 Licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
 
 **Anyone may run this workshop for non-commercial purposes, as long as you credit the creator.**
-You are also free to translate it, or to swap in your own scenarios to fit your community. Use inside your company for study groups is welcome too.
+You are also free to translate it, or to swap in your own scenarios to fit your community.
 
-Here is a credit line you can copy as is.
+### Uses we welcome
+
+The following need no advance notice.
+
+- Running it as is at a study group, reading group, or co-working session, inside or outside your company
+- Holding it as a local community or student club event
+- Swapping in your own questions, translating it, or adding your own themes
+- Charging a fee that covers actual costs such as the venue or a social gathering (we do not treat cost recovery as a commercial purpose)
+
+### How to credit
+
+Copy this as is.
 
 ```text
 "Go探無比 (gotan)" © ANDPAD Inc. / CC BY-NC 4.0
@@ -89,8 +113,10 @@ https://github.com/andpad-dev/gotan
 
 If you modify the material, please also state that changes were made.
 
-Paid events, commercial training, and books or content sold for a fee fall outside this license.
-If you have such a use in mind, please reach out on [Issues](https://github.com/andpad-dev/gotan/issues).
+### Uses that need a conversation
+
+Training run for tuition revenue, and books or content sold for a fee, fall outside this license.
+If you have such a use in mind, or you are unsure whether yours counts as one we welcome, ask on [Issues](https://github.com/andpad-dev/gotan/issues).
 
 The creator:
 
