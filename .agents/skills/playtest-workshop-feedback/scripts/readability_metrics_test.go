@@ -64,6 +64,14 @@ func TestExtractMarkdownJoinsSoftWrappedSentence(t *testing.T) {
 	}
 }
 
+func TestExtractMarkdownJoinsIndentedParagraphContinuation(t *testing.T) {
+	got := extractMarkdown("この文は次の行へ\n    続いて終わります。\n")
+	want := []sentenceMetric{{Text: "この文は次の行へ 続いて終わります。", Length: 18}}
+	if !reflect.DeepEqual(got.sentences, want) {
+		t.Fatalf("sentences = %#v, want %#v", got.sentences, want)
+	}
+}
+
 func TestExtractMarkdownMeasuresLongListItems(t *testing.T) {
 	item := strings.Repeat("長", 61)
 	got := extractMarkdown("- " + item + "\n")
@@ -74,7 +82,7 @@ func TestExtractMarkdownMeasuresLongListItems(t *testing.T) {
 }
 
 func TestExtractMarkdownJoinsListItemContinuation(t *testing.T) {
-	got := extractMarkdown("- このリスト項目は次の行へ\n  続いて終わります。\n")
+	got := extractMarkdown("- このリスト項目は次の行へ\n    続いて終わります。\n")
 	want := []sentenceMetric{{
 		Text:   "このリスト項目は次の行へ 続いて終わります。",
 		Length: 22,
@@ -109,6 +117,25 @@ func TestExtractMarkdownRemovesInlineCodeURL(t *testing.T) {
 	}
 	if strings.ContainsAny(got.languageText, "`") || strings.Contains(got.languageText, "https") {
 		t.Fatalf("inline URL leaked into extracted text: %#v", got)
+	}
+}
+
+func TestExtractMarkdownPreservesHTMLLookingInlineCode(t *testing.T) {
+	got := extractMarkdown("値は `<nil>` です。要素は `<details>` です。\n")
+	want := []sentenceMetric{
+		{Text: "値は <nil> です。", Length: 12},
+		{Text: "要素は <details> です。", Length: 17},
+	}
+	if !reflect.DeepEqual(got.sentences, want) {
+		t.Fatalf("sentences = %#v, want %#v", got.sentences, want)
+	}
+}
+
+func TestExtractMarkdownDoesNotSplitInlineCodePunctuation(t *testing.T) {
+	got := extractMarkdown("- `?` キーを押します。\n")
+	want := []sentenceMetric{{Text: "? キーを押します。", Length: 10}}
+	if !reflect.DeepEqual(got.sentences, want) {
+		t.Fatalf("sentences = %#v, want %#v", got.sentences, want)
 	}
 }
 
@@ -198,6 +225,18 @@ func TestExtractMarkdownSkipsTableSeparatorAndMeasuresCells(t *testing.T) {
 	}
 	if got.structuralText != "" {
 		t.Fatalf("table text must not count toward STR: %q", got.structuralText)
+	}
+}
+
+func TestExtractMarkdownSkipsOneColumnTableSeparator(t *testing.T) {
+	content := "| 項目 |\n| --- |\n| 値 |\n"
+	got := extractMarkdown(content)
+	want := []sentenceMetric{
+		{Text: "項目", Length: 2},
+		{Text: "値", Length: 1},
+	}
+	if !reflect.DeepEqual(got.sentences, want) {
+		t.Fatalf("sentences = %#v, want %#v", got.sentences, want)
 	}
 }
 

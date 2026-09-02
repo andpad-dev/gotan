@@ -23,6 +23,7 @@ const (
 	unknownToken    = "<UNK>"
 	beginToken      = "<BOS>"
 	endToken        = "<EOS>"
+	inlineBoundary  = "\x00"
 	mddMethod       = "kagome-ipa-bunsetsu-forward-heuristic-v1"
 	surprisalMethod = "kagome-ipa-add-alpha-word-bigram-v1"
 	crsMethod       = "readability-crs-with-estimated-mdd-and-ngram-surprisal-v1"
@@ -33,12 +34,11 @@ var (
 	bareURLPattern         = regexp.MustCompile(`https?://[^\s<>\[\](){}「」『』。、，；：！？]+`)
 	boldPattern            = regexp.MustCompile(`\*\*([^*]+)\*\*|__([^_]+)__`)
 	tagPattern             = regexp.MustCompile(`<[^>]+>`)
-	inlineCode             = regexp.MustCompile("`([^`]*)`")
 	headingPattern         = regexp.MustCompile(`^#{1,6}\s+`)
 	listPattern            = regexp.MustCompile(`^\s*(?:[-*+]|\d+\.)\s+`)
 	fencePattern           = regexp.MustCompile(`^\s*(` + "`" + `{3,}|~{3,})`)
 	detailsTagPattern      = regexp.MustCompile(`(?i)</?details\b[^>]*>`)
-	tableSeparator         = regexp.MustCompile(`^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$`)
+	tableSeparator         = regexp.MustCompile(`^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)*\|?\s*$`)
 	spaceBeforePunctuation = regexp.MustCompile(`\s+([。、，；：！？!?])`)
 	blockquotePrefix       = regexp.MustCompile(`^\s{0,3}>\s?`)
 )
@@ -46,6 +46,12 @@ var (
 type sentenceMetric struct {
 	Text   string `json:"text"`
 	Length int    `json:"length"`
+}
+
+type inlineCodeSpan struct {
+	placeholder string
+	raw         string
+	content     string
 }
 
 type dependencyDetail struct {
@@ -222,7 +228,7 @@ func measure(path, corpusRoot string, analyzer *tokenizer.Tokenizer) (metrics, e
 	structuralRatio := ratio(len(structuralRunes), len(totalRunes))
 	crs := calculateCRS(mdd, maxLength, kanjiRatio, surprisal, structuralRatio)
 	return metrics{
-		Scope:                  "visible prose excluding details, code blocks, URLs, Markdown, whitespace, punctuation",
+		Scope:                  "visible prose excluding details, code blocks, URLs, and Markdown; whitespace and punctuation are excluded only from K and STR denominators",
 		TotalTextChars:         len(totalRunes),
 		KanjiChars:             kanji,
 		KanjiRatio:             kanjiRatio,
@@ -269,7 +275,7 @@ func extractMarkdown(content string) extractedMarkdown {
 		if text == "" {
 			return
 		}
-		languageText.WriteString(text)
+		languageText.WriteString(strings.Join(strings.Fields(stripInlineBoundaries(text)), " "))
 		languageText.WriteRune('\n')
 		sentences = append(sentences, splitSentences(text)...)
 	}
@@ -291,7 +297,8 @@ func extractMarkdown(content string) extractedMarkdown {
 	}
 
 	for _, originalLine := range strings.Split(content, "\n") {
-		containerLine := stripBlockquotePrefixes(originalLine)
+		protectedLine, codeSpans := protectInlineCode(originalLine)
+		containerLine := stripBlockquotePrefixes(protectedLine)
 		if inCode {
 			if fencePattern.MatchString(containerLine) &&
 				isClosingFence(containerLine, fenceChar, fenceLength) {
@@ -304,6 +311,7 @@ func extractMarkdown(content string) extractedMarkdown {
 
 		rawLine := stripHTMLComments(containerLine, &inHTMLComment)
 		rawLine = stripDetails(rawLine, &detailsDepth)
+		rawLine = restoreInlineCode(rawLine, codeSpans, true)
 		line := strings.TrimSpace(rawLine)
 		if fence := fencePattern.FindStringSubmatch(rawLine); fence != nil {
 			marker := strings.TrimSpace(fence[1])
@@ -320,8 +328,8 @@ func extractMarkdown(content string) extractedMarkdown {
 			continue
 		}
 		isIndented := strings.HasPrefix(rawLine, "\t") || strings.HasPrefix(rawLine, "    ")
-		isNestedList := len(listItem) > 0 && listPattern.MatchString(rawLine)
-		if isIndented && !isNestedList {
+		isVisibleContinuation := len(paragraph) > 0 || len(listItem) > 0
+		if isIndented && !isVisibleContinuation {
 			flushBlocks()
 			continue
 		}
@@ -395,6 +403,76 @@ func isClosingFence(line string, fenceChar byte, minimumLength int) bool {
 		}
 	}
 	return true
+}
+
+// protectInlineCode replaces complete Markdown code spans with placeholders so
+// their contents cannot be mistaken for HTML, details tags, or table syntax.
+func protectInlineCode(line string) (string, []inlineCodeSpan) {
+	var protected strings.Builder
+	var spans []inlineCodeSpan
+
+	for i := 0; i < len(line); {
+		if line[i] != '`' {
+			protected.WriteByte(line[i])
+			i++
+			continue
+		}
+		runEnd := i
+		for runEnd < len(line) && line[runEnd] == '`' {
+			runEnd++
+		}
+		runLength := runEnd - i
+		closeStart := -1
+		for j := runEnd; j < len(line); {
+			if line[j] != '`' {
+				j++
+				continue
+			}
+			closeEnd := j
+			for closeEnd < len(line) && line[closeEnd] == '`' {
+				closeEnd++
+			}
+			if closeEnd-j == runLength {
+				closeStart = j
+				break
+			}
+			j = closeEnd
+		}
+		if closeStart < 0 {
+			protected.WriteString(line[i:runEnd])
+			i = runEnd
+			continue
+		}
+		closeEnd := closeStart + runLength
+		placeholder := fmt.Sprintf("\x01INLINE%d\x02", len(spans))
+		spans = append(spans, inlineCodeSpan{
+			placeholder: placeholder,
+			raw:         line[i:closeEnd],
+			content:     line[runEnd:closeStart],
+		})
+		protected.WriteString(placeholder)
+		i = closeEnd
+	}
+	return protected.String(), spans
+}
+
+// restoreInlineCode replaces protected code-span placeholders with either the
+// original Markdown span or visible content wrapped in non-rendered boundaries.
+func restoreInlineCode(line string, spans []inlineCodeSpan, withDelimiters bool) string {
+	for _, span := range spans {
+		replacement := inlineBoundary + span.content + inlineBoundary
+		if withDelimiters {
+			replacement = span.raw
+		}
+		line = strings.ReplaceAll(line, span.placeholder, replacement)
+	}
+	return line
+}
+
+// stripInlineBoundaries removes internal code-span markers before morphology
+// and language-model analysis.
+func stripInlineBoundaries(text string) string {
+	return strings.ReplaceAll(text, inlineBoundary, "")
 }
 
 // stripBlockquotePrefixes removes nested Markdown blockquote containers while
@@ -901,6 +979,7 @@ func calculateCRS(mdd float64, maxSentenceLength int, kanjiRatio, surprisal, str
 // plainText removes inline Markdown and URL syntax while preserving the text
 // that a reader sees after rendering.
 func plainText(line string) string {
+	line, codeSpans := protectInlineCode(line)
 	line = linkPattern.ReplaceAllStringFunc(line, func(value string) string {
 		match := linkPattern.FindStringSubmatch(value)
 		return firstNonEmpty(match[1:]...)
@@ -910,7 +989,7 @@ func plainText(line string) string {
 		return firstNonEmpty(match[1:]...)
 	})
 	line = tagPattern.ReplaceAllString(line, "")
-	line = inlineCode.ReplaceAllString(line, "$1")
+	line = restoreInlineCode(line, codeSpans, false)
 	line = strings.ReplaceAll(line, `\|`, `|`)
 	line = bareURLPattern.ReplaceAllString(line, "")
 	line = spaceBeforePunctuation.ReplaceAllString(line, "$1")
@@ -924,7 +1003,7 @@ func plainText(line string) string {
 func eligible(text string) string {
 	var result strings.Builder
 	for _, r := range text {
-		if unicode.IsSpace(r) || unicode.IsPunct(r) || unicode.IsSymbol(r) {
+		if unicode.IsSpace(r) || unicode.IsPunct(r) || unicode.IsSymbol(r) || unicode.IsControl(r) {
 			continue
 		}
 		result.WriteRune(r)
@@ -937,9 +1016,14 @@ func eligible(text string) string {
 func splitSentences(text string) []sentenceMetric {
 	var result []sentenceMetric
 	var sentence strings.Builder
+	inInlineCode := false
 	for _, r := range text {
+		if r == rune(inlineBoundary[0]) {
+			inInlineCode = !inInlineCode
+			continue
+		}
 		sentence.WriteRune(r)
-		if strings.ContainsRune("。！？!?", r) {
+		if !inInlineCode && strings.ContainsRune("。！？!?", r) {
 			result = appendSentence(result, sentence.String())
 			sentence.Reset()
 		}
@@ -950,7 +1034,7 @@ func splitSentences(text string) []sentenceMetric {
 // appendSentence trims one sentence candidate and appends its Unicode rune
 // length when the candidate is non-empty.
 func appendSentence(sentences []sentenceMetric, text string) []sentenceMetric {
-	text = strings.TrimSpace(text)
+	text = strings.Join(strings.Fields(stripInlineBoundaries(text)), " ")
 	if text == "" {
 		return sentences
 	}
