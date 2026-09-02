@@ -18,6 +18,7 @@ Goで開発していると、こうしたシーンに何度もぶつかります
 ## 作成元
 
 このワークショップは [株式会社アンドパッド](https://andpad.co.jp/) が作成しました。
+[Go Conference 2026](https://gocon.jp/2026/) のワークショップ「go.devの歩き方、その先へ 〜Go公式リソースの旅。明日からの調べ方を手に入れるワークショップ〜」の教材です。
 
 - [ANDPAD Tech Blog](https://tech.andpad.co.jp/)
 - [エンジニア採用サイト](https://engineer.andpad.co.jp/)
@@ -82,6 +83,7 @@ It was inspired by and pays tribute to the former event [質実Go研](https://gi
 ## Created by
 
 This workshop was created by [ANDPAD Inc.](https://andpad.co.jp/)
+It is the material for 「go.devの歩き方、その先へ 〜Go公式リソースの旅。明日からの調べ方を手に入れるワークショップ〜」, a workshop session at [Go Conference 2026](https://gocon.jp/2026/).
 
 - [ANDPAD Tech Blog](https://tech.andpad.co.jp/)
 - [Engineering careers](https://engineer.andpad.co.jp/)
