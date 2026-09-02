@@ -70,7 +70,7 @@ func main() {
 Playground: [Go のバージョンも表示する共有コード](https://go.dev/play/p/UwYB3wyRxe9)
 
 このシナリオは Go 1.27 の機能を扱うため、**Playground で実行するのがおすすめ**です。
-手元で動かす場合は Go 1.27 が必要です。`GOTOOLCHAIN=go1.27.0 go run main.go` で実測すると、こう出ます（アドレスや絶対パスは環境ごとに変わります）。
+手元で動かす場合は Go 1.27 が必要です。`GOTOOLCHAIN=go1.27.0 go run main.go` で実行すると、こう出ます（アドレスや絶対パスは環境ごとに変わります）。
 
 ```
 go version: go1.27.0
@@ -136,7 +136,7 @@ goroutineleak profile: total 4
 1. 同期プリミティブ（channel、`sync.Mutex`、`sync.Cond` など）でブロックしている
 2. **もう二度と起きられない**
 
-冒頭の実測を当てはめると、`goroutine` プロファイル total 5 のうち 4 個は `chan send`（`./main.go:30`）でブロックしていて、残りの 1 個はプロファイルを書き出している最中の `main` goroutine です。
+冒頭の実行結果を当てはめると、`goroutine` プロファイル total 5 のうち 4 個は `chan send`（`./main.go:30`）でブロックしていて、残りの 1 個はプロファイルを書き出している最中の `main` goroutine です。
 `goroutineleak` プロファイルはそこから 4 個だけ抽出しました。
 差の 1 個は「まだ生きて動いている main は leak ではない」という当たり前の話です。
 
