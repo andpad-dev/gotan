@@ -2,6 +2,8 @@
 
 # 1 枚のテキストがテストになるまで: cmd/go の script tests
 
+> **実行環境**: 手元に Go 1.27 が必要です。GOROOT の `src/cmd/go` でテストを実行します。
+
 あなたのチームでは、CLI の結合テストごとに一時ディレクトリを作り、複数の入力ファイルを書き出し、コマンドを実行して標準出力・標準エラーを検査しています。テストの準備コードが本題より長く、レビューで「何を試したいのか」が見えにくくなってきました。
 
 同僚が [Go command](https://go.dev/cmd/go/) の Source Files から、Go 1.27.0 の [`run_hello.txt`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/testdata/script/run_hello.txt) を見つけました。1 枚のテキストに、実行手順、期待値、実行時に必要な Go ファイルが同居しています。

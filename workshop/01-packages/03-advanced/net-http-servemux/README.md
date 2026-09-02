@@ -2,6 +2,8 @@
 
 # http.ServeMux のルーティング規約を解読せよ
 
+> **実行環境**: 手元に Go 1.22 以上が必要です。
+
 管理画面向け API は `/reports/latest` と `/reports/{id}` を同じ `ServeMux` に登録しました。登録順に頼らず、より具体的なルートが選ばれ、誤ったメソッドには 405 を返します。なんでこうなってるの？背景を調べよう。
 
 次のコードを [Go Playground で動かす](https://go.dev/play/p/fbR5kWMHL2Z) と、リテラルな `latest`、ワイルドカード、メソッド不一致の振る舞いを観測できます。

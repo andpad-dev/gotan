@@ -4,6 +4,28 @@
 
 取り組みたいテーマと難易度を選び、シナリオを開いてください。各シナリオの先頭から、この一覧、進行ガイド、カテゴリの調べ方に戻れます。
 
+## 実行環境
+
+ほとんどのシナリオは [Go Playground](https://go.dev/play/) だけで進められます。手元に Go が必要なのは次のシナリオです。
+
+| シナリオ | 必要な Go |
+| --- | --- |
+| [`http.ServeMux`](01-packages/03-advanced/net-http-servemux/README.md) | 1.22 以上 |
+| [`time.Timer`](01-packages/03-advanced/time-timer-channels/README.md) | 1.27 以上 |
+| [`go run`](03-cmd-tools/01-beginner/go-run/README.md) | 1.24 以上 |
+| [`go tool cover`](03-cmd-tools/01-beginner/go-tool-cover/README.md) | 指定なし |
+| [`go vet`](03-cmd-tools/01-beginner/go-vet-basics/README.md) | 1.27 以上 |
+| [`go fix`](03-cmd-tools/02-intermediate/go-fix-modernize/README.md) | 1.27 以上 |
+| [`go generate`](03-cmd-tools/02-intermediate/go-generate/README.md) | 1.21 以上 |
+| [`go tool pprof`](03-cmd-tools/02-intermediate/go-tool-pprof/README.md) | 1.27 以上 |
+| [cmd/go の script tests](03-cmd-tools/03-advanced/go-script-tests/README.md) | 1.27 |
+| [`go tool trace`](03-cmd-tools/03-advanced/go-tool-trace/README.md) | 指定なし |
+
+[`goroutineleak` プロファイル](02-features/03-advanced/goroutine-leak-profile/README.md) は Playground でも実行できます。手元で動かす場合は Go 1.27 が必要です。
+
+手元の Go がシナリオの要求より古いと、`go run` がツールチェーンのダウンロードを始めます。会場では先に Playground を試してください。
+同じ情報は各シナリオの先頭にも書いています。
+
 ## 01-packages — [標準パッケージの調べ方](01-packages/README.md)
 
 - 初級: [`cmp.Or`](01-packages/01-beginner/cmp-or/README.md) / [`fmt.Printf`](01-packages/01-beginner/fmt-printf/README.md) / [`fmt.Sprintf`](01-packages/01-beginner/fmt-sprintf/README.md) / [for 文の仕様](01-packages/01-beginner/lang-spec-basics/README.md) / [`strings.Cut`](01-packages/01-beginner/strings-cut/README.md)

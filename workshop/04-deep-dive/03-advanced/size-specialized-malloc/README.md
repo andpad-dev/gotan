@@ -2,6 +2,8 @@
 
 # Go 1.27 の Faster Memory Allocation は、なんで 80 バイト以下だけなの？
 
+> **実行環境**: Go Playground だけで完結します。手元に Go は要りません。
+
 Go 1.27 のリリースノートを読んでいたら、「Faster Memory Allocation」という項目に、こう書いてありました。
 
 > The compiler now generates calls to size-specialized memory allocation routines, reducing the cost of some small (<80 byte) memory allocations by up to 30%.
