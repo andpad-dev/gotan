@@ -26,16 +26,28 @@ Examples: [beginner #2](https://github.com/andpad-dev/gotan/pull/2), [intermedia
 Use this structure:
 
 1. `# <title>`.
-2. An introduction framed as a workplace problem. The observation, purpose, and investigation should connect naturally without requiring a fixed sentence. Link every runnable Go example to Go Playground.
-3. `## 設問 N: <heading>` sections, using the question count for the difficulty. Each section contains the problem, an optional `<details><summary>ヒント</summary>` hint, and an `<details><summary>答え</summary>` explanation with **調査ルート** (primary sources and order) and **答え**.
-4. An optional `<details><summary>こぼれ話</summary>` section for interesting but nonessential findings.
-5. `## 調査の入り口` with primary-source starting links.
+2. One execution-environment badge, so readers can tell before opening whether they need Go installed.
+3. An introduction framed as a workplace problem. The observation, purpose, and investigation should connect naturally without requiring a fixed sentence. Link every runnable Go example to Go Playground.
+4. `## 設問 N: <heading>` sections, using the question count for the difficulty. Each section contains the problem, an optional `<details><summary>ヒント</summary>` hint, and an `<details><summary>答え</summary>` explanation with **調査ルート** (primary sources and order) and **答え**.
+5. An optional `<details><summary>こぼれ話</summary>` section for interesting but nonessential findings.
+6. `## 調査の入り口` with primary-source starting links.
 
 Formatting:
 
 - Separate question, trivia, and entry-point sections with `---`.
 - Do not use Markdown headings inside `<details>`; use bold labels instead.
 - Keep common investigation triggers, such as “press `f` to search first,” visible in the category README rather than hiding them in hints.
+
+Execution-environment badge:
+
+| Case | Message | Color |
+| --- | --- | --- |
+| Go Playground alone is enough | `Go Playground` | `00ADD8` |
+| Needs a local Go, version known | `Go <x.y> 以上` (match the `go` line in the scenario's `go.mod`) | `F39C12` |
+| Needs a local Go, no version floor | `手元の Go` | `F39C12` |
+| No code to run | `不要` | `9E9E9E` |
+
+Write it as `![実行環境: <message>](https://img.shields.io/badge/実行環境-<message>-<color>)` with the label and message percent-encoded, and keep the alt text identical to the badge. Add anything the badge cannot carry as one line below it. Also list the scenario in the 実行環境 section of `workshop/SCENARIOS.md` when it needs a local Go.
 
 ## Quality and Research
 

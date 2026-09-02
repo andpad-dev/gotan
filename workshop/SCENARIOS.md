@@ -6,7 +6,13 @@
 
 ## 実行環境
 
-ほとんどのシナリオは [Go Playground](https://go.dev/play/) だけで進められます。手元に Go が必要なのは次のシナリオです。
+シナリオは実行環境で3つに分かれます。各シナリオの先頭にも同じ区分をバッジで示しています。
+
+- **Go Playground だけで完結する**（18 件）: 手元に Go は要りません
+- **手元の Go が必要**（11 件）: 下の表のとおりです
+- **コードの実行が不要**（2 件）: [pkg.go.dev API](03-cmd-tools/03-advanced/pkg-go-dev-api-v1beta/README.md) はブラウザと `curl`、[Go toolchain の信頼](04-deep-dive/03-advanced/go-toolchain-trust/README.md) は読解だけで進みます
+
+手元に Go が必要なのは次のシナリオです。
 
 | シナリオ | 必要な Go |
 | --- | --- |
@@ -24,7 +30,6 @@
 [`goroutineleak` プロファイル](02-features/03-advanced/goroutine-leak-profile/README.md) は Playground でも実行できます。手元で動かす場合は Go 1.27 が必要です。
 
 手元の Go がシナリオの要求より古いと、`go run` がツールチェーンのダウンロードを始めます。会場では先に Playground を試してください。
-同じ情報は各シナリオの先頭にも書いています。
 
 ## 01-packages — [標準パッケージの調べ方](01-packages/README.md)
 

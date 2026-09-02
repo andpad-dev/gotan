@@ -2,7 +2,7 @@
 
 # 1 枚のテキストがテストになるまで: cmd/go の script tests
 
-![実行環境: Go 1.27 以上](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%201.27%20%E4%BB%A5%E4%B8%8A-F39C12)
+![実行環境: Go 1.27](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%201.27-F39C12)
 
 GOROOT の `src/cmd/go` でテストを実行します。
 
