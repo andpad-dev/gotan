@@ -128,6 +128,8 @@ type bigramModel struct {
 	contexts      map[string]int
 }
 
+// main parses command-line arguments, runs every readability analyzer, and
+// writes the combined metrics as JSON.
 func main() {
 	var corpusFlag string
 	flag.StringVar(&corpusFlag, "corpus", "", "workshop corpus root (default: discovered repository workshop directory)")
@@ -166,15 +168,20 @@ func main() {
 	}
 }
 
+// exitError prints a fatal command error and terminates with a non-zero status.
 func exitError(err error) {
 	fmt.Fprintln(os.Stderr, err)
 	os.Exit(1)
 }
 
+// newAnalyzer constructs the shared Kagome tokenizer with the embedded IPA
+// dictionary and omits synthetic BOS and EOS morphology tokens.
 func newAnalyzer() (*tokenizer.Tokenizer, error) {
 	return tokenizer.New(ipa.Dict(), tokenizer.OmitBosEos())
 }
 
+// measure extracts visible prose, calculates deterministic text metrics, runs
+// the MDD and surprisal estimators, and combines them into a CRS estimate.
 func measure(path, corpusRoot string, analyzer *tokenizer.Tokenizer) (metrics, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -244,6 +251,8 @@ func measure(path, corpusRoot string, analyzer *tokenizer.Tokenizer) (metrics, e
 	}, nil
 }
 
+// extractMarkdown approximates GitHub-rendered learner-facing text while
+// excluding hidden details, comments, code, URLs, and Markdown delimiters.
 func extractMarkdown(content string) extractedMarkdown {
 	var totalText, structuralText, languageText strings.Builder
 	var sentences []sentenceMetric
@@ -373,6 +382,8 @@ func extractMarkdown(content string) extractedMarkdown {
 	}
 }
 
+// isClosingFence reports whether line contains only a compatible Markdown
+// fence whose marker is at least as long as the opening fence.
 func isClosingFence(line string, fenceChar byte, minimumLength int) bool {
 	marker := strings.TrimSpace(line)
 	if len(marker) < minimumLength {
@@ -386,6 +397,8 @@ func isClosingFence(line string, fenceChar byte, minimumLength int) bool {
 	return true
 }
 
+// stripBlockquotePrefixes removes nested Markdown blockquote containers while
+// preserving the quoted text for readability analysis.
 func stripBlockquotePrefixes(line string) string {
 	for blockquotePrefix.MatchString(line) {
 		line = blockquotePrefix.ReplaceAllString(line, "")
@@ -393,6 +406,8 @@ func stripBlockquotePrefixes(line string) string {
 	return line
 }
 
+// stripHTMLComments removes single-line and multiline HTML comments and
+// updates inComment so hidden text cannot leak across source lines.
 func stripHTMLComments(line string, inComment *bool) string {
 	var visible strings.Builder
 	for line != "" {
@@ -418,6 +433,8 @@ func stripHTMLComments(line string, inComment *bool) string {
 	return visible.String()
 }
 
+// stripDetails removes text inside nested details elements while preserving
+// visible text before an opening tag and after the matching closing tag.
 func stripDetails(line string, depth *int) string {
 	var visible strings.Builder
 	last := 0
@@ -441,6 +458,8 @@ func stripDetails(line string, depth *int) string {
 	return visible.String()
 }
 
+// splitTableCells separates a GFM table row at unescaped pipes outside inline
+// code spans and reports whether the line contains table cell boundaries.
 func splitTableCells(line string) ([]string, bool) {
 	var cells []string
 	var current strings.Builder
@@ -491,6 +510,8 @@ func splitTableCells(line string) ([]string, bool) {
 	return cells, true
 }
 
+// resolveCorpusRoot validates an explicit corpus path or discovers the nearest
+// workshop directory from the target file and current working directory.
 func resolveCorpusRoot(flagValue, target string) (string, error) {
 	if flagValue != "" {
 		root, err := filepath.Abs(flagValue)
@@ -525,6 +546,8 @@ func resolveCorpusRoot(flagValue, target string) (string, error) {
 	return "", errors.New("could not discover workshop corpus root; pass -corpus")
 }
 
+// loadCorpus reads visible prose from sorted workshop README files, excludes
+// the target file, and returns corpus texts with file and token counts.
 func loadCorpus(root, target string, analyzer *tokenizer.Tokenizer) ([]string, int, int, error) {
 	target, err := filepath.Abs(target)
 	if err != nil {
@@ -565,6 +588,8 @@ func loadCorpus(root, target string, analyzer *tokenizer.Tokenizer) ([]string, i
 	return texts, len(paths), tokenCount, nil
 }
 
+// tokenizeMorphs converts Kagome tokens into the morphology fields required by
+// the dependency and language-model estimators.
 func tokenizeMorphs(analyzer *tokenizer.Tokenizer, text string) []morph {
 	tokens := analyzer.Tokenize(text)
 	result := make([]morph, 0, len(tokens))
@@ -590,6 +615,8 @@ func tokenizeMorphs(analyzer *tokenizer.Tokenizer, text string) []morph {
 	return result
 }
 
+// tokenizeWords returns base-form word tokens and removes punctuation before
+// bigram training or surprisal scoring.
 func tokenizeWords(analyzer *tokenizer.Tokenizer, text string) []string {
 	morphs := tokenizeMorphs(analyzer, text)
 	words := make([]string, 0, len(morphs))
@@ -602,6 +629,8 @@ func tokenizeWords(analyzer *tokenizer.Tokenizer, text string) []string {
 	return words
 }
 
+// splitPhrases approximates bunsetsu boundaries by flushing a phrase after a
+// particle or punctuation token.
 func splitPhrases(morphs []morph) []phrase {
 	var phrases []phrase
 	var current phrase
@@ -624,6 +653,8 @@ func splitPhrases(morphs []morph) []phrase {
 	return phrases
 }
 
+// estimateMDD infers forward dependencies for every visible sentence and
+// returns their distance average with auditable phrase-level details.
 func estimateMDD(sentences []sentenceMetric, analyzer *tokenizer.Tokenizer) (float64, int, int, []sentenceMDDDetail) {
 	var details []sentenceMDDDetail
 	totalDistance := 0
@@ -668,6 +699,8 @@ func estimateMDD(sentences []sentenceMetric, analyzer *tokenizer.Tokenizer) (flo
 	return round2(float64(totalDistance) / float64(totalDependencies)), totalPhrases, totalDependencies, details
 }
 
+// inferHead chooses a forward dependency target from the source phrase's final
+// particle and the part-of-speech content of following phrases.
 func inferHead(phrases []phrase, index int) (int, string) {
 	last := len(phrases) - 1
 	if index >= last {
@@ -691,6 +724,8 @@ func inferHead(phrases []phrase, index int) (int, string) {
 	return index + 1, "nearest-following-phrase"
 }
 
+// phraseToDetail converts an inferred phrase into JSON-ready surfaces, text,
+// and unique part-of-speech labels.
 func phraseToDetail(index int, p phrase) phraseDetail {
 	detail := phraseDetail{Index: index}
 	var text strings.Builder
@@ -709,6 +744,8 @@ func phraseToDetail(index int, p phrase) phraseDetail {
 	return detail
 }
 
+// lastNonPunctuation returns the final morphology token that can determine a
+// phrase's dependency rule.
 func lastNonPunctuation(p phrase) morph {
 	for i := len(p.morphs) - 1; i >= 0; i-- {
 		if !isPunctuation(p.morphs[i]) {
@@ -718,10 +755,14 @@ func lastNonPunctuation(p phrase) morph {
 	return morph{}
 }
 
+// isPunctuation reports whether a morphology token is punctuation according to
+// either its Kagome part of speech or its surface form.
 func isPunctuation(item morph) bool {
 	return item.pos == "記号" || strings.ContainsAny(item.surface, "。！？!?、,.")
 }
 
+// isCaseOrTopicParticle reports whether a particle should seek the next
+// predicate under the documented MDD heuristic.
 func isCaseOrTopicParticle(item morph) bool {
 	if item.posSub1 == "格助詞" || item.posSub1 == "係助詞" {
 		return true
@@ -734,6 +775,8 @@ func isCaseOrTopicParticle(item morph) bool {
 	}
 }
 
+// phraseHasPOS reports whether a phrase contains the requested top-level
+// Kagome part-of-speech label.
 func phraseHasPOS(p phrase, wanted string) bool {
 	for _, item := range p.morphs {
 		if item.pos == wanted {
@@ -743,6 +786,8 @@ func phraseHasPOS(p phrase, wanted string) bool {
 	return false
 }
 
+// phraseIsPredicate reports whether a phrase contains a verb, adjective, or
+// noun-plus-copula construction that can head a dependency.
 func phraseIsPredicate(p phrase) bool {
 	for _, item := range p.morphs {
 		if item.pos == "動詞" || item.pos == "形容詞" {
@@ -758,6 +803,8 @@ func phraseIsPredicate(p phrase) bool {
 	return false
 }
 
+// trainBigram builds a deterministic add-alpha word-bigram model, maps
+// single-occurrence words to the unknown token, and records BOS/EOS events.
 func trainBigram(texts []string, analyzer *tokenizer.Tokenizer, alpha float64) bigramModel {
 	rawCounts := make(map[string]int)
 	tokenized := make([][]string, 0, len(texts))
@@ -798,6 +845,7 @@ func trainBigram(texts []string, analyzer *tokenizer.Tokenizer, alpha float64) b
 	return model
 }
 
+// add records one observed transition and increments its context total.
 func (m *bigramModel) add(context, word string) {
 	if m.bigrams[context] == nil {
 		m.bigrams[context] = make(map[string]int)
@@ -806,6 +854,7 @@ func (m *bigramModel) add(context, word string) {
 	m.contexts[context]++
 }
 
+// normalize maps words outside the trained vocabulary to the unknown token.
 func (m bigramModel) normalize(word string) string {
 	if _, ok := m.vocabularySet[word]; ok {
 		return word
@@ -813,6 +862,8 @@ func (m bigramModel) normalize(word string) string {
 	return unknownToken
 }
 
+// probability returns the normalized add-alpha conditional probability for a
+// word given the preceding context token.
 func (m bigramModel) probability(context, word string) float64 {
 	word = m.normalize(word)
 	vocabularySize := float64(len(m.vocabulary))
@@ -820,6 +871,8 @@ func (m bigramModel) probability(context, word string) float64 {
 		(float64(m.contexts[context]) + m.alpha*vocabularySize)
 }
 
+// averageSurprisal calculates mean negative log2 probability across target
+// words and the final EOS transition.
 func (m bigramModel) averageSurprisal(words []string) float64 {
 	context := beginToken
 	total := 0.0
@@ -835,6 +888,8 @@ func (m bigramModel) averageSurprisal(words []string) float64 {
 	return round2(total / float64(events))
 }
 
+// calculateCRS applies the workshop's heuristic objective function. The
+// structural ratio argument is a percentage and is converted to a ratio.
 func calculateCRS(mdd float64, maxSentenceLength int, kanjiRatio, surprisal, structuralRatio float64) float64 {
 	penalty := 15*math.Pow(math.Max(0, mdd-2.5), 2) +
 		0.5*math.Max(0, float64(maxSentenceLength-60)) +
@@ -843,6 +898,8 @@ func calculateCRS(mdd float64, maxSentenceLength int, kanjiRatio, surprisal, str
 	return round2(100 - penalty + 20*(structuralRatio/100))
 }
 
+// plainText removes inline Markdown and URL syntax while preserving the text
+// that a reader sees after rendering.
 func plainText(line string) string {
 	line = linkPattern.ReplaceAllStringFunc(line, func(value string) string {
 		match := linkPattern.FindStringSubmatch(value)
@@ -862,6 +919,8 @@ func plainText(line string) string {
 	return strings.Join(strings.Fields(line), " ")
 }
 
+// eligible removes whitespace, punctuation, and symbols before K and STR
+// character counting.
 func eligible(text string) string {
 	var result strings.Builder
 	for _, r := range text {
@@ -873,6 +932,8 @@ func eligible(text string) string {
 	return result.String()
 }
 
+// splitSentences divides rendered prose at Japanese and ASCII sentence-ending
+// punctuation and retains an unterminated final sentence.
 func splitSentences(text string) []sentenceMetric {
 	var result []sentenceMetric
 	var sentence strings.Builder
@@ -886,6 +947,8 @@ func splitSentences(text string) []sentenceMetric {
 	return appendSentence(result, sentence.String())
 }
 
+// appendSentence trims one sentence candidate and appends its Unicode rune
+// length when the candidate is non-empty.
 func appendSentence(sentences []sentenceMetric, text string) []sentenceMetric {
 	text = strings.TrimSpace(text)
 	if text == "" {
@@ -894,6 +957,8 @@ func appendSentence(sentences []sentenceMetric, text string) []sentenceMetric {
 	return append(sentences, sentenceMetric{Text: text, Length: len([]rune(text))})
 }
 
+// firstNonEmpty returns the first non-empty capture from an alternative
+// regular-expression match.
 func firstNonEmpty(values ...string) string {
 	for _, value := range values {
 		if value != "" {
@@ -903,6 +968,8 @@ func firstNonEmpty(values ...string) string {
 	return ""
 }
 
+// ratio returns a percentage rounded to two decimal places and returns zero
+// for an empty denominator.
 func ratio(numerator, denominator int) float64 {
 	if denominator == 0 {
 		return 0
@@ -910,6 +977,7 @@ func ratio(numerator, denominator int) float64 {
 	return round2(float64(numerator) / float64(denominator) * 100)
 }
 
+// round2 rounds a floating-point value to two decimal places.
 func round2(value float64) float64 {
 	return math.Round(value*100) / 100
 }
