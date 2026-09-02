@@ -69,7 +69,8 @@ func main() {
 
 Playground: [Go のバージョンも表示する共有コード](https://go.dev/play/p/UwYB3wyRxe9)
 
-`GOTOOLCHAIN=go1.27.0 go run main.go` で実測すると、こう出ます（アドレスや絶対パスは環境ごとに変わります）。
+このシナリオは Go 1.27 の機能を扱うため、**Playground で実行するのがおすすめ**です。
+手元で動かす場合は Go 1.27 が必要です。`GOTOOLCHAIN=go1.27.0 go run main.go` で実測すると、こう出ます（アドレスや絶対パスは環境ごとに変わります）。
 
 ```
 go version: go1.27.0
