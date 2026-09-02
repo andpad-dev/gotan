@@ -133,7 +133,11 @@ func TestExtractMarkdownPreservesHTMLLookingInlineCode(t *testing.T) {
 
 func TestExtractMarkdownDoesNotSplitInlineCodePunctuation(t *testing.T) {
 	got := extractMarkdown("- `?` キーを押します。\n")
-	want := []sentenceMetric{{Text: "? キーを押します。", Length: 10}}
+	want := []sentenceMetric{{
+		Text:    "? キーを押します。",
+		Length:  10,
+		MDDText: "キーを押します。",
+	}}
 	if !reflect.DeepEqual(got.sentences, want) {
 		t.Fatalf("sentences = %#v, want %#v", got.sentences, want)
 	}
@@ -271,6 +275,18 @@ func TestSplitSentences(t *testing.T) {
 	}
 }
 
+func TestSplitSentencesRecognizesEnglishFullStops(t *testing.T) {
+	got := splitSentences("First sentence. Second sentence. Version 1.22 stays.")
+	want := []sentenceMetric{
+		{Text: "First sentence.", Length: 15},
+		{Text: "Second sentence.", Length: 16},
+		{Text: "Version 1.22 stays.", Length: 19},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("splitSentences() = %#v, want %#v", got, want)
+	}
+}
+
 func TestBigramProbabilitiesNormalizeAndSurprisalIsDeterministic(t *testing.T) {
 	analyzer := mustAnalyzer(t)
 	modelA := trainBigram([]string{"猫が走る。猫が眠る。", "犬が走る。"}, analyzer, 0.5)
@@ -322,6 +338,18 @@ func TestMDDEstimateExcludesRootAndUsesJapaneseParticleRule(t *testing.T) {
 	}
 	if details[0].Dependencies[0].Rule != "case-or-topic-particle-to-next-predicate" {
 		t.Fatalf("first rule = %q", details[0].Dependencies[0].Rule)
+	}
+}
+
+func TestSplitPhrasesDoesNotCreatePunctuationOnlyRoot(t *testing.T) {
+	analyzer := mustAnalyzer(t)
+	phrases := splitPhrases(tokenizeMorphs(analyzer, "これは正しいでしょうか。"))
+	if len(phrases) == 0 {
+		t.Fatal("no phrases")
+	}
+	last := phraseToDetail(len(phrases)-1, phrases[len(phrases)-1])
+	if last.Text == "。" || last.Text == "？" || last.Text == "?" {
+		t.Fatalf("punctuation-only root phrase: %#v", last)
 	}
 }
 

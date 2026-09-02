@@ -31,7 +31,7 @@ const (
 
 var (
 	linkPattern            = regexp.MustCompile(`!\[([^\]]*)\]\([^)]*\)|\[([^\]]+)\]\([^)]*\)`)
-	bareURLPattern         = regexp.MustCompile(`https?://[^\s<>\[\](){}「」『』。、，；：！？]+`)
+	bareURLPattern         = regexp.MustCompile(`https?://[^\x00\s<>\[\](){}「」『』。、，；：！？]+`)
 	boldPattern            = regexp.MustCompile(`\*\*([^*]+)\*\*|__([^_]+)__`)
 	tagPattern             = regexp.MustCompile(`<[^>]+>`)
 	headingPattern         = regexp.MustCompile(`^#{1,6}\s+`)
@@ -44,8 +44,9 @@ var (
 )
 
 type sentenceMetric struct {
-	Text   string `json:"text"`
-	Length int    `json:"length"`
+	Text    string `json:"text"`
+	Length  int    `json:"length"`
+	MDDText string `json:"-"`
 }
 
 type inlineCodeSpan struct {
@@ -719,11 +720,12 @@ func splitPhrases(morphs []morph) []phrase {
 		}
 	}
 	for _, item := range morphs {
-		current.morphs = append(current.morphs, item)
-		switch {
-		case isPunctuation(item):
+		if isPunctuation(item) {
 			flush()
-		case item.pos == "助詞":
+			continue
+		}
+		current.morphs = append(current.morphs, item)
+		if item.pos == "助詞" {
 			flush()
 		}
 	}
@@ -739,7 +741,11 @@ func estimateMDD(sentences []sentenceMetric, analyzer *tokenizer.Tokenizer) (flo
 	totalPhrases := 0
 	totalDependencies := 0
 	for _, sentence := range sentences {
-		phrases := splitPhrases(tokenizeMorphs(analyzer, sentence.Text))
+		mddText := sentence.Text
+		if sentence.MDDText != "" {
+			mddText = sentence.MDDText
+		}
+		phrases := splitPhrases(tokenizeMorphs(analyzer, mddText))
 		if len(phrases) == 0 {
 			continue
 		}
@@ -1016,29 +1022,60 @@ func eligible(text string) string {
 func splitSentences(text string) []sentenceMetric {
 	var result []sentenceMetric
 	var sentence strings.Builder
+	var mddSentence strings.Builder
 	inInlineCode := false
-	for _, r := range text {
+	runes := []rune(text)
+	for i, r := range runes {
 		if r == rune(inlineBoundary[0]) {
 			inInlineCode = !inInlineCode
 			continue
 		}
 		sentence.WriteRune(r)
-		if !inInlineCode && strings.ContainsRune("。！？!?", r) {
-			result = appendSentence(result, sentence.String())
+		if !inInlineCode || !strings.ContainsRune("。！？!?、,.", r) {
+			mddSentence.WriteRune(r)
+		}
+		if !inInlineCode && isSentenceTerminator(runes, i) {
+			result = appendSentence(result, sentence.String(), mddSentence.String())
 			sentence.Reset()
+			mddSentence.Reset()
 		}
 	}
-	return appendSentence(result, sentence.String())
+	return appendSentence(result, sentence.String(), mddSentence.String())
+}
+
+// isSentenceTerminator reports whether a rune ends prose. ASCII full stops end
+// a sentence only before whitespace or end-of-text, so decimals and versions
+// remain intact.
+func isSentenceTerminator(runes []rune, index int) bool {
+	r := runes[index]
+	if strings.ContainsRune("。！？!?", r) {
+		return true
+	}
+	if r != '.' {
+		return false
+	}
+	if index+1 < len(runes) && !unicode.IsSpace(runes[index+1]) {
+		return false
+	}
+	return true
 }
 
 // appendSentence trims one sentence candidate and appends its Unicode rune
 // length when the candidate is non-empty.
-func appendSentence(sentences []sentenceMetric, text string) []sentenceMetric {
+func appendSentence(sentences []sentenceMetric, text, mddText string) []sentenceMetric {
 	text = strings.Join(strings.Fields(stripInlineBoundaries(text)), " ")
 	if text == "" {
 		return sentences
 	}
-	return append(sentences, sentenceMetric{Text: text, Length: len([]rune(text))})
+	mddText = strings.Join(strings.Fields(stripInlineBoundaries(mddText)), " ")
+	if mddText == text {
+		mddText = ""
+	}
+	return append(sentences, sentenceMetric{
+		Text:    text,
+		Length:  len([]rune(text)),
+		MDDText: mddText,
+	})
 }
 
 // firstNonEmpty returns the first non-empty capture from an alternative
