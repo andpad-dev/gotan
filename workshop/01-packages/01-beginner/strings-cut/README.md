@@ -2,6 +2,8 @@
 
 # strings.Cut で連携設定のキーと値を分けよう
 
+![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
+
 外部 SaaS との連携設定では、管理画面から `region=asia-east1` のような `key=value` 形式の項目が届きます。実装担当は、区切り記号が欠けた入力を「値が空」と誤認しないよう、まず設定を安全に分けたいと考えました。コードに `strings.Cut` を見かけました。どんなものか調べてみましょう。
 
 次の観測ログを [Go Playground で動かす](https://go.dev/play/p/qzzfmNtViQU) と、区切り記号がある設定とない設定で結果が変わります。

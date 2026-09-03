@@ -60,7 +60,7 @@ jobs:
           # プライベートリポジトリ (このリポジトリの PR 等) へのリンク検証に必要.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: --no-progress --accept '200..=299,403,429' './**/*.md'
+          args: --no-progress --accept '200..=299,403,429' --exclude 'img\.shields\.io' './**/*.md'
           fail: true
 
   # 問題を変更する PR に、難易度ディレクトリと一致するラベルを必須にする.

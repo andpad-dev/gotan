@@ -2,6 +2,8 @@
 
 # 初級: encoding/json の nil スライスと空スライスを調べよう
 
+![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
+
 案件詳細 API のレスポンスをフロントエンドと確認していたところ、担当者がいない案件だけ `{"assignees":null}` が返っていました。画面側は常に配列として処理したいので、空のときも `{"assignees":[]}` で返す契約です。
 
 レビューで次の `json.Marshal` を見かけました。どんなものか調べてみましょう。

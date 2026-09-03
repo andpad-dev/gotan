@@ -2,6 +2,8 @@
 
 # Go 1.27 の `goroutineleak` プロファイルは、なぜ「絶対に起きない goroutine」だけを教えてくれるのか
 
+![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
+
 運用しているサービスで、`/debug/pprof/goroutine` を眺めていると goroutine の数が時間経過とともにじりじり増えています。  
 スタックを開くと、`chan send` で止まっているものが少しずつ積み上がっているようです。  
 ただ、既存の `goroutine` プロファイルには「今この瞬間に存在している goroutine 全部」が並ぶので、「本当に永遠に起きられないやつ」と「単に長生きしているだけのやつ」の区別がつきません。
