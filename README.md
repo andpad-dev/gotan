@@ -1,3 +1,5 @@
+<img src="assets/gotan-logo.png" alt="Go探無比 (gotan)" width="280">
+
 # Go探無比 (gotan) - Go Conference 2026 Workshop
 
 **「Goの探索、豪胆無比に。」**
@@ -22,6 +24,10 @@ Goで開発していると、こうしたシーンに何度もぶつかります
 
 - [ANDPAD Tech Blog](https://tech.andpad.co.jp/)
 - [エンジニア採用サイト](https://engineer.andpad.co.jp/)
+
+ロゴの gopher は、Renée French がデザインした Go Gopher に着想を得て描いたものです。
+Go Gopher は [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) で提供されています。The Go gopher was designed by Renée French.
+Go の公式ロゴではありません。
 
 ## ライセンス
 
@@ -87,6 +93,10 @@ It is the material for 「go.devの歩き方、その先へ 〜Go公式リソー
 
 - [ANDPAD Tech Blog](https://tech.andpad.co.jp/)
 - [Engineering careers](https://engineer.andpad.co.jp/)
+
+The gopher in the logo is an original drawing inspired by the Go Gopher designed by Renée French.
+The Go Gopher is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The Go gopher was designed by Renée French.
+This is not the official Go logo.
 
 ## License
 
