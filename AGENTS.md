@@ -47,7 +47,9 @@ Execution-environment badge:
 | Needs a local Go, no version floor | `手元の Go` | `F39C12` |
 | No code to run | `不要` | `9E9E9E` |
 
-Write it as `![実行環境: <message>](https://img.shields.io/badge/実行環境-<message>-<color>)` with the label and message percent-encoded, and keep the alt text identical to the badge. Add anything the badge cannot carry as one line below it. Also list the scenario in the 実行環境 section of `workshop/SCENARIOS.md` when it needs a local Go.
+Write it as `![実行環境: <message>](https://img.shields.io/badge/実行環境-<message>-<color>)` with the label and message percent-encoded, and keep the alt text identical to the badge. Add anything the badge cannot carry as one line below it.
+
+Then add a row to the category table in `workshop/SCENARIOS.md`, pasting the **same badge markdown verbatim**. The two must match character for character, so a mismatch is easy to spot.
 
 ## Quality and Research
 
