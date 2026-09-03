@@ -27,7 +27,7 @@ func main() {
 }
 ```
 
-同じコードを [main.go](./main.go) として、`go 1.27` の [go.mod](./go.mod) と一緒に置いてあります。このディレクトリで次を実行すると、コードを手で保存し直さずに観測できます。
+同じコードを [main.go](./main.go) として、`go 1.27` の [go.mod](./go.mod) と一緒に置いてあります。このディレクトリで次を実行します。
 
 ```console
 $ go version
@@ -78,17 +78,16 @@ func main() {
 }
 ```
 
-`-diff` は変更を適用せず差分を表示し、差分が空でないときは終了コードが非 0 になります。この例で終了コード 1 になるのは想定どおりです。
+`-diff` は変更を適用せず、差分だけを表示します。差分が空でないときは終了コードが非 0 になります。この例の終了コード 1 は想定どおりです。
 
 この `go fix` は一体何者で、どこまで面倒を見てくれるのでしょうか。
-
-チームで進める場合は、「Go 1.26/1.27 の変更と `go vet` との違い」「CLIでの一覧・絞り込み・diffの実測」「inline例とGo本体ソース」の3担当に分かれ、最後に安全に適用する手順を一つにまとめてみましょう。
 
 ---
 
 ## 設問 1: 新しい `go fix` の位置づけを調べよう
 
-Go 1.26 で刷新された `go fix` は何をするコマンドで、旧 `go fix`（Go 1.0 時代からある fixers）や `go vet` とはどう違うのでしょうか？
+Go 1.26 で刷新された `go fix` は何をするコマンドでしょうか？
+旧 `go fix`（Go 1.0 時代からある fixers）や `go vet` との違いも調べてください。
 
 <details>
 <summary>ヒント</summary>
@@ -123,9 +122,9 @@ Go 1.26 で刷新された `go fix` は何をするコマンドで、旧 `go fix
 
 ## 設問 2: modernizer を確認・選択して適用する手順を調べよう
 
-チームのコードにいきなり `go fix ./...` を叩くのは怖いので、
-「今どの modernizer が動くのか」「どんな置き換えを提案してくるのか」を確認してから、必要なものだけ適用したいです。
-どういう手順を踏めばよいでしょうか？
+いきなり `go fix ./...` を実行するのは避けたいです。
+まず、どの modernizer が動き、どんな置き換えを提案してくるのかを確認します。
+そのうえで、必要なものだけ適用する手順を調べてください。
 
 <details>
 <summary>ヒント</summary>
@@ -167,11 +166,17 @@ Go 1.26 で刷新された `go fix` は何をするコマンドで、旧 `go fix
 
 ## 設問 3: `//go:fix inline` で自作 API の移行を自動化しよう
 
-社内ライブラリで非推奨にした関数の呼び出しを、新しい関数に順次置き換えていきたいです。
-呼び出し側に手作業で頼んで回るのは辛いので、`go fix` に自動でやってほしいのですが、どう書けば実現できますか？
+自作ライブラリで非推奨にした関数の呼び出しを、新しい関数に置き換えたいです。
+この置き換えを `go fix` で自動化するには、どう書けばよいでしょうか？
 どんな制約や注意点があるでしょうか？
 
-特に「自分自身のテストでは置き換えない」という条件を具体的に判別するため、[inline-example/legacy.go](./inline-example/legacy.go)、[inline-example/legacy_test.go](./inline-example/legacy_test.go)、[inline-example/go.mod](./inline-example/go.mod) を用意しました。Go Playground では複数ファイルに対する `go fix` を実行できないため、この例はローカルで確認します。
+「自分自身のテストでは置き換えない」という条件を確かめる例を用意しました。使うファイルは次の 3 つです。
+
+- [inline-example/legacy.go](./inline-example/legacy.go)
+- [inline-example/legacy_test.go](./inline-example/legacy_test.go)
+- [inline-example/go.mod](./inline-example/go.mod)
+
+Go Playground では複数ファイルの `go fix` を実行できません。この例はローカルで確認します。
 
 ```console
 $ cd inline-example
@@ -181,8 +186,16 @@ $ go test ./...
 $ go fix -inline -diff ./...
 ```
 
-`TestHello`、`BenchmarkHello`、`BenchHello`、`ExampleHello`、`TestSomethingElse` のうち、どの関数内の `Hello()` が残るかを予想してから diff と比較してください。
-`BenchHello` は除外判定を観測するための関数名であり、`go test` がベンチマークとして自動実行する標準の `BenchmarkXxx` 形式ではありません。
+次の 5 つの関数のうち、どの関数内の `Hello()` が残るかを予想してから diff と比較してください。
+
+- `TestHello`
+- `BenchmarkHello`
+- `BenchHello`
+- `ExampleHello`
+- `TestSomethingElse`
+
+`BenchHello` は除外判定を観測するための関数名です。
+`go test` が自動実行する標準の `BenchmarkXxx` 形式ではありません。
 
 <details>
 <summary>ヒント</summary>
@@ -201,7 +214,7 @@ $ go fix -inline -diff ./...
 1. [解説記事「Using go fix to modernize Go code」](https://go.dev/blog/gofix) の "self-service" パラダイム節を読み、`//go:fix inline` が解決する移行問題を確認する。
 2. `go tool fix help inline` を手元で実行し、対象、binding declaration、専用フラグ、専用テストの説明を読む。
 3. [inline analyzer のドキュメント](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/inline) を読み、関数・定数・型エイリアスごとの制約を確認する。公開パッケージの文書はツールチェーン同梱版より新しい場合があるため、対象版の実装とも照合する。
-4. 同梱例で `go fix -inline -diff ./...` を実行し、専用テストの名前ごとの差を記録する。文書だけでは `BenchmarkHello` と `BenchHello` の違いを確定できないため、[Go 1.27.0 の `withinTestOf`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/vendor/golang.org/x/tools/go/analysis/passes/inline/inline.go) を読み、実測と照合する。
+4. 同梱例で `go fix -inline -diff ./...` を実行し、専用テストの名前ごとの差を記録する。文書だけでは `BenchmarkHello` と `BenchHello` の違いを確定できないため、[Go 1.27.0 の `withinTestOf`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/vendor/golang.org/x/tools/go/analysis/passes/inline/inline.go) を読み、実行した結果と照合する。
 
 **答え**
 
@@ -238,9 +251,11 @@ $ go fix -inline -diff ./...
 
 ## 調査の入り口
 
-- 手元コマンド: `go help fix` / `go tool fix help` / `go tool fix help <analyzer>`
+- 手元コマンド: `go help fix` / `go tool fix help`
+- 個別 analyzer の説明: `go tool fix help <analyzer>`
 - リリースノート: [Go 1.26 の刷新](https://go.dev/doc/go1.26#go-command) / [Go 1.27 の analyzer 変更](https://go.dev/doc/go1.27#go-fix)
 - コマンドのドキュメント: [cmd/fix](https://pkg.go.dev/cmd/fix) / [cmd/vet](https://pkg.go.dev/cmd/vet) / [cmd/go の該当節](https://pkg.go.dev/cmd/go#hdr-Apply_fixes_suggested_by_static_checkers)
-- Modernizer の一次情報: [modernize パッケージ](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/modernize) / [Go 1.27.0 の fix suite](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/vendor/golang.org/x/tools/go/analysis/suite/fix/fix.go) / [inline analyzer](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/inline)
+- Modernizer の一次情報: [modernize パッケージ](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/modernize) / [inline analyzer](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/inline)
+- `go fix` の登録集合: [Go 1.27.0 の fix suite](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/vendor/golang.org/x/tools/go/analysis/suite/fix/fix.go)
 - 基盤: [go/analysis](https://pkg.go.dev/golang.org/x/tools/go/analysis)
 - 解説記事: [Using go fix to modernize Go code](https://go.dev/blog/gofix)

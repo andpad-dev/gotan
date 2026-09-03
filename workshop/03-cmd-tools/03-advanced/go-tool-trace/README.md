@@ -6,9 +6,9 @@
 
 README のコードを保存してから進めます。
 
-注文処理サービスのテストで、4 つの注文検証処理が各 25ms かかります。並行して実行するはずなのに、処理完了まで約 100ms かかっています。CPU 使用率は低く、CPU profile を開いても「何が待たせたか」ははっきりしません。
+テストでは、4 つの注文検証処理を並行に実行します。1 件 25ms のはずが、全体は約 100ms かかります。CPU 使用率は低く、CPU profile を開いても「何が待たせたか」は分かりません。
 
-さらに、運用チームは「遅いリクエストが発生した**後**に、直前の状況を持ち帰りたい」と考えています。短い再現だけでなく、execution trace がなぜ今の形になったのかまで調べ、次の障害対応に使える調査手順を作りましょう。
+遅いリクエストが発生した**後**に、直前の状況を調べたい場面もあります。
 
 この仕組みはなんでこうなってるの？背景を調べよう。
 
@@ -56,7 +56,7 @@ $ go run main.go
 orders processed
 ```
 
-このテストでは、さらに 4 つの注文検証処理を同じ「order-processing」タスクに結びます。
+テストは、4 つの注文検証処理を「order-processing」タスクに結びます。
 
 **`main_test.go`**
 
@@ -77,7 +77,7 @@ func TestProcessOrders(t *testing.T) {
 }
 ```
 
-Go 1.26.4 / macOS で `go test -trace` を実行すると、テストは成功しますが、注文検証が並列化されているとは限りません。
+Go 1.26.4 / macOS で `go test -trace` を実行すると、テストは成功します。ただし、注文検証が並列化されているとは限りません。
 
 ```console
 $ go test -run '^TestProcessOrders$' -trace=order.trace
@@ -91,9 +91,9 @@ ok  	example.com/trace-demo	0.469s
 
 注文検証処理は `go` 文で 4 つ起動しています。ならば 25ms 前後で終わりそうなのに、テストは約 100ms です。
 
-この現象を最初に CPU profile だけで調べるのが不十分な理由と、`go test -trace=order.trace` が観測できる事実を、一次情報から説明してください。
+最初に CPU profile だけで調べるのが不十分な理由を、一次情報から説明してください。`go test -trace=order.trace` が観測できる事実も説明してください。
 
-その際、まず [Go の診断ツール案内](https://go.dev/doc/diagnostics) で現在の公式な契約を確認し、その後に pprof のサンプリング設計を説明した Russ Cox の [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof) も読みます。2013 年当時の実装詳細を現在のランタイム仕様として扱わず、周期的に得たスタックの標本を数える考え方が、待機時間の調査にどんな限界を持つかを整理してください。
+まず [Go の診断ツール案内](https://go.dev/doc/diagnostics) で現在の公式な契約を確認します。次に Russ Cox の [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof) を読みます。記事は pprof のサンプリング設計を 2013 年時点で解説したものです。実装詳細を現在のランタイム仕様として扱わないでください。周期的に得たスタックの標本を数える考え方が、待機時間の調査にどんな限界を持つかを整理してください。
 
 <details>
 <summary>ヒント</summary>
@@ -129,7 +129,7 @@ ok  	example.com/trace-demo	0.469s
 
 `order.trace` をブラウザで開く前に、同期待ちだけを pprof 形式へ取り出せます。どのコマンドをつなげればよいでしょうか。
 
-実測出力から、どの行で処理が待っているかを特定してください。さらに、`trace.NewTask` と `trace.WithRegion` が、4 本の goroutine をただの匿名な棒グラフにしないために、どのような手がかりを足しているか説明してください。
+実行した結果から、どの行で処理が待っているかを特定してください。さらに、`trace.NewTask` と `trace.WithRegion` が足す手がかりを説明してください。手がかりがないと、4 本の goroutine は匿名な棒グラフのままです。
 
 <details>
 <summary>ヒント</summary>
@@ -190,9 +190,11 @@ ROUTINE ======================== example.com/trace-demo.processOrders.func1.1
 
 ## 設問 3: なぜ「遅くなってから trace を採る」では手遅れなのか？
 
-運用チームは、遅いリクエストを検知してから trace を取り始める案を出しました。しかし、検知した時点では、原因となった待ち時間はすでに過去です。
+遅いリクエストを検知してから trace を取り始める案があります。しかし、検知した時点では、原因となった待ち時間はすでに過去です。
 
-execution tracer が Go 1.21〜1.22 でどう変わったかを追い、flight recording がこの運用課題にどう答えるかを説明してください。あわせて、「新しい trace なら `go tool trace` が巨大なファイルを一切メモリに載せない」と言えない理由も答えてください。
+execution tracer が Go 1.21〜1.22 でどう変わったかを追ってください。flight recording がこの課題にどう答えるかを説明してください。あわせて、次の主張が正しいとは言えない理由も答えてください。
+
+> 新しい trace なら、`go tool trace` は巨大なファイルを一切メモリに載せない。
 
 <details>
 <summary>ヒント</summary>
@@ -226,9 +228,9 @@ execution tracer が Go 1.21〜1.22 でどう変わったかを追い、flight r
 
 ## 設問 4: trace viewer を誰に見せるか決めよう
 
-trace には goroutine 名、タスク名、ソース位置などの調査情報が入ります。開発用ノート PC で viewer を開くとき、意図せず同じネットワークの誰かに見せないには、どの `-http` 指定を選ぶべきでしょうか。
+trace には goroutine 名、タスク名、ソース位置などの調査情報が入ります。手元で viewer を開くとき、同じネットワークの誰かに意図せず見せたくありません。どの `-http` 指定を選ぶべきでしょうか。
 
-Go 1.27 で変わった `go tool trace -http=:6060` の扱いと、全アドレスで明示的に公開したい場合の指定を、一次情報で確認してください。なお、この問題のコマンド実測は Go 1.26.4 で行っているため、Go 1.27 の listen-address 変更そのものはリリースノートで確認します。
+Go 1.27 で変わった `go tool trace -http=:6060` の扱いを、一次情報で確認してください。全アドレスで明示的に公開したい場合の指定も確認します。この問題のコマンドは Go 1.26.4 で実行しています。そのため、Go 1.27 の listen-address 変更はリリースノートで確認します。
 
 <details>
 <summary>ヒント</summary>
@@ -272,7 +274,8 @@ Go 1.27 で変わった `go tool trace -http=:6060` の扱いと、全アドレ�
 1. [Go の診断ツール案内](https://go.dev/doc/diagnostics)
 2. [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof)
 3. [trace の公式ドキュメント](https://go.dev/cmd/trace/)
-4. 手元の `go help testflag`、`go tool trace -h`、`go tool pprof -h` と [Go 1.26.4 の `cmd/trace` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/trace/doc.go)
-5. [Go 1.21 リリースノート](https://go.dev/doc/go1.21) と [Go 1.22 リリースノート](https://go.dev/doc/go1.22)
-6. [execution tracer overhaul の設計文書](https://go.googlesource.com/proposal/+/refs/heads/master/design/60773-execution-tracer-overhaul.md) と [Issue #63185](https://github.com/golang/go/issues/63185)
-7. [Go 1.27 リリースノート](https://go.dev/doc/go1.27)
+4. 手元の `go help testflag`、`go tool trace -h`、`go tool pprof -h`
+5. [Go 1.26.4 の `cmd/trace` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/trace/doc.go)
+6. [Go 1.21 リリースノート](https://go.dev/doc/go1.21) と [Go 1.22 リリースノート](https://go.dev/doc/go1.22)
+7. [execution tracer overhaul の設計文書](https://go.googlesource.com/proposal/+/refs/heads/master/design/60773-execution-tracer-overhaul.md) と [Issue #63185](https://github.com/golang/go/issues/63185)
+8. [Go 1.27 リリースノート](https://go.dev/doc/go1.27)

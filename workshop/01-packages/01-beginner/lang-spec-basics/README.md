@@ -10,7 +10,7 @@
 
 ## 設問 1: for 文
 
-他言語で見かける `for value in values` のような反復を、Go ではどう書くのでしょうか。次のコードでスライス `values` の要素を順に表示する構文を観察し、`range` が返す二つの値と `_` の役割まで調べてください。
+他言語で見かける `for value in values` のような反復を、Go ではどう書くのでしょうか。次のコードでスライス `values` の要素を順に表示する構文を観察してください。そのうえで、`range` が返す二つの値と `_` の役割まで調べてください。
 
 ```go
 package main
@@ -68,7 +68,7 @@ ForStmt = "for" [ Condition | ForClause | RangeClause ] Block .
 ## 設問 2: switch 文
 
 Go の switch 文は、C 言語の switch 文と違って、break が不要なことは知っています。
-次のコードでは `x == 1` のとき `one` だけが表示されます。C 言語の switch 文のように、1 つの case にマッチしたら、次の case も実行されるようにするにはどうすればよいでしょうか？
+次のコードでは `x == 1` のとき `one` だけが表示されます。C 言語の switch 文のように、1 つの case にマッチしたら次の case も実行させたいです。どうすればよいでしょうか？
 
 ```go
 package main

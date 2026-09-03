@@ -4,9 +4,9 @@
 
 ![実行環境: Go 1.27 以上](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%201.27%20%E4%BB%A5%E4%B8%8A-F39C12)
 
-先輩が出した PR で、CI のジョブに `go vet ./...` が追加されているのを見かけました。どんなものか調べてみましょう。
+CI のジョブに `go vet ./...` が追加されているのを見かけました。どんなものか調べてみましょう。
 
-たとえば、次のような何気ないコードに `go vet` をかけてみます。
+一見問題のない次のコードに `go vet` をかけてみます。
 
 ```go
 package main
@@ -21,7 +21,12 @@ func main() {
 
 （Go Playground で動かす: https://go.dev/play/p/GOVSRd_FWPU ）
 
-同じコードを [main.go](./main.go) として、`go 1.27` の [go.mod](./go.mod) と一緒に置いてあります。このディレクトリで `go version`、`go build ./...`、`go run .`、`go vet ./...` の順に実行してください。
+同じコードを [main.go](./main.go) として、`go 1.27` の [go.mod](./go.mod) と一緒に置いてあります。このディレクトリで次の順に実行してください。
+
+1. `go version`
+2. `go build ./...`
+3. `go run .`
+4. `go vet ./...`
 
 `go build` や `go run` は普通に通り、実行結果は次のとおりです。
 
@@ -35,7 +40,7 @@ hello, %!d(string=gopher)
 main.go:7:21: fmt.Printf format %d has arg name of wrong type string
 ```
 
-`go vet` はビルドやテストとは別に、いったい何を見ているのでしょうか。
+`go vet` はビルドやテストとは別に、何を見ているのでしょうか。
 
 ## 設問 1: `go vet` は何を報告するコマンド？ コンパイルとの違いは？
 

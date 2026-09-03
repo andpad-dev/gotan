@@ -4,16 +4,17 @@
 
 ![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
 
-Go 1.27 のリリースノートを読んでいたら、「Faster Memory Allocation」という項目に、こう書いてありました。
+Go 1.27 リリースノートの「Faster Memory Allocation」の要点は、次の 2 つです。
 
-> The compiler now generates calls to size-specialized memory allocation routines, reducing the cost of some small (<80 byte) memory allocations by up to 30%.
+- コンパイラが **size-specialized** な割り当てルーチンを呼ぶようになった
+- 一部の小さな割り当て（some small, `<80 byte`）のコストが最大 30% 下がった
 
-小さいメモリ割り当てが速くなるのは嬉しい。でも、**なんで「80 バイト以下」に限定されている**のでしょう？
-128 バイトでも 256 バイトでも速くしてくれたらいいのに、と思いませんか。この `80` という数字がどこから来て、なぜそこで線を引いたのか、背景を調べてみましょう。
+でも、**なんで「80 バイト以下」に限定されている**のでしょう？
+この `80` がどこから来て、なぜそこで線を引いたのか、背景を調べましょう。
 
-リリースノートの要約は `<80 byte` と書いていますが、Go 1.27.0 の実装は `size > 80` を対象外にするため、**ちょうど 80 バイトの割り当ても対象**です。この問題では実装に合わせて「80 バイト以下」と表記します。
+リリースノートの要約は `<80 byte` です。一方、Go 1.27.0 の実装は `size > 80` を対象外にします。つまり、**ちょうど 80 バイトの割り当ても対象**です。この問題では実装に合わせて「80 バイト以下」と表記します。
 
-対象になるのは、たとえば次のような「サイズがコンパイル時に確定している小さな割り当て」です。
+対象の典型は、**サイズがコンパイル時に確定している**小さな割り当てです。
 
 ```go
 type Point struct{ X, Y int } // 16 バイト = 80 バイト以下
@@ -21,7 +22,7 @@ type Point struct{ X, Y int } // 16 バイト = 80 バイト以下
 p := new(Point) // サイズが分かっているので size-specialized の対象になりうる
 ```
 
-（Go Playground で動かす: https://go.dev/play/p/YnvY6u0c87E ）
+（Go Playground で実行: https://go.dev/play/p/YnvY6u0c87E ）
 
 Go 1.27.0 での出力:
 
@@ -33,7 +34,7 @@ Go 1.27.0 での出力:
 
 ## 設問 1: そもそも「size-specialized」とは何を専用化している？ なぜコンパイル時にサイズが分かる割り当てにしか効かない？
 
-「size-specialized memory allocation routines を呼ぶ」とは、具体的にコンパイラが何を、どんな関数の呼び出しに変えているのでしょうか。
+コンパイラは、具体的に何を、どんな関数の呼び出しに変えているのでしょうか。
 まずは仕組みを押さえましょう。
 
 <details>
@@ -75,8 +76,8 @@ Go 1.27 のコンパイラは、**割り当てサイズがコンパイル時に�
 
 ## 設問 2: なんで 80 バイト以下に限定したの？（本題）
 
-いよいよ本題です。`80` という数字は、コンパイラとランタイムのどこに、どんな理由で書かれているのでしょうか。
-一次情報のコメントを、自分の目で確かめてみましょう。
+`80` という数字は、コンパイラとランタイムのどこに、どんな理由で書かれているのでしょうか。
+一次情報のコメントを、自分の目で確認しましょう。
 
 <details>
 <summary>ヒント</summary>
@@ -123,10 +124,10 @@ Go 1.27 のコンパイラは、**割り当てサイズがコンパイル時に�
 
 ---
 
-## 設問 3: 既定で有効なのに、なぜ `GOEXPERIMENT=nosizespecializedmalloc` という無効化スイッチがあって、しかも Go 1.28 で消える予定なの？
+## 設問 3: 既定で有効なのに、なぜ無効化スイッチがあり、しかも Go 1.28 で消える予定なの？
 
-リリースノートには、この最適化を切るための `GOEXPERIMENT=nosizespecializedmalloc` が用意され、「Go 1.28 で削除予定」とあります。
-既定で有効な最適化に、わざわざ一時的な opt-out を添える意図は何でしょうか。
+この最適化を切るスイッチが `GOEXPERIMENT=nosizespecializedmalloc` です。リリースノートには「Go 1.28 で削除予定」とあります。
+既定で有効な最適化に、一時的な opt-out を添える意図は何でしょうか。
 
 <details>
 <summary>ヒント</summary>
@@ -177,6 +178,6 @@ Go 1.27 のコンパイラは、**割り当てサイズがコンパイル時に�
 ## 調査の入り口
 
 - [Go 1.27 リリースノート「Faster Memory Allocation」](https://go.dev/doc/go1.27)
-- CL: [cmd/compile: call generated size-specialized malloc functions directly](https://go-review.googlesource.com/c/go/+/707856)
-- ソース: [`runtime/_mkmalloc/constants.go`（`specializedMallocMax = 80` の理由コメント）](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/_mkmalloc/constants.go;l=25)
-- ソース: [`cmd/compile/internal/ssagen/ssa.go`（`specializedMallocSym`）](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/compile/internal/ssagen/ssa.go;l=804)
+- CL: [size-specialized malloc を直接呼ぶコンパイラ変更](https://go-review.googlesource.com/c/go/+/707856)
+- ソース: [`runtime/_mkmalloc/constants.go`（80 の理由コメント）](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/_mkmalloc/constants.go;l=25)
+- ソース: [`cmd/compile` の `specializedMallocSym`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/compile/internal/ssagen/ssa.go;l=804)

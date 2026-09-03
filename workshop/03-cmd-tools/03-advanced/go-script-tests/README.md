@@ -6,9 +6,9 @@
 
 GOROOT の `src/cmd/go` でテストを実行します。
 
-あなたのチームでは、CLI の結合テストごとに一時ディレクトリを作り、複数の入力ファイルを書き出し、コマンドを実行して標準出力・標準エラーを検査しています。テストの準備コードが本題より長く、レビューで「何を試したいのか」が見えにくくなってきました。
+CLI の結合テストでは、一時ディレクトリを作り、入力ファイルを書き出し、出力を検査します。準備コードが本題より長く、「何を試したいのか」が見えにくくなっています。
 
-同僚が [Go command](https://go.dev/cmd/go/) の Source Files から、Go 1.27.0 の [`run_hello.txt`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/testdata/script/run_hello.txt) を見つけました。1 枚のテキストに、実行手順、期待値、実行時に必要な Go ファイルが同居しています。
+題材は Go 1.27.0 の [`run_hello.txt`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/testdata/script/run_hello.txt) です。[Go command](https://go.dev/cmd/go/) の Source Files からたどれます。1 枚のテキストに、実行手順、期待値、実行時に必要な Go ファイルが同居しています。
 
 ```text
 env GO111MODULE=off
@@ -22,7 +22,7 @@ package main
 func main() { println("hello world") }
 ```
 
-境界線より下の `hello.go` は [Go Playground](https://go.dev/play/p/4Quk7tidxe8) でも実行できます。この 1 枚がどのようにテストへ変換されるのかを起点に、現在の実装、導入時の設計判断、自分たちのプロジェクトで再利用できる境界まで調べましょう。
+境界線より下の `hello.go` は [Go Playground](https://go.dev/play/p/4Quk7tidxe8) でも実行できます。この 1 枚は、どのようにテストへ変換されるのでしょうか。現在の実装、導入時の設計判断、再利用できる境界まで調べましょう。
 
 ---
 
@@ -30,7 +30,7 @@ func main() { println("hello world") }
 
 `-- hello.go --` より上は、なぜファイルとして展開されずにコマンドとして実行されるのでしょうか。反対に、境界線より下はいつ、どこへ作られるのでしょうか。
 
-Go 1.27.0 の `TestScript` で、`run_hello.txt` を読み込んでからテストが終了するまでの流れを追ってください。さらに、この 1 件だけを名前で選んで実行し、実測結果と結び付けて説明してください。
+Go 1.27.0 の `TestScript` で流れを追ってください。範囲は、`run_hello.txt` の読み込みからテスト終了までです。さらに、この 1 件だけを名前で選んで実行し、結果と結び付けて説明してください。
 
 <details>
 <summary>ヒント</summary>
@@ -63,7 +63,7 @@ Go 1.27.0 の `TestScript` で、`run_hello.txt` を読み込んでからテス�
 4. `ExtractFiles` で files を作業ディレクトリ内へ展開する。`cmd/go` の設定では `$WORK/gopath/src` から始まり、作業ディレクトリ外を指す名前は拒否される。
 5. `Archive.Comment` だけを script engine に渡し、`go run hello.go` の後で直前の標準エラーが `hello world` に一致するか検査する。
 
-Go 1.27.0 / macOS で、Go のソースディレクトリから対象 subtest だけを実行した結果です。他の実行と build cache を分けるため、実測では cache も一時ディレクトリへ向けました。所要時間は環境で変わります。
+Go 1.27.0 / macOS で、Go のソースディレクトリから対象 subtest だけを実行した結果です。他の実行と build cache を分けるため、cache も一時ディレクトリへ向けました。所要時間は環境で変わります。
 
 ```console
 $ cd "$(GOTOOLCHAIN=go1.27.0 go env GOROOT)/src/cmd/go"
@@ -79,9 +79,9 @@ ok  	cmd/go	1.460s
 
 ## 設問 2: なぜ bash でも普通の Go テストでもない？
 
-現在の runner は、system shell ではなく、登録されたコマンドと条件だけを解釈する小さな言語を使います。一方、ファイルの列挙、個別選択、並列実行には `testing` の仕組みを使っています。
+現在の runner は system shell を使いません。登録されたコマンドと条件だけを解釈する小さな言語を使います。一方、ファイルの列挙、個別選択、並列実行には `testing` の仕組みを使っています。
 
-この二層構造は、どんな旧方式の問題を同時に解こうとして 2018 年に導入されたのでしょうか。導入時の変更と現在の実装を区別し、2023 年の「Go Testing By Example」の Tip 13〜17 がこの設計をどう説明できるかも整理してください。
+この二層構造は、どんな旧方式の問題を同時に解こうとして 2018 年に導入されたのでしょうか。導入時の変更と現在の実装を区別してください。2023 年の「Go Testing By Example」の Tip 13〜17 との対応も整理してください。
 
 <details>
 <summary>ヒント</summary>
@@ -99,7 +99,7 @@ ok  	cmd/go	1.460s
 
 1. [Go command](https://go.dev/cmd/go/) から現在の [Go 1.27.0 `script_test.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/script_test.go;l=39) を開き、Source の履歴をたどる。
 2. [Go Testing By Example](https://research.swtch.com/testing) の Tip 13〜17 を読み、現在の構造を「複数ファイル」「小さな言語」「script」という観点に分ける。ただし記事は 2023 年公開なので、これを 2018 年の採用理由の証拠にはしない。
-3. 2018 年の変更 [`cmd/go: add new test script facility`](https://github.com/golang/go/commit/5890e25b7ccb2d2249b2f8a02ef5dbc36047868b) と、その一次レビュー [CL 123577](https://go-review.googlesource.com/c/go/+/123577) を読み、旧方式、新方式、当時の実測を分けて記録する。
+3. 2018 年の変更 [`cmd/go: add new test script facility`](https://github.com/golang/go/commit/5890e25b7ccb2d2249b2f8a02ef5dbc36047868b) と、その一次レビュー [CL 123577](https://go-review.googlesource.com/c/go/+/123577) を読み、旧方式、新方式、当時の実行結果を分けて記録する。
 4. [Go 1.27.0 の script engine](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/internal/script/engine.go;l=5) を読み、現在も小さく、設定可能で、platform-agnostic な言語として実装されていることを確認する。
 
 **答え**
@@ -110,7 +110,7 @@ ok  	cmd/go	1.460s
 - 次の Go 製 `testgo` framework は、個別選択、Windows、並列実行、テスト間の分離を可能にした。しかし、一時ファイル作成や実行結果の検査が Go の手続きへ膨らみ、テストの意図を流し読みしにくかった。
 - 新方式は、外側を `testing` の subtest として選択・並列化し、内側だけを用途専用の shell-like language と txtar で短く記述した。これにより、両方式の長所を組み合わせた。
 
-当時の変更では、同時に移行した 15 件のテストについて `TestScript` が 5.5 秒から 2.5 秒になったと報告されています。これは 2018 年のその変更に対する実測であり、Go 1.27.0 や別環境の性能保証ではありません。
+当時の変更では、同時に移行した 15 件のテストについて `TestScript` が 5.5 秒から 2.5 秒になったと報告されています。これは 2018 年の変更時に報告された実行結果であり、Go 1.27.0 や別環境の性能保証ではありません。
 
 2023 年の記事の Tip 13〜17 は、現在の 1 枚を読むための整理になります。txtar で複数ファイルを束ねる（13）、既存のテキスト形式に注釈して小さな言語にする（14）、専用の parser / printer でテストを単純にする（15）、テスト品質そのものを保つ（16）、操作の列を script として読む（17）という対応です。ただし、記事が 2018 年の変更を引き起こしたという時系列ではありません。資料から言えるのは、同じ著者が後年に設計上の知見としてまとめた、ということまでです。
 
@@ -122,14 +122,14 @@ ok  	cmd/go	1.460s
 
 ## 設問 3: 自分たちのテストへ、どこまで持ち帰れる？
 
-チームは同じ形式を採用したくなりました。しかし、Go 1.27.0 の runner は `internal/txtar` と `cmd/internal/script` を import しています。
+同じ形式を採用したいとします。ただし、Go 1.27.0 の runner は次の二つを import しています。`internal/txtar` と `cmd/internal/script` です。
 
-この実装をそのまま依存先にできるでしょうか。標準の公開 API、Go 本体の internal implementation、公開されている外部 module を区別し、次の二つの場合の採用案を示してください。
+この実装をそのまま依存先にできるでしょうか。区別するのは、標準の公開 API、Go 本体の internal 実装、公開の外部 module の三つです。そのうえで、次の二つの場合の採用案を示してください。
 
 - 必要なのは「複数のテキストファイルを 1 枚に束ねること」だけ
 - 必要なのは「ファイルの展開に加え、小さな script を実行すること」まで
 
-最後に、冒頭の `run_hello.txt` がなぜ 1 枚で済み、なぜ個別実行でき、同じものを無条件には import できないのかを一続きで説明してください。
+最後に、冒頭の `run_hello.txt` について一続きで説明してください。観点は、なぜ 1 枚で済むか、なぜ個別実行できるか、なぜ同じものを無条件には import できないか、の三つです。
 
 <details>
 <summary>ヒント</summary>

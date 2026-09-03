@@ -4,11 +4,13 @@
 
 ![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
 
-運用しているサービスで、`/debug/pprof/goroutine` を眺めていると goroutine の数が時間経過とともにじりじり増えています。  
-スタックを開くと、`chan send` で止まっているものが少しずつ積み上がっているようです。  
-ただ、既存の `goroutine` プロファイルには「今この瞬間に存在している goroutine 全部」が並ぶので、「本当に永遠に起きられないやつ」と「単に長生きしているだけのやつ」の区別がつきません。
+本番サービスの `/debug/pprof/goroutine` で、goroutine の数がじりじり増えています。  
+スタックを開くと、`chan send` で止まったものが積み上がっています。  
+既存の `goroutine` プロファイルには、今存在する goroutine が全部並びます。  
+「永遠に起きられないもの」と「長生きしているだけのもの」を区別できません。
 
-先輩が「Go 1.27 に上げてみたら `/debug/pprof/goroutineleak` というエンドポイントが増えていた」と教えてくれました。試しに、原因調査のために社内で見つけたリークパターンをそのまま切り出し、`goroutine` と `goroutineleak` の両方を並べて出してみます。
+Go 1.27 では `/debug/pprof/goroutineleak` が追加されています。  
+同じリークパターンを切り出し、両方のプロファイルを並べて出します。
 
 ```go
 // main.go
@@ -71,8 +73,10 @@ func main() {
 
 Playground: [Go のバージョンも表示する共有コード](https://go.dev/play/p/UwYB3wyRxe9)
 
-このシナリオは Go 1.27 の機能を扱うため、**Playground で実行するのがおすすめ**です。
-手元で動かす場合は Go 1.27 が必要です。`GOTOOLCHAIN=go1.27.0 go run main.go` で実行すると、こう出ます（アドレスや絶対パスは環境ごとに変わります）。
+このシナリオは Go 1.27 の機能を扱うため、**Playground で実行するのがおすすめ**です。  
+手元で動かす場合は Go 1.27 が必要です。  
+`GOTOOLCHAIN=go1.27.0 go run main.go` で実行すると、こう出ます。  
+アドレスや絶対パスは環境ごとに変わります。
 
 ```
 go version: go1.27.0
@@ -95,14 +99,15 @@ goroutineleak profile: total 4
 #	0x...	main.processWorkItems.func1+0x9b	./main.go:30
 ```
 
-同じ瞬間のスナップショットのはずなのに、`goroutine` は total 5、`goroutineleak` は total 4。  
-この 1 個の差は何を意味していて、そもそもランタイムはどうやって「これは絶対に起きない」「これは違う」を判別しているのでしょうか？
+同じ瞬間なのに `goroutine` は total 5、`goroutineleak` は total 4 です。  
+この 1 個の差は何を意味するのでしょうか。  
+ランタイムは「絶対に起きない」と「そうでない」をどう判別しているのでしょうか。
 
 ---
 
 ## 設問 1: `goroutine` プロファイルと `goroutineleak` プロファイル、二つの定義はどう違うのか？
 
-まずは両方が「何を集めるプロファイル」なのか、それぞれの定義を一次資料で確認しましょう。
+両方が何を集めるプロファイルなのか、定義を一次資料で確認しましょう。
 
 <details>
 <summary>ヒント</summary>
@@ -150,9 +155,12 @@ goroutineleak profile: total 4
 
 ## 設問 2: ランタイムはどうやって「二度と起きられない」ことを判定しているのか？
 
-「blocked on primitive」はランタイムから見て自明な状態です（各 goroutine の `waitreason` などで分かる）。  
+「blocked on primitive」はランタイムから見て自明です。  
+各 goroutine の `waitreason` などで分かります。  
 難しいのは「二度と起きられない」の判定です。  
-誰かがまだ channel の送信を握っているかもしれない、mutex を解放するかもしれない――そういう「未来の可能性」を、`goroutineleak` プロファイルはどう見分けているのでしょう？
+誰かがまだ channel の送信を握っているかもしれません。  
+mutex がこれから解放されるかもしれません。  
+この「未来の可能性」を、`goroutineleak` プロファイルはどう見分けているのでしょう？
 
 <details>
 <summary>ヒント</summary>
@@ -203,16 +211,19 @@ goroutineleak profile: total 4
 
 ---
 
-## 設問 3: なぜ「グローバル変数や runnable goroutine のローカル変数から到達可能なプリミティブ」は検出しないのか？
+## 設問 3: なぜグローバル変数や runnable goroutine から到達できるプリミティブは検出しないのか？
 
-Go 1.27 リリースノートの `Goroutine leak profile` 節には、実は次の但し書きが添えられています。
-
-> Because this technique builds on reachability, the runtime may fail to identify leaks caused by blocking on concurrency primitives reachable through global variables or the local variables of runnable goroutines.
-
-グローバル変数から辿れる channel を延々と待っているだけでも、「起こしに来る当てがない」なら実質リークですよね？なぜ Go チームはあえてこのパターンを検出範囲から外したのでしょうか。
+Go 1.27 リリースノートの `Goroutine leak profile` 節には但し書きがあります。  
+到達可能性に基づく手法のため、検出できないリークがあると書かれています。  
+グローバル変数から辿れる channel を待つだけでも、実質リークではないでしょうか。  
+なぜ Go チームはあえてこのパターンを検出範囲から外したのでしょうか。
 
 <details>
 <summary>ヒント</summary>
+
+但し書きの原文は次の一文です。
+
+> Because this technique builds on reachability, the runtime may fail to identify leaks caused by blocking on concurrency primitives reachable through global variables or the local variables of runnable goroutines.
 
 - 設計文書の `Rationale` 節を開くと、この手法の性質を短く言い切っている一文があります。そこに書かれている **形式的な性質を表す一語**（形式手法や検証論で使われる語）に注目しましょう。
 - 設問 2 の 6 ステップを見直しましょう。ステップ 3〜4 の「reachable なら root に昇格する」は、**未来**を静的に断定できないかわりに使う近似です。「グローバル変数から reachable」も同じ扱いになるとき、この手法は何を優先し、何を犠牲にしていますか？診断ツールが本番運用で嫌われるのはどんな失敗パターンでしょうか。
@@ -249,9 +260,15 @@ Go チームは **soundness を保つ代わりに completeness を犠牲にす�
 
 ## 設問 4: なぜ「回収」ではなく「診断」になり、実装まで 10 年以上かかった？
 
-Go 1.26 で experimental、Go 1.27 で GA というスピード感の裏に、実は 10 年以上前からの前史があります。それを辿ってみましょう。
+Go 1.26 で experimental、Go 1.27 で GA。  
+この裏には 10 年以上前からの前史があります。
 
-[Go 1.27 リリースノート](https://go.dev/doc/go1.27) で現在の機能を確認してから、さらに前へ戻ります。2012 年、Russ Cox は [A Tour of Go](https://research.swtch.com/gotour) の質疑で「参照されなくなった channel を待つ goroutine は GC されるか」と問われています。当時の回答と、2015 年の partial deadlock proposal、現在の `goroutineleak` profile を比べてください。何が変わり、なぜ現在も goroutine を消すのではなく診断情報として残す設計なのかを説明しましょう。
+[Go 1.27 リリースノート](https://go.dev/doc/go1.27) で現在の機能を確認し、さらに前へ戻ります。  
+2012 年、Russ Cox は [A Tour of Go](https://research.swtch.com/gotour) の質疑を受けました。  
+「参照されなくなった channel を待つ goroutine は GC されるか」という質問です。  
+当時の回答と 2015 年の partial deadlock proposal を読みます。  
+そのうえで現在の `goroutineleak` profile と比べてください。  
+何が変わり、なぜ今も goroutine を消さず診断情報として残すのかを説明しましょう。
 
 <details>
 <summary>ヒント</summary>
@@ -325,7 +342,9 @@ Go でメインループを止める慣用イディオムに `select{}`（case �
 - [Go 1.27 リリースノート](https://go.dev/doc/go1.27)（`Goroutine leak profile` 節。現在の定義と制約）
 - [A Tour of Go](https://research.swtch.com/gotour)（2012 年の講演 Q&A。blocked goroutine を回収しない当時の理由）
 - [Go 1.26 リリースノート](https://go.dev/doc/go1.26)（`Experimental goroutine leak profile` 節。同じ機能の experiment 版、proposal issue へのリンク、リークするサンプルコード）
-- [`runtime/pprof` パッケージドキュメント](https://pkg.go.dev/runtime/pprof)（`type Profile` docstring の予約プロファイル名一覧）
-- [`net/http/pprof` パッケージドキュメント](https://pkg.go.dev/net/http/pprof)（`/debug/pprof/goroutineleak` エンドポイントの登録）
+- [`runtime/pprof` パッケージドキュメント](https://pkg.go.dev/runtime/pprof)（予約プロファイル名の一覧）
+- [`net/http/pprof` パッケージドキュメント](https://pkg.go.dev/net/http/pprof)（`/debug/pprof/goroutineleak` の登録）
 
-> ※ 2026-08-31 にローカルの Go 1.27.0 と Go Playground の両方で実行し、先頭行が `go version: go1.27.0`、プロファイル件数が 5 と 4 になることを確認した。共有コード自身が実行版を表示するため、後日試す場合は先頭行も結果と一緒に記録する。
+> ※ 2026-08-31 にローカルの Go 1.27.0 と Go Playground の両方で実行した。  
+> 先頭行は `go version: go1.27.0`、プロファイル件数は 5 と 4 だった。  
+> 共有コード自身が実行版を表示するため、後日試す場合は先頭行も結果と一緒に記録する。

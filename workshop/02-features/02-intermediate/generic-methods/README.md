@@ -4,10 +4,9 @@
 
 ![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
 
-自作の型にジェネリックメソッドを生やすことをやりたいです。どういうふうにやればいいか調べよう。
-
-社内ユーティリティに、独自コンテナ型 `Slice[T]` があります。
-値を別の型に写す変換ヘルパを、コンテナに **メソッドとして** 生やしたいです。
+手元に独自コンテナ型 `Slice[T]` があります。
+値を別の型へ写す変換ヘルパを **メソッドとして** 生やしたいです。
+どういうふうにやればいいか調べよう。
 
 ```go
 type Slice[T any] struct {
@@ -24,19 +23,20 @@ Go 1.26.4 でこのコードをコンパイルすると、次のように拒否�
 syntax error: method must have no type parameters
 ```
 
-Go 1.27 では「ジェネリックメソッド」が正式に使えるようになりました。1.26 と 1.27 の違いを、
+Go 1.27 では「ジェネリックメソッド」が正式に使えるようになりました。
+一次情報で次の三点を押さえてから、実際に手を動かして書きましょう。
 
 - 仕様書のどこがどう変わったのか
 - なぜ Go 1.26 までは書けなかったのか
 - インタフェースメソッドではどうなのか
 
-を一次情報で押さえてから、実際に手を動かして書けるようになりましょう。
-
 ---
 
 ## 設問 1: 仕様書のどこが変わったのか調べよう
 
-Go 1.27 で「method に何が書けるようになったか」を、リリースノートと [The Go Programming Language Specification](https://go.dev/ref/spec) から特定しましょう。仕様書の該当セクションの EBNF がどう変わったかまで見てみます。
+Go 1.27 で「method に何が書けるようになったか」を特定しましょう。
+情報源はリリースノートと [The Go Programming Language Specification](https://go.dev/ref/spec) です。
+仕様書では、該当セクションの **EBNF の変化** まで見ます。
 
 <details>
 <summary>ヒント</summary>
@@ -88,13 +88,15 @@ syntax error: method must have no type parameters
 
 ---
 
-## 設問 2: なぜインタフェースメソッドでは依然として書けないか、そして generic method はインタフェースを実装するか
+## 設問 2: インタフェースメソッドとの線引きを調べよう
 
-リリースノートには含みのある一文があります。
+リリースノートの generic methods の段落は、二つの制約を明記しています。
 
-> methods of interfaces may not declare type parameters **nor can interface methods be implemented by generic methods**.
+- インタフェースメソッドは型パラメータを宣言できない
+- **ジェネリックメソッドでインタフェースを実装することもできない**
 
-つまり Go 1.27 でも「インタフェースメソッドに型パラメータは書けない」うえに、「ジェネリックメソッドでインタフェースを実装することもできない」。なぜこういう線引きになったのでしょうか。次のコードを Playground で試して、コンパイラの言い分も一緒に確認しましょう。
+なぜこの線引きなのでしょうか。
+次のコードを Playground で試して、コンパイラのエラーメッセージも確認しましょう。
 
 ```go
 package main
@@ -174,9 +176,11 @@ Go 1.27.0 で実際にコンパイルすると、compiler が同じことを言�
 
 ---
 
-## 設問 3: 実際に書いて動かそう — `Slice[T]` に `Map[F any]` を生やす
+## 設問 3: `Slice[T]` に `Map[F any]` を生やして動かそう
 
-一次情報で挙動を押さえたら、冒頭の `Slice[T].Map[F any]` を完成させて、Go 1.27 以降の手元環境か Playground で動かしてみましょう。呼び出し側で型引数を明示しなくても済むか（型推論が効くか）も確かめてください。
+冒頭の `Slice[T].Map[F any]` を完成させましょう。
+Go 1.27 以降の手元環境か Playground で動かします。
+呼び出し側で型引数を明示しなくても済むか（型推論が効くか）も確かめてください。
 
 <details>
 <summary>ヒント</summary>
@@ -303,6 +307,10 @@ Go 1.27 リリースノートの [math/rand/v2 節](https://go.dev/doc/go1.27#mi
 - リリースノート: [Go 1.27 Release Notes #language](https://go.dev/doc/go1.27#language)
 - 言語仕様: [Method declarations](https://go.dev/ref/spec#Method_declarations) / [Type parameter declarations](https://go.dev/ref/spec#Type_parameter_declarations)
 - Proposal: [#77273 spec: generic methods for Go](https://go.dev/issue/77273)
-- ツールの追随作業: [#77549 x/tools: plan for generic methods](https://github.com/golang/go/issues/77549) / [Go Code Owners](https://dev.golang.org/owners)
-- 先行議論: [#49085 proposal: spec: allow type parameters in methods](https://go.dev/issue/49085) / [Type Parameters Proposal の No parameterized methods 節](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#No-parameterized-methods)
-- 実行環境: `go version` と `go.mod` の `go 1.27` を確認し、手元の `go run .` または Go Playground で実行する
+- ツールの追随作業: [#77549 x/tools: plan for generic methods](https://github.com/golang/go/issues/77549)
+- 担当者の探し方: [Go Code Owners](https://dev.golang.org/owners)
+- 先行議論:
+  - [#49085 proposal: spec: allow type parameters in methods](https://go.dev/issue/49085)
+  - [Type Parameters Proposal の No parameterized methods 節](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#No-parameterized-methods)
+- 実行環境: `go version` と `go.mod` の `go 1.27` を確認する
+- 動かし方: 手元で `go run .` するか Go Playground で実行する

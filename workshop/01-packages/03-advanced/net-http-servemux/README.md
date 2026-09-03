@@ -4,11 +4,11 @@
 
 ![実行環境: Go 1.22 以上](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%201.22%20%E4%BB%A5%E4%B8%8A-F39C12)
 
-管理画面向け API は `/reports/latest` と `/reports/{id}` を同じ `ServeMux` に登録しました。登録順に頼らず、より具体的なルートが選ばれ、誤ったメソッドには 405 を返します。なんでこうなってるの？背景を調べよう。
+同じ `ServeMux` に `/reports/latest` と `/reports/{id}` を登録しました。すると**登録順に頼らず**、より具体的なルートが選ばれます。誤ったメソッドには **405** が返ります。なんでこうなってるの？背景を調べよう。
 
-次のコードを [Go Playground で動かす](https://go.dev/play/p/fbR5kWMHL2Z) と、リテラルな `latest`、ワイルドカード、メソッド不一致の振る舞いを観測できます。
+次のコードは [Go Playground で動かせます](https://go.dev/play/p/fbR5kWMHL2Z)。リテラル一致、ワイルドカード一致、メソッド不一致の三つを観測できます。
 
-このシナリオには、Go 1.22 以降のルーティング規則を有効にする `go.mod` と、上のコードを保存した `main.go` を同梱しています。ローカルではこのディレクトリで `go run .` を実行してください。実行前に `go version`、`go env GOMOD`、`go env GODEBUG` も確認しましょう。
+このディレクトリには、上のコードの `main.go` と `go.mod` を同梱しています。`go.mod` は Go 1.22 以降のルーティング規則を有効にします。ローカルでは `go run .` を実行してください。
 
 ```go
 package main
@@ -52,7 +52,7 @@ POST /reports/2026-08 -> 405
 
 ## 設問 1: どのルートが勝つ？
 
-`GET /reports/latest` が `GET /reports/{id}` より先か後かにかかわらず、`GET /reports/latest` はどちらのハンドラーへ届くでしょうか。また、`POST /reports/2026-08` が 405 になる条件を説明してください。
+登録が先でも後でも、`GET /reports/latest` はどちらのハンドラーへ届くでしょうか。また、`POST /reports/2026-08` が 405 になる条件を説明してください。
 
 <details>
 <summary>ヒント</summary>
@@ -82,11 +82,11 @@ POST /reports/2026-08 -> 405
 
 ---
 
-## 設問 2: どの条件でこの 2 つは登録時に衝突する？
+## 設問 2: どの条件で登録時に衝突する？
 
-このシナリオの `go.mod`（`go 1.22`）で、`httpmuxgo121` を設定していない通常の挙動を前提にします。API 担当者が `GET /reports/{id}` と `/reports/latest` を登録しようとしています。両方とも一部の GET リクエストに一致しますが、なぜどちらも「常により具体的」とは言えず、`HandleFunc` が panic するのでしょうか。
+**前提**: このシナリオの `go.mod`（`go 1.22`）のまま、`httpmuxgo121` は設定しません。`GET /reports/{id}` と `/reports/latest` を登録します。両方とも一部の GET リクエストに一致します。なぜどちらも「常により具体的」とは言えず、`HandleFunc` が panic するのでしょうか。
 
-まず、実際の登録処理を次のコードで確認してください。[Go Playground でこのコードを実行する](https://go.dev/play/p/iMHQSYKMgpE) と、Go 1.22 以降の標準設定では 2 つ目の `HandleFunc` の登録時に panic し、`registered` は出力されません。
+まず登録処理を次のコードで確認してください。[Go Playground で実行する](https://go.dev/play/p/iMHQSYKMgpE)と、2 つ目の `HandleFunc` が **panic** します。`registered` は出力されません。
 
 ```go
 package main
@@ -104,7 +104,7 @@ func main() {
 }
 ```
 
-ローカルで panic しない場合は、`go version`、`go env GOMOD`、`go env GODEBUG` を確認し、標準設定と `GODEBUG=httpmuxgo121=1` を付けた場合の結果を比較して、その差が生じる条件も説明してください。
+ローカルで panic しない場合は、実行環境を確認してください。見る対象は `go version`、`go env GOMOD`、`go env GODEBUG` の三つです。次に、標準設定と `GODEBUG=httpmuxgo121=1` の結果を比較してください。差が生じる条件も説明してください。
 
 <details>
 <summary>ヒント</summary>
@@ -141,7 +141,7 @@ func main() {
 
 ## 設問 3: なぜ文字列の書式変更だけで互換性の議論が必要だった？
 
-Go 1.21 では `{id}` を含むパターンは特別なワイルドカードではありませんでした。Go 1.22 の変更で何が変わり、どの互換設定が用意されたでしょうか。プロジェクトの移行時に確認すべき点を挙げてください。
+Go 1.21 では `{id}` を含むパターンは特別なワイルドカードではありませんでした。Go 1.22 の変更で何が変わり、どの互換設定が用意されたでしょうか。移行時に確認すべき点を挙げてください。
 
 <details>
 <summary>ヒント</summary>
@@ -172,7 +172,7 @@ Go 1.22 から、メソッド付きパターンと `{name}` / `{name...}` のワ
 
 ## 設問 4: なぜ「最後に登録したものが勝つ」ではない？
 
-提案 Issue と実装をたどり、順序独立の優先順位と登録時の衝突検出が、管理 API のルートを複数チームで保守するときにどんな利点を持つか説明してください。
+提案 Issue と実装をたどってください。複数チームでルートを保守するとき、順序独立の優先順位と登録時の衝突検出にはどんな利点があるでしょうか。
 
 <details>
 <summary>ヒント</summary>
