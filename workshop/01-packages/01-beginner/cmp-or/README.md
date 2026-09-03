@@ -4,6 +4,7 @@
 
 ![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
 
+社内の通知サービスのコードを読んでいます。
 通知先チャンネルは、個人設定・チーム設定・全社既定の順に選びます。未設定の項目は空文字です。個人設定が空なのに、チーム設定の `#backend-alerts` が選ばれるコードで `cmp.Or` を見かけました。どんなものか調べてみましょう。
 
 次のコードを [Go Playground で動かす](https://go.dev/play/p/InznZIGNSza) と、下の実行結果を確認できます。
@@ -36,7 +37,11 @@ all unavailable: ""
 
 ## 設問 1: なぜチーム設定が選ばれる？
 
-`personalChannel` は空なのに、出力はなぜ `#backend-alerts` になるのでしょうか。`cmp.Or` が引数をどの順番で見て、どの値を返すかを予想してから調べてください。
+`personalChannel` は空なのに、出力はなぜ `#backend-alerts` になるのでしょうか。
+`cmp.Or` が引数をどの順番で見て、どの値を返すかを調べてください。
+
+たとえば `cmp.Or("", "#backend-alerts", "#general")` と書いたとします。
+空文字を読み飛ばして、どの値が選ばれるでしょうか。予想してから調べてみましょう。
 
 <details>
 <summary>ヒント</summary>

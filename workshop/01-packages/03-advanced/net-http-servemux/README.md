@@ -84,7 +84,7 @@ POST /reports/2026-08 -> 405
 
 ## 設問 2: どの条件で登録時に衝突する？
 
-**前提**: このシナリオの `go.mod`（`go 1.22`）のまま、`httpmuxgo121` は設定しません。`GET /reports/{id}` と `/reports/latest` を登録します。両方とも一部の GET リクエストに一致します。なぜどちらも「常により具体的」とは言えず、`HandleFunc` が panic するのでしょうか。
+**前提**: このシナリオの `go.mod`（`go 1.22`）のまま、`httpmuxgo121` は設定しません。`GET /reports/{id}` と `/reports/latest` を登録します。両方とも一部の GET リクエストに一致します。どちらのパターンも、相手より「具体的」とは言い切れません。なぜそうなるのか、そして `HandleFunc` がなぜ panic するのかを調べてください。
 
 まず登録処理を次のコードで確認してください。[Go Playground で実行する](https://go.dev/play/p/iMHQSYKMgpE)と、2 つ目の `HandleFunc` が **panic** します。`registered` は出力されません。
 
