@@ -1,3 +1,5 @@
+<img src="assets/gotan-logo.png" alt="Go探無比 (gotan)" width="280">
+
 # Go探無比 (gotan) - Go Conference 2026 Workshop
 
 **「Goの探索、豪胆無比に。」**
@@ -22,6 +24,8 @@ Goで開発していると、こうしたシーンに何度もぶつかります
 
 - [ANDPAD Tech Blog](https://tech.andpad.co.jp/)
 - [エンジニア採用サイト](https://engineer.andpad.co.jp/)
+
+The Go gopher was designed by Renée French.
 
 ## ライセンス
 
@@ -87,6 +91,8 @@ It is the material for 「go.devの歩き方、その先へ 〜Go公式リソー
 
 - [ANDPAD Tech Blog](https://tech.andpad.co.jp/)
 - [Engineering careers](https://engineer.andpad.co.jp/)
+
+The Go gopher was designed by Renée French.
 
 ## License
 
