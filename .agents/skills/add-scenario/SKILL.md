@@ -4,7 +4,7 @@ description: ワークショップの問題（README 1枚に設問・ヒント�
 metadata:
   author: ANDPAD
   category: document generation
-  version: "1.1.0"
+  version: "1.1.1"
   globs: "workshop/**/README.md"
   language:
     - go
@@ -116,6 +116,8 @@ README を書く前に、次のストーリーマップを scratchpad に作る�
 - 参照する URL はすべて curl -s -o /dev/null -w "%{http_code}" などで実在を確認する。
 - 題材のコードは scratchpad で go run し、実際の出力を取得する。
   - 渡されたコードが動かない場合は、勝手に直さず修正案と理由をユーザーに報告して判断を仰ぐ。
+- 参加者に実行させるコマンドは、対象と表示項目を明示する。`env` や `printenv` のような環境変数の一括表示、認証情報・トークン・クレデンシャルストアの表示を例に使わない。環境情報が必要なら `go env GOOS GOARCH` のように項目を許可リスト化する。
+- Issue、PR、チャットへ出力を共有させる場合は、公開されてもよい値だけを出し、共有前の確認を問題文に明記する。秘密情報を出力してからマスクする手順にしない。
 - 問題コード・実行例には Go Playground の共有リンクを作る。
   ~~~bash
   curl -s -X POST --data-binary @main.go https://play.golang.org/share
