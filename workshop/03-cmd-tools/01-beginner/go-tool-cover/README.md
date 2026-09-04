@@ -4,7 +4,7 @@
 
 ![実行環境: 手元の Go](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-%E6%89%8B%E5%85%83%E3%81%AE%20Go-F39C12)
 
-README のコードを保存してから進めます。
+このディレクトリに `go.mod`、`main.go`、`main_test.go` を同梱しています。ローカルではこのディレクトリでコマンドを実行してください。
 
 CI のテスト結果で、`coverage: 66.7%` を見かけました。どんなものか調べてみましょう。
 
@@ -69,13 +69,13 @@ func TestCalculate(t *testing.T) {
 }
 ```
 
-Go 1.26.4 で次を実行した結果です。
+Go 1.27.0 で次を実行した結果です。所要時間は実行環境によって変わります。
 
 ```console
 $ go test -coverprofile=cover.out
 PASS
 coverage: 66.7% of statements
-ok  	example.com/cover-demo	0.226s
+ok  	example.com/cover-demo	0.781s
 
 $ go tool cover -func=cover.out
 example.com/cover-demo/main.go:5:	calculate	80.0%
@@ -108,7 +108,7 @@ total:					(statements)	66.7%
 
 1. [Go のコマンド一覧](https://go.dev/doc/cmd) で `cover` を見つけ、[cover の公式ドキュメント](https://go.dev/cmd/cover/) を開く。ここで、`cover` は `go test -coverprofile=cover.out` が出力する coverage profile を解析するコマンドだと分かる。
 2. 手元で `go help testflag` を実行し、`-coverprofile` がテスト成功後に coverage profile を書き出すことを確認する。
-3. `go tool cover -help` を実行し、`-func` を使って関数ごとの到達率を表示する。実装上の注意は、[Go 1.26.4 の `cmd/cover` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/cover/doc.go) の説明も読む。
+3. `go tool cover -help` を実行し、`-func` を使って関数ごとの到達率を表示する。実装上の注意は、[Go 1.27.0 の `cmd/cover` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/cover/doc.go) の説明も読む。
 
 **答え**
 
@@ -182,4 +182,4 @@ total:					(statements)	66.7%
 1. [Go のコマンド一覧](https://go.dev/doc/cmd)
 2. [cover の公式ドキュメント](https://go.dev/cmd/cover/)
 3. 手元の `go help testflag` と `go tool cover -help`
-4. [Go 1.26.4 の `cmd/cover` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/cover/doc.go)
+4. [Go 1.27.0 の `cmd/cover` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/cover/doc.go)

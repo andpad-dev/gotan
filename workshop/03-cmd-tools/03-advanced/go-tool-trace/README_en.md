@@ -2,6 +2,8 @@
 
 # Track Down 100 ms of Synchronization Waiting: `go tool trace`
 
+This directory includes `go.mod`, `main.go`, and `main_test.go`. Run the local commands from this directory.
+
 A test runs the same operation four times, each taking 25 ms. They should run concurrently, yet completion takes about 100 ms. CPU usage is low, and a CPU profile does not make the cause of the wait clear. Let us investigate why execution tracing is shaped this way.
 
 **`main.go`**
@@ -67,12 +69,12 @@ func TestProcessWork(t *testing.T) {
 }
 ```
 
-With Go 1.26.4 on macOS:
+With Go 1.27.0 on macOS (elapsed time varies by environment):
 
 ```console
 $ go test -run '^TestProcessWork$' -trace=work.trace
 PASS
-ok   	example.com/trace-demo	0.469s
+ok   	example.com/trace-demo	0.853s
 ```
 
 ---
@@ -101,7 +103,7 @@ First establish the current contract in the [Go diagnostics guide](https://go.de
 1. Use the [diagnostics guide](https://go.dev/doc/diagnostics) to distinguish time actively consuming CPU cycles from execution-trace observations of latency and goroutine behavior.
 2. Read “Profiling with pprof” and “Interpreting the data” in [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof). Use its explanation of periodically sampled stacks as design history, but do not treat details such as the fixed-size tables in the 2013 implementation as evidence of today's implementation.
 3. Use `go help testflag` to confirm that `-trace trace.out` writes an execution trace before the test exits.
-4. Read the [trace documentation](https://go.dev/cmd/trace/) and the [Go 1.26.4 `cmd/trace` source](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/trace/doc.go).
+4. Read the [trace documentation](https://go.dev/cmd/trace/) and the [Go 1.27.0 `cmd/trace` source](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/trace/doc.go).
 
 **Answer**
 
@@ -138,7 +140,7 @@ Before opening `work.trace` in a browser, extract synchronization waiting in ppr
     go tool pprof -list='processWork.func1.1' sync.pprof
     ```
 
-3. Read `go doc runtime/trace` and the [Go 1.26.4 runtime/trace source](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/runtime/trace/annotation.go).
+3. Read `go doc runtime/trace` and the [Go 1.27.0 runtime/trace source](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/trace/annotation.go).
 
 **Answer**
 
@@ -147,11 +149,11 @@ A representative profile is:
 ```console
 $ go tool pprof -top sync.pprof
 Type: delay
-Showing nodes accounting for 466.64ms, 100% of 466.64ms total
+Showing nodes accounting for 464.38ms, 100% of 464.38ms total
       flat  flat%   sum%        cum   cum%
-  205.63ms 44.07% 44.07%   205.63ms 44.07%  runtime.chanrecv1
-  156.72ms 33.58% 77.65%   156.72ms 33.58%  sync.(*Mutex).Lock
-  104.29ms 22.35%   100%   104.29ms 22.35%  sync.(*WaitGroup).Wait
+  204.65ms 44.07% 44.07%   204.65ms 44.07%  runtime.chanrecv1
+  156.27ms 33.65% 77.72%   156.27ms 33.65%  sync.(*Mutex).Lock
+  103.46ms 22.28%   100%   103.46ms 22.28%  sync.(*WaitGroup).Wait
 ```
 
 Then `-list` connects the wait to the lock line:
@@ -159,8 +161,8 @@ Then `-list` connects the wait to the lock line:
 ```console
 $ go tool pprof -list='processWork.func1.1' sync.pprof
 ROUTINE ======================== example.com/trace-demo.processWork.func1.1
-         .   156.72ms     19: trace.WithRegion(ctx, "step", func() {
-         .   156.72ms     20:  lock.Lock()
+         .   156.27ms     19: trace.WithRegion(ctx, "step", func() {
+         .   156.27ms     20:  lock.Lock()
          .          .     21:  defer lock.Unlock()
 ```
 
@@ -203,7 +205,7 @@ Starting after detection cannot record the earlier lock contention. Go 1.21 redu
 
 ## Question 4: Decide who can see the trace viewer
 
-A trace can contain goroutine names, task names, and source locations. Which `-http` value should a developer use on a laptop to avoid exposing it unintentionally? Confirm the Go 1.27 change to `go tool trace -http=:6060` and the explicit all-addresses form from primary sources. The command measurements above use Go 1.26.4; verify the listen-address change in the release notes.
+A trace can contain goroutine names, task names, and source locations. Which `-http` value should a developer use on a laptop to avoid exposing it unintentionally? Confirm the Go 1.27 change to `go tool trace -http=:6060` and the explicit all-addresses form from primary sources. The commands above use Go 1.27.0, so you can reproduce the listen-address change locally.
 
 <details>
 <summary>Hint</summary>
@@ -245,7 +247,7 @@ In Go 1.27, the port-only form `-http=:6060` is restricted to localhost, matchin
 1. [Go diagnostics guide](https://go.dev/doc/diagnostics)
 2. [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof)
 3. [Official trace documentation](https://go.dev/cmd/trace/)
-4. `go help testflag`, `go tool trace -h`, `go tool pprof -h`, and [Go 1.26.4 `cmd/trace` source](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/trace/doc.go)
+4. `go help testflag`, `go tool trace -h`, `go tool pprof -h`, and [Go 1.27.0 `cmd/trace` source](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/trace/doc.go)
 5. [Go 1.21 release notes](https://go.dev/doc/go1.21) and [Go 1.22 release notes](https://go.dev/doc/go1.22)
 6. [Execution tracer overhaul design](https://go.googlesource.com/proposal/+/refs/heads/master/design/60773-execution-tracer-overhaul.md) and [Issue #63185](https://github.com/golang/go/issues/63185)
 7. [Go 1.27 release notes](https://go.dev/doc/go1.27)

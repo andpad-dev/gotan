@@ -90,8 +90,9 @@ short="XY" err=EOF
 
 **調査ルート**
 
-1. [Buffer.Peek](https://pkg.go.dev/bytes#Buffer.Peek) のエラー時の説明を読む。
-2. [実装](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/bytes/buffer.go;l=85) で、残っているバイト列と `io.EOF` を返す分岐を確認する。
+1. [Go Documentation](https://go.dev/doc/) から `bytes` パッケージを開く。
+2. [Buffer.Peek](https://pkg.go.dev/bytes#Buffer.Peek) のエラー時の説明を読む。
+3. [実装](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/bytes/buffer.go;l=85) で、残っているバイト列と `io.EOF` を返す分岐を確認する。
 
 **答え**
 
@@ -120,8 +121,9 @@ short="XY" err=EOF
 
 **調査ルート**
 
-1. [Buffer.Peek](https://pkg.go.dev/bytes#Buffer.Peek) の返り値の有効期間と alias の説明を読む。
-2. [buffer.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/bytes/buffer.go;l=85) のスライス式を確認する。
+1. [Go Documentation](https://go.dev/doc/) から `bytes` パッケージを開く。
+2. [Buffer.Peek](https://pkg.go.dev/bytes#Buffer.Peek) の返り値の有効期間と alias の説明を読む。
+3. [buffer.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/bytes/buffer.go;l=85) のスライス式を確認する。
 
 **答え**
 

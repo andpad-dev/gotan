@@ -103,7 +103,7 @@ Turn the three output lines into test observations, then use a short timeout.
 
 1. Confirm the purpose in the [Go 1.21 context notes](https://go.dev/doc/go1.21#context).
 2. Read [`WithoutCancel`](https://pkg.go.dev/context#WithoutCancel) and [`WithTimeout`](https://pkg.go.dev/context#WithTimeout).
-3. Reproduce the [execution example](https://go.dev/play/p/02PmNtj9kUO).
+3. Reproduce the [execution example](https://go.dev/play/p/ArrX3G2xO82).
 
 **Answer**
 

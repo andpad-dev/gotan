@@ -185,7 +185,7 @@ Go 1.27 以降の手元環境か Playground で動かします。
 <details>
 <summary>ヒント</summary>
 
-- 手元で `go version` を実行し、Go 1.27 以降であることを確認してから `go run .` を実行する
+- 手元で試す場合は、空の作業ディレクトリに完成したコードを `main.go` として保存する。`go mod init example.com/generic-methods` の後、`go.mod` の `go` 行を `1.27` にし、`go run .` を実行する
 - Playground の実行結果に表示される Go バージョンも確認する
 - `go.mod` は `go 1.27` にする。Go 1.27 toolchain でも `go 1.26` のままだと、`generic method requires go1.27 or later` という言語バージョンのエラーになる
 - 呼び出し側は `s.Map(func(n int) string { ... })` のように書ける（型引数 `F` は関数リテラルから推論される）
@@ -198,7 +198,7 @@ Go 1.27 以降の手元環境か Playground で動かします。
 **調査ルート**
 
 1. 設問 1 の EBNF を思い出しつつ、メソッド名の直後に `[F any]` を置く。
-2. `go version` と `go.mod` の `go 1.27` を確認し、手元で `go run .` するか Playground で走らせて出力を確認する。
+2. Playground で走らせるか、空の作業ディレクトリに `main.go` と `go 1.27` の `go.mod` を用意して `go run .` し、出力を確認する。
 3. 型推論の効き方は [仕様書の Type inference](https://go.dev/ref/spec#Type_inference) と同じ。関数引数から `F` が推論される。
 
 **答え**
@@ -313,4 +313,4 @@ Go 1.27 リリースノートの [math/rand/v2 節](https://go.dev/doc/go1.27#mi
   - [#49085 proposal: spec: allow type parameters in methods](https://go.dev/issue/49085)
   - [Type Parameters Proposal の No parameterized methods 節](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#No-parameterized-methods)
 - 実行環境: `go version` と `go.mod` の `go 1.27` を確認する
-- 動かし方: 手元で `go run .` するか Go Playground で実行する
+- 動かし方: Go Playground で実行するか、上の手順で別の作業ディレクトリに `main.go` と `go.mod` を用意して `go run .` する
