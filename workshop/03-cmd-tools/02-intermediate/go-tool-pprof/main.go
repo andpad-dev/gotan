@@ -4,7 +4,7 @@ import "fmt"
 
 var result uint64
 
-func seatCode(seed uint64) uint64 {
+func transform(seed uint64) uint64 {
 	for range 4_000_000 {
 		seed = seed*2862933555777941757 + 3037000493
 	}
@@ -12,5 +12,5 @@ func seatCode(seed uint64) uint64 {
 }
 
 func main() {
-	fmt.Println(seatCode(1))
+	fmt.Println(transform(1))
 }

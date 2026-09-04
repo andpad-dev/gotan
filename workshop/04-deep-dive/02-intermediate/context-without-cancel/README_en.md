@@ -1,10 +1,8 @@
 [Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 04-deep-dive](../../README.md)
 
-# Intermediate: Preserve Audit Logs with a Deadline Using context.WithoutCancel
+# Intermediate: Add an Independent Deadline to context.WithoutCancel
 
-An HTTP API updates order status and saves an audit log after returning its response. When the client closes the connection, `r.Context()` is canceled and the audit write stops. The log must retain the request ID, while a failed write must not continue forever.
-
-We want to continue writing the audit log for a limited time after the HTTP request ends. [Run this in the Go Playground](https://go.dev/play/p/02PmNtj9kUO) and observe the error and request ID after canceling the parent.
+Code must retain a value from its parent context while ignoring parent cancellation. It also needs an independent deadline so the derived operation cannot continue forever. [Run this in the Go Playground](https://go.dev/play/p/ArrX3G2xO82) and observe the error and value after canceling the parent.
 
 ```go
 package main
@@ -14,25 +12,25 @@ import (
 	"fmt"
 )
 
-type requestIDKey struct{}
+type markerKey struct{}
 
 func main() {
 	parent, cancel := context.WithCancel(
-		context.WithValue(context.Background(), requestIDKey{}, "req-42"),
+		context.WithValue(context.Background(), markerKey{}, "kept"),
 	)
 	detached := context.WithoutCancel(parent)
 	cancel()
 
 	fmt.Println("parent:", parent.Err())
 	fmt.Println("detached:", detached.Err())
-	fmt.Println("request ID:", detached.Value(requestIDKey{}))
+	fmt.Println("value:", detached.Value(markerKey{}))
 }
 ```
 
 ```text
 parent: context canceled
 detached: <nil>
-request ID: req-42
+value: kept
 ```
 
 ---
@@ -57,15 +55,15 @@ Start with the release notes that introduced this API. Then read the package doc
 
 **Answer**
 
-`context.WithoutCancel(parent)` can still find values from the parent, but is not canceled when the parent is canceled. It has no deadline, a `nil` `Done` channel, and a `nil` `Err`. Thus the parent reports `context canceled`, while the detached context still returns `req-42`.
+`context.WithoutCancel(parent)` can still find values from the parent, but is not canceled when the parent is canceled. It has no deadline, a `nil` `Done` channel, and a `nil` `Err`. Thus the parent reports `context canceled`, while the detached context still returns `kept`.
 
 </details>
 
 ---
 
-## Question 2: How do you prevent an audit write from waiting forever?
+## Question 2: How do you prevent the derived operation from waiting forever?
 
-How should the audit write get its own deadline, and what does a `nil` `Done` channel mean for a `select`?
+How should the operation get its own deadline, and what does a `nil` `Done` channel mean for a `select`?
 
 <details><summary>Hint</summary>
 
@@ -83,7 +81,7 @@ Compare the `Done` behavior with the language specification's rules for `nil` ch
 
 **Answer**
 
-Detach the request context with `WithoutCancel`, then wrap it in `WithTimeout` with a short independent deadline, and always call the returned `CancelFunc` when finished. A `nil` channel case is never selected, so `WithoutCancel` alone cannot provide a cancellation wait. The timeout makes the operation independent of client disconnects but still bounded.
+Detach the parent context with `WithoutCancel`, then wrap it in `WithTimeout` with a short independent deadline, and always call the returned `CancelFunc` when finished. A `nil` channel case is never selected, so `WithoutCancel` alone cannot provide a cancellation wait. The timeout keeps the operation bounded.
 
 </details>
 
@@ -91,11 +89,11 @@ Detach the request context with `WithoutCancel`, then wrap it in `WithTimeout` w
 
 ## Question 3: How do you test the separation?
 
-Which two observations establish that the request ID remains available, client cancellation is ignored, and the independent deadline is obeyed?
+Which two observations establish that the value remains available, parent cancellation is ignored, and the independent deadline is obeyed?
 
 <details><summary>Hint</summary>
 
-Turn the three output lines into test observations. Use a short timeout and a controllable test double for the log destination.
+Turn the three output lines into test observations, then use a short timeout.
 
 </details>
 
@@ -109,7 +107,7 @@ Turn the three output lines into test observations. Use a short timeout and a co
 
 **Answer**
 
-First, after canceling the parent, the audit code must still read the request ID and must not immediately return `context canceled`, reproducing `detached: <nil>` and `request ID: req-42`. Second, if the destination does not respond, the operation must end at the audit context's own deadline. Testing these separately proves that the code both survives client cancellation and avoids an unbounded wait.
+First, after canceling the parent, the derived context must still return the value and must not immediately return `context canceled`, reproducing `detached: <nil>` and `value: kept`. Second, the operation must end at its own deadline. Testing these separately proves that parent cancellation is detached without creating an unbounded wait.
 
 </details>
 

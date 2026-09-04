@@ -2,7 +2,7 @@
 
 # Investigate What `go generate` Can Do and What It Should Do
 
-Our team wants to automate code generation with `go generate`. While investigating, we found that `//go:generate` is more flexible than a fixed format limited to code-generation commands. The sample in [`main.go`](./main.go) demonstrates this.
+We want to automate code generation with `go generate`. `//go:generate` is more flexible than a fixed format limited to code-generation commands. The sample in [`main.go`](./main.go) demonstrates this.
 
 ```go
 package main

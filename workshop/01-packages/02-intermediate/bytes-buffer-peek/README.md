@@ -1,12 +1,12 @@
 [シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [01-packages の調べ方](../../README.md)
 
-# 受信メッセージのヘッダーを先読みしよう
+# bytes.Buffer の先頭を読み取らずに確認しよう
 
 ![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
 
-バックエンドの受信処理では、外部システムから届くメッセージの先頭 4 バイトが種別、その後ろが本文です。受信担当は種別を見てから適切な処理へ渡したいものの、本文をまだ消費してはいけません。`bytes.Buffer.Peek` を使って受信したメッセージの先頭を確認したいです。どういうふうにやればいいか調べよう。
+レビュー中に、`bytes.Buffer` の先頭 4 バイトを消費せず確認するコードを見かけました。`Peek` の返り値とバッファの関係を調べましょう。
 
-次の観測コードを [Go Playground で動かす](https://go.dev/play/p/FyP4yK-B61w) と、3 つの性質が見えます。先読み・不足データ・返されたスライスの共有です。
+次の観測コードを [Go Playground で動かす](https://go.dev/play/p/OdJEVvlBSbf) と、3 つの性質が見えます。先読み・不足データ・返されたスライスの共有です。
 
 ```go
 package main
@@ -17,14 +17,14 @@ import (
 )
 
 func main() {
-	packet := bytes.NewBufferString("HDR:payload")
-	header, err := packet.Peek(4)
-	fmt.Printf("header=%q err=%v remaining=%q\n", header, err, packet.String())
+	buffer := bytes.NewBufferString("ABCDrest")
+	prefix, err := buffer.Peek(4)
+	fmt.Printf("prefix=%q err=%v remaining=%q\n", prefix, err, buffer.String())
 
-	header[0] = 'h'
-	fmt.Printf("after mutation remaining=%q\n", packet.String())
+	prefix[0] = 'a'
+	fmt.Printf("after mutation remaining=%q\n", buffer.String())
 
-	short := bytes.NewBufferString("OK")
+	short := bytes.NewBufferString("XY")
 	got, err := short.Peek(4)
 	fmt.Printf("short=%q err=%v\n", got, err)
 }
@@ -33,23 +33,23 @@ func main() {
 実行結果:
 
 ```text
-header="HDR:" err=<nil> remaining="HDR:payload"
-after mutation remaining="hDR:payload"
-short="OK" err=EOF
+prefix="ABCD" err=<nil> remaining="ABCDrest"
+after mutation remaining="aBCDrest"
+short="XY" err=EOF
 ```
 
 ---
 
-## 設問 1: 読み取らずに種別を確認するには？
+## 設問 1: 読み取らずに先頭を確認するには？
 
-最初の出力で `header` は `"HDR:"` ですが、`remaining` も同じ `"HDR:payload"` です。`Peek(4)` は何をしており、同じ目的で `Next(4)` を使うと何が違うでしょうか。
+最初の出力で `prefix` は `"ABCD"` ですが、`remaining` も `"ABCDrest"` のままです。`Peek(4)` は何をしており、`Next(4)` を使うと何が違うでしょうか。
 
 <details>
 <summary>ヒント</summary>
 
 - [カテゴリの調べ方](../../README.md) を入口に `bytes.Buffer` のメソッド一覧を開く。
 - `Peek` と `Next` の説明にある「buffer を進めるか」を比べる。
-- `Peek` は本のページにしおりを挟んでのぞく操作、`Next` はそのページをめくって読み取り位置を進める操作、と考える。`packet := bytes.NewBufferString("HDR:payload")` で同じ位置から両方を試すと違いが見えやすい。
+- `buffer := bytes.NewBufferString("ABCDrest")` で、同じ位置から両方を試す。
 
 </details>
 
@@ -64,9 +64,9 @@ short="OK" err=EOF
 
 **答え**
 
-`Peek(4)` は次の 4 バイトを返しますが、バッファの読み取り位置を進めません。そのため担当へ渡した後でも、本文を含む完全なパケットを読む処理が同じ内容を受け取れます。
+`Peek(4)` は次の 4 バイトを返しますが、バッファの読み取り位置を進めません。そのため、後から読む処理も同じ内容を受け取れます。
 
-`Next(4)` は 4 バイトを返したうえで、読み取ったものとしてバッファを進めます。種別の判定と消費を同時にしたい場合には使えますが、今回の「のぞいてから渡す」用途には `Peek` が合います。
+`Next(4)` は 4 バイトを返したうえで、読み取り位置を進めます。先頭を消費せず確認する用途には `Peek` が合います。
 
 </details>
 
@@ -74,14 +74,14 @@ short="OK" err=EOF
 
 ## 設問 2: 4 バイトに足りないときは？
 
-`"OK"` に対する `Peek(4)` は、なぜ空のスライスではなく `"OK"` と `EOF` を返すのでしょうか。受信が途中であることを検知する処理では、返り値をどう扱えばよいでしょうか。
+`"XY"` に対する `Peek(4)` は、なぜ空のスライスではなく `"XY"` と `EOF` を返すのでしょうか。返り値をどう扱えばよいでしょうか。
 
 <details>
 <summary>ヒント</summary>
 
 - `Peek` の「fewer than n bytes」の説明を探す。
 - データの一部とエラーが同時に返る API であることに注目する。
-- `"OK"` は壊れたヘッダーとは限らず、「今のバッファには2バイトしか届いていない」と考える。部分データと `io.EOF` を別々に扱う理由を整理する。
+- 今のバッファには 2 バイトしかない。部分データと `io.EOF` を別々に扱う理由を整理する。
 
 </details>
 
@@ -95,17 +95,17 @@ short="OK" err=EOF
 
 **答え**
 
-要求した 4 バイトより少ないとき、`Peek` は現在あるバイト列を返し、同時に `io.EOF` を返します。空にして情報を失うのではなく、「ここまで受信済みだが、ヘッダーとしては不足」という状態を表せます。
+要求した 4 バイトより少ないとき、`Peek` は現在あるバイト列を返し、同時に `io.EOF` を返します。空にせず、存在する分を返します。
 
-受信処理は `err` を確認し、`io.EOF` ならさらにデータを受信してから再試行します。部分データ `got` を完全なヘッダーとして処理してはいけません。
+呼び出し側は `err` を確認します。必要な長さに足りない部分データ `got` を、完全な結果として扱ってはいけません。
 
 </details>
 
 ---
 
-## 設問 3: なぜ `header[0]` を書き換えると本文まで変わる？
+## 設問 3: なぜ `prefix[0]` を書き換えるとバッファも変わる？
 
-返された `header` の 1 バイトを `h` にすると、バッファ全体も `"hDR:payload"` になりました。後段へ種別を安全に渡してからバッファを読み書きしたいとき、何に注意し、いつコピーを作るべきでしょうか。
+返された `prefix` の 1 バイトを `a` にすると、バッファ全体も `"aBCDrest"` になりました。何に注意し、いつコピーを作るべきでしょうか。
 
 <details>
 <summary>ヒント</summary>
@@ -127,9 +127,9 @@ short="OK" err=EOF
 
 `Peek` が返すスライスはバッファ内容を共有します。読み書きメソッドを呼んだ後は有効ではなく、返ったスライスを書き換えると、次に読む内容も変わり得ます。観測用の返り値を破壊的に変更してはいけません。
 
-後段が種別を保持したり変更したりするなら、先に別のスライスへコピーします。読み取りだけで直後に使うならコピーは不要です。性能のための先読みと、所有権を分けたいデータを区別するのがポイントです。
+返り値を保持したり変更したりするなら、先に別のスライスへコピーします。読み取りだけで直後に使うならコピーは不要です。
 
-例えば `safeHeader := bytes.Clone(header)` としておけば、後から `header[0]` を書き換えても `safeHeader` は元の4バイトを保持します。`Peek` の返り値を長く持ち回るのか、その場で読むだけなのかで、コピーの要否を決めます。
+例えば `copyOfPrefix := bytes.Clone(prefix)` としておけば、後から `prefix[0]` を書き換えてもコピーは元の 4 バイトを保持します。返り値の用途でコピーの要否を決めます。
 
 </details>
 

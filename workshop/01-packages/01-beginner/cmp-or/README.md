@@ -1,13 +1,13 @@
 [シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [01-packages の調べ方](../../README.md)
 
-# cmp.Or で通知先チャンネルを決めよう
+# cmp.Or で最初の非ゼロ値を選ぼう
 
 ![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
 
-社内の通知サービスのコードを読んでいます。
-通知先チャンネルは、個人設定・チーム設定・全社既定の順に選びます。未設定の項目は空文字です。個人設定が空なのに、チーム設定の `#backend-alerts` が選ばれるコードで `cmp.Or` を見かけました。どんなものか調べてみましょう。
+レビュー中に、空文字を含む候補から値を選ぶコードで `cmp.Or` を見かけました。
+どの候補が選ばれるか予想してから、動かしてみましょう。
 
-次のコードを [Go Playground で動かす](https://go.dev/play/p/InznZIGNSza) と、下の実行結果を確認できます。
+次のコードを [Go Playground で動かす](https://go.dev/play/p/WkH9Xink92x) と、下の実行結果を確認できます。
 
 ```go
 package main
@@ -18,10 +18,10 @@ import (
 )
 
 func main() {
-	personalChannel := ""
-	teamChannel := "#backend-alerts"
-	companyDefault := "#general"
-	fmt.Println(cmp.Or(personalChannel, teamChannel, companyDefault))
+	first := ""
+	second := "second"
+	fallback := "fallback"
+	fmt.Println(cmp.Or(first, second, fallback))
 	fmt.Printf("all unavailable: %q\n", cmp.Or("", ""))
 }
 ```
@@ -29,18 +29,18 @@ func main() {
 実行結果:
 
 ```text
-#backend-alerts
+second
 all unavailable: ""
 ```
 
 ---
 
-## 設問 1: なぜチーム設定が選ばれる？
+## 設問 1: なぜ 2 番目の値が選ばれる？
 
-`personalChannel` は空なのに、出力はなぜ `#backend-alerts` になるのでしょうか。
+`first` は空なのに、出力はなぜ `second` になるのでしょうか。
 `cmp.Or` が引数をどの順番で見て、どの値を返すかを調べてください。
 
-たとえば `cmp.Or("", "#backend-alerts", "#general")` と書いたとします。
+たとえば `cmp.Or("", "second", "fallback")` と書いたとします。
 空文字を読み飛ばして、どの値が選ばれるでしょうか。予想してから調べてみましょう。
 
 <details>
@@ -62,9 +62,9 @@ all unavailable: ""
 
 **答え**
 
-`cmp.Or` は引数を左から順に見て、ゼロ値ではない最初の値を返します。`string` のゼロ値は空文字なので、空の `personalChannel` は飛ばされ、次の `teamChannel` である `#backend-alerts` が返ります。
+`cmp.Or` は引数を左から順に見て、ゼロ値ではない最初の値を返します。`string` のゼロ値は空文字なので、空の `first` は飛ばされ、次の `second` が返ります。
 
-優先順位は引数の並びで表します。このコードでは個人設定、チーム設定、全社既定の順です。
+候補の優先順位は、引数の並びで表します。
 
 </details>
 
@@ -79,7 +79,7 @@ all unavailable: ""
 
 - `Or` の「すべての値がゼロ値」の場合を確認する。
 - 関数の戻り値の型と個数から、どの情報を返しているかを考える。
-- `cmp.Or("", "")` と `cmp.Or("", "#general")` の結果を並べ、「候補が見つからなかった」ことを戻り値だけで区別できるか考える。
+- `cmp.Or("", "")` と `cmp.Or("", "fallback")` の結果を並べ、「候補が見つからなかった」ことを戻り値だけで区別できるか考える。
 
 </details>
 
@@ -96,7 +96,7 @@ all unavailable: ""
 
 すべての引数がゼロ値なら、`cmp.Or` はその型のゼロ値を返します。`string` では空文字です。戻り値は選ばれた文字列だけで、どの候補から選ばれたかや「未設定だった」という別の状態は返しません。
 
-そのため、空文字を「未設定」として扱える今回の設定では、空文字のチェックを加えて業務ルールを適用します。空文字そのものを有効な通知先として区別したい設計なら、値だけでなく設定の有無も表せるデータ構造を用意する必要があります。
+空文字を「候補がない」として扱うなら、戻り値が空かを別に確認します。空文字そのものを有効な値として区別したいなら、値だけでなく候補の有無も表せるデータ構造が必要です。
 
 例えば「候補がない」と「設定に明示的な空文字が入っている」を区別したいなら、`value string` だけでなく `found bool` も一緒に返す関数にします。`cmp.Or` は値の優先順位を決める関数で、設定の有無までは記録しません。
 

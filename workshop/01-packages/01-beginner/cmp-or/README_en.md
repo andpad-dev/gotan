@@ -1,10 +1,10 @@
 [Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 01-packages](../../README.md)
 
-# Choose a notification channel with cmp.Or
+# Choose the first non-zero value with cmp.Or
 
-An internal notification service selects a destination channel in the order of personal settings, team settings, and the company default. Unconfigured fields are empty strings. While looking at code where the team setting `#backend-alerts` was selected even though the personal setting was empty, you noticed `cmp.Or`. Let’s investigate what it does.
+During review, you notice `cmp.Or` in code that selects a value from candidates containing empty strings. Predict which candidate is selected, then run the example.
 
-Run the following code in the [Go Playground](https://go.dev/play/p/InznZIGNSza) to observe the result when values are selected by priority and when all settings are unconfigured.
+Run the following code in the [Go Playground](https://go.dev/play/p/WkH9Xink92x) to observe the result when values are selected by priority and when all candidates are zero values.
 
 ```go
 package main
@@ -15,10 +15,10 @@ import (
 )
 
 func main() {
-	personalChannel := ""
-	teamChannel := "#backend-alerts"
-	companyDefault := "#general"
-	fmt.Println(cmp.Or(personalChannel, teamChannel, companyDefault))
+	first := ""
+	second := "second"
+	fallback := "fallback"
+	fmt.Println(cmp.Or(first, second, fallback))
 	fmt.Printf("all unavailable: %q\n", cmp.Or("", ""))
 }
 ```
@@ -26,17 +26,17 @@ func main() {
 Output:
 
 ```text
-#backend-alerts
+second
 all unavailable: ""
 ```
 
 ---
 
-## Question 1: Why is the team setting selected?
+## Question 1: Why is the second value selected?
 
-`personalChannel` is empty, so why is the output `#backend-alerts`? Find out in what order `cmp.Or` examines its arguments and which value it returns.
+`first` is empty, so why is the output `second`? Find out in what order `cmp.Or` examines its arguments and which value it returns.
 
-For example, first predict which value is selected by `cmp.Or("", "#backend-alerts", "#general")` after the empty string is skipped, then investigate.
+For example, first predict which value is selected by `cmp.Or("", "second", "fallback")` after the empty string is skipped, then investigate.
 
 <details>
 <summary>Hint</summary>
@@ -57,9 +57,9 @@ For example, first predict which value is selected by `cmp.Or("", "#backend-aler
 
 **Answer**
 
-`cmp.Or` examines its arguments from left to right and returns the first value that is not the zero value. The zero value of `string` is the empty string, so the empty `personalChannel` is skipped and the next value, `teamChannel` (`#backend-alerts`), is returned.
+`cmp.Or` examines its arguments from left to right and returns the first value that is not the zero value. The zero value of `string` is the empty string, so the empty `first` is skipped and `second` is returned.
 
-The argument order expresses the priority. In this code, the order is personal setting, team setting, and company default.
+The argument order expresses the priority.
 
 </details>
 
@@ -67,14 +67,14 @@ The argument order expresses the priority. In this code, the order is personal s
 
 ## Question 2: What should you check when everything is unconfigured?
 
-The `""` returned by `cmp.Or("", "")` indicates that no setting was found. Whether to treat that as a configuration error and send no notification, or to add another default, depends on the business rules. Can you determine everything needed for that decision from the information returned by `cmp.Or` alone?
+The `""` returned by `cmp.Or("", "")` indicates that no non-zero candidate was found. Can the return value distinguish that case from an explicitly selected empty string?
 
 <details>
 <summary>Hint</summary>
 
 - Check what happens when all values are zero values in `Or`.
 - Consider what information is returned from the function’s return type and number of return values.
-- Compare the results of `cmp.Or("", "")` and `cmp.Or("", "#general")`, and consider whether the return value alone distinguishes “no candidate was found”.
+- Compare the results of `cmp.Or("", "")` and `cmp.Or("", "fallback")`, and consider whether the return value alone distinguishes “no candidate was found”.
 
 </details>
 
@@ -91,7 +91,7 @@ The `""` returned by `cmp.Or("", "")` indicates that no setting was found. Wheth
 
 When all arguments are zero values, `cmp.Or` returns the zero value of that type. For `string`, that is the empty string. The return value contains only the selected string; it does not say which candidate it came from or whether it represented an unconfigured setting.
 
-Because an empty string means “unconfigured” in this configuration, add an empty-string check and apply the business rules. If the empty string itself must be distinguished as a valid notification destination, you need a data structure that represents presence as well as the value.
+If an empty string means “no candidate”, check the returned value separately. If an explicit empty string must be distinguished, use a data structure that represents presence as well as the value.
 
 For example, if you need to distinguish “there is no candidate” from “an explicit empty string is configured”, return both `value string` and `found bool` from the lookup function. `cmp.Or` determines value priority; it does not record whether a setting was present.
 

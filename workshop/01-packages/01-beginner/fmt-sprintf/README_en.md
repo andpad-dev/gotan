@@ -2,7 +2,7 @@
 
 # Build strings with fmt.Sprintf
 
-You came across the following code in a senior colleague’s work, building a string by inserting values.
+You came across the following code while reviewing how it builds a string by inserting values.
 
 ```go
 package main
@@ -10,20 +10,20 @@ package main
 import "fmt"
 
 func main() {
-	name := "gopher"
-	points := 42
-	msg := fmt.Sprintf("User %s has %d points", name, points)
+	label := "value"
+	count := 42
+	msg := fmt.Sprintf("%s: %d", label, count)
 	fmt.Println(msg)
 	fmt.Printf("%T\n", msg)
 }
 ```
 
-([Run it in the Go Playground](https://go.dev/play/p/u99kEiMPNJA))
+([Run it in the Go Playground](https://go.dev/play/p/tr3HrACqN0c))
 
 Output:
 
 ```text
-User gopher has 42 points
+value: 42
 string
 ```
 
@@ -31,7 +31,7 @@ Let’s investigate what `fmt.Sprintf` does.
 
 ## Question 1: What does `Sprintf` return? What do `%s` and `%d` mean?
 
-`fmt.Println` prints to the screen, but what does this `fmt.Sprintf` return? Also, find out how `name` and `points` correspond to `%s` and `%d`.
+`fmt.Println` prints to the screen, but what does this `fmt.Sprintf` return? Also, find out how `label` and `count` correspond to `%s` and `%d`.
 
 <details>
 <summary>Hint</summary>
@@ -56,14 +56,14 @@ Let’s investigate what `fmt.Sprintf` does.
 - `fmt.Sprintf` uses the same formatting directives as `Printf`, but **returns the formatted result as a `string` instead of printing it**. Use it when you want to store the constructed string and use it later.
 - `%s`: a verb that inserts an argument as a string.
 - `%d`: a verb that inserts an argument as a decimal integer.
-- The `%s` and `%d` in `format` correspond to the following arguments, `name` and `points`, from left to right.
+- The `%s` and `%d` in `format` correspond to the following arguments, `label` and `count`, from left to right.
 
 ```go
-name := "gopher"
-points := 42
-msg := fmt.Sprintf("User %s has %d points", name, points)
+label := "value"
+count := 42
+msg := fmt.Sprintf("%s: %d", label, count)
 fmt.Println(msg)
-// Output: User gopher has 42 points
+// Output: value: 42
 fmt.Printf("%T\n", msg)
 // Output: string
 ```
@@ -76,7 +76,7 @@ It is useful to remember the pair this way: `fmt.Printf(...)` formats and prints
 
 ## Question 2: Aligning digits and padding with zeros
 
-Logs and reports often need numbers to have the same width, to be zero-padded like `007`, or to have a fixed number of digits after the decimal point. Find out how to specify width and precision for `%d` and `%f`.
+Numbers sometimes need the same width, zero-padding like `007`, or a fixed number of digits after the decimal point. Find out how to specify width and precision for `%d` and `%f`.
 
 Run this code first and relate each requested width or precision to the observed output before looking up the syntax.
 

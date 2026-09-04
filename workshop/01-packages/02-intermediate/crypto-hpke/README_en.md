@@ -1,12 +1,12 @@
 [Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 01-packages](../../README.md)
 
-# Deliver an Encrypted File to the Audit Destination
+# Encrypt One Message with crypto/hpke
 
-When submitting customer data to an external auditor, we want the sender to know only the auditor's public key and ensure that only the auditor can open the contents. Let's use `crypto/hpke`, added in Go 1.26, to deliver a message following the standard library example. Let's investigate how to do this.
+The sender encrypts one message with the receiver's public key, and the receiver decrypts it with the private key. Investigate the `crypto/hpke` API added in Go 1.26.
 
 This is an exercise in investigating the roles of an API. In real-world use, always add an organizational security review for protocol selection and key management.
 
-When you [run the following code in the Go Playground](https://go.dev/play/p/FDMWW7yXLFE), you can confirm that decryption succeeds with the same `info` and is rejected with a different `info`.
+When you [run the following code in the Go Playground](https://go.dev/play/p/ONc5q75dM5t), you can confirm that decryption succeeds with the same `info` and is rejected with a different `info`.
 
 ```go
 package main
@@ -27,8 +27,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	info := []byte("audit-export/v1")
-	ciphertext, err := hpke.Seal(publicKey, kdf, aead, info, []byte("customer export ready"))
+	info := []byte("example/v1")
+	ciphertext, err := hpke.Seal(publicKey, kdf, aead, info, []byte("message"))
 	if err != nil {
 		panic(err)
 	}
@@ -37,7 +37,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	_, wrongInfoErr := hpke.Open(privateKey, kdf, aead, []byte("audit-export/v2"), ciphertext)
+	_, wrongInfoErr := hpke.Open(privateKey, kdf, aead, []byte("example/v2"), ciphertext)
 	fmt.Printf("received=%q\n", plaintext)
 	fmt.Println("different info rejected:", wrongInfoErr != nil)
 }
@@ -46,7 +46,7 @@ func main() {
 Output:
 
 ```text
-received="customer export ready"
+received="message"
 different info rejected: true
 ```
 
@@ -93,7 +93,7 @@ Which key does the sender use with `Seal`, and which key does the receiver use w
 
 - Place the arguments to `Seal` and `Open` side by side.
 - Read the comments for the one-message `Seal` / `Open` API.
-- Think of the public key as a mailbox that anyone can put something into, the private key as the key held only by the recipient, and `info` as a purpose label such as “audit export v1.” Confirm why the same ciphertext cannot be opened without using the same label.
+- Compare which of the public key, private key, and `info` is passed to both `Seal` and `Open`.
 
 </details>
 
@@ -109,7 +109,7 @@ Which key does the sender use with `Seal`, and which key does the receiver use w
 
 The sender seals with the recipient's public key, and the recipient opens with the corresponding private key. Here, the sender receives `privateKey.PublicKey().Bytes()` and reconstructs the public key with `kem.NewPublicKey`.
 
-`info` is contextual information that both sides use with the same value. In the sample, it represents the version of the audit-data export format. Passing a different `info` to the decryption side causes `Open` to return an error because the ciphertext was not created in the same context.
+`info` is contextual information that both sides use with the same value. Passing a different `info` to the decryption side causes `Open` to return an error because the ciphertext was not created in the same context.
 
 </details>
 

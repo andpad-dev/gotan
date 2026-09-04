@@ -2,7 +2,7 @@
 
 # Investigate what `go vet` checks
 
-You noticed that a senior colleague added `go vet ./...` to a CI job in a pull request. Let’s investigate what it does.
+You noticed `go vet ./...` in a CI job. Let’s investigate what it does.
 
 For example, run `go vet` on code like this:
 

@@ -4,7 +4,7 @@
 
 ![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
 
-先輩のコードで、値を埋め込んで文字列を作っている次のコードを見かけました。
+コードを読んでいて、値を埋め込んで文字列を作る次の処理を見かけました。
 
 ```go
 package main
@@ -12,20 +12,20 @@ package main
 import "fmt"
 
 func main() {
-	name := "gopher"
-	points := 42
-	msg := fmt.Sprintf("ユーザー %s のポイントは %d です", name, points)
+	label := "value"
+	count := 42
+	msg := fmt.Sprintf("%s: %d", label, count)
 	fmt.Println(msg)
 	fmt.Printf("%T\n", msg)
 }
 ```
 
-（Go Playground で動かす: https://go.dev/play/p/uDdRXVMggVb ）
+（Go Playground で動かす: https://go.dev/play/p/tr3HrACqN0c ）
 
 実行結果:
 
 ```
-ユーザー gopher のポイントは 42 です
+value: 42
 string
 ```
 
@@ -34,7 +34,7 @@ string
 ## 設問 1: `Sprintf` は何を返す？ `%s` や `%d` は何を意味する？
 
 `fmt.Println` は画面に出力しますが、この `fmt.Sprintf` は何を返しているのでしょうか。
-また、`%s` や `%d` の部分に `name` と `points` がどう対応しているのか確かめてみましょう。
+また、`%s` や `%d` の部分に `label` と `count` がどう対応しているのか確かめてみましょう。
 
 <details>
 <summary>ヒント</summary>
@@ -59,14 +59,14 @@ string
 - `fmt.Sprintf` は、`Printf` と同じ書式指定でフォーマットした結果を **画面に出力せず `string` として返す** 関数です（`S` は String の S）。作った文字列を変数に入れて後で使いたいときに使います。
 - `%s`: 引数を文字列として埋め込む verb。
 - `%d`: 引数を 10 進整数として埋め込む verb。
-- `format` に書いた `%s` `%d` が、後ろに渡した引数 `name` `points` に左から順に対応します。
+- `format` に書いた `%s` `%d` が、後ろに渡した引数 `label` `count` に左から順に対応します。
 
 ```go
-name := "gopher"
-points := 42
-msg := fmt.Sprintf("ユーザー %s のポイントは %d です", name, points)
+label := "value"
+count := 42
+msg := fmt.Sprintf("%s: %d", label, count)
 fmt.Println(msg)
-// 出力: ユーザー gopher のポイントは 42 です
+// 出力: value: 42
 fmt.Printf("%T\n", msg)
 // 出力: string
 ```
@@ -79,7 +79,7 @@ fmt.Printf("%T\n", msg)
 
 ## 設問 2: 数値の桁揃えやゼロ埋めをしたい
 
-ログや帳票では、数値の幅を揃えたり、`007` のようにゼロ埋めしたり、小数点以下の桁数を固定したりしたくなります。
+数値の幅を揃えたり、`007` のようにゼロ埋めしたり、小数点以下の桁数を固定したりしたくなります。
 `%d` や `%f` に幅や精度をどう指定すればよいか調べてみましょう。
 
 次のコードを実行して、指定した幅・精度と実際の出力を対応付けてから、書式の指定方法を調べましょう。

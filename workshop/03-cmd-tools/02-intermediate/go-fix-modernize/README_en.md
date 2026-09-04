@@ -2,7 +2,7 @@
 
 # Bring Existing Code Up to Date with go fix Modernizers
 
-We want to bring our team's Go code in line with current idioms. We heard that `go fix` was revamped in Go 1.26. Let us investigate how to use it, how it differs from `go vet`, and how it can help migrate our own APIs.
+We want to bring Go code in line with current idioms. `go fix` was revamped in Go 1.26. Let us investigate how to use it, how it differs from `go vet`, and how it can help migrate an API.
 
 For example, here is code written in an unmistakably old style ([Playground](https://go.dev/play/p/6pcJuZQr7_0)):
 
@@ -106,7 +106,7 @@ Go 1.26 completely rewrote `go fix`. It now runs a collection of fixers built on
 
 ## Question 2: Inspect, select, and apply modernizers
 
-Before running `go fix ./...` on a team's code, how can you see which modernizers apply, inspect their proposed replacements, and apply only the changes you need?
+Before running `go fix ./...`, how can you see which modernizers apply, inspect their proposed replacements, and apply only the changes you need?
 
 <details>
 <summary>Hint</summary>

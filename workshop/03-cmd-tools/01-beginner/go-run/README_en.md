@@ -4,7 +4,7 @@
 
 You came across `go run`. Let’s investigate what it does.
 
-A senior colleague told you, “For a quick check, `go run main.go` is fine.” A colleague with Python and Ruby experience says, “`go run` is convenient, like running a script. So Go can run as an interpreter too.”
+`go run main.go` starts quickly, much like running a script. Does that mean Go runs the source with an interpreter?
 
 Go is supposed to be a compiled language, but is that understanding correct? Let’s investigate what actually happens when you run `go run`.
 
@@ -12,7 +12,7 @@ Go is supposed to be a compiled language, but is that understanding correct? Let
 
 ## Question 1: Does `go run` interpret and execute source code like an interpreter?
 
-As your colleague suggests, does `go run` behave like an “interpreter” that executes source code while interpreting it step by step? Or does it run the program in some other way?
+Does `go run` behave like an interpreter that executes source code step by step, or does it run the program in some other way?
 
 <details>
 <summary>Hint</summary>

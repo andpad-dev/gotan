@@ -16,7 +16,7 @@ slog.Handler インタフェースにはメソッドがいくつあり、それ�
 どのメソッドがハンドラーの中心になるか考えてみましょう。
 また、標準でこのインタフェースを実装している型も探してみましょう。
 
-例えば `logger.Info("login", "user", "alice")` を呼ぶとします。
+例えば `logger.Info("event", "key", "value")` を呼ぶとします。
 ログを受け取って出力する役割と、出力前に共通属性を付ける役割は同じでしょうか。
 ログがハンドラーへ届く流れを想像してから、4つのメソッドを分類してみましょう。
 
@@ -101,7 +101,7 @@ func main() {
 		defer func() {
 			fmt.Println("embedded handler panicked:", recover() != nil)
 		}()
-		slog.New(badHandler{}).Info("login")
+		slog.New(badHandler{}).Info("event")
 	}()
 
 	attr := slog.Any("password", password("secret"))
