@@ -12,20 +12,20 @@ package main
 import "fmt"
 
 func main() {
-	label := "value"
-	count := 42
-	msg := fmt.Sprintf("%s: %d", label, count)
+	name := "gopher"
+	points := 42
+	msg := fmt.Sprintf("ユーザー %s のポイントは %d です", name, points)
 	fmt.Println(msg)
 	fmt.Printf("%T\n", msg)
 }
 ```
 
-（Go Playground で動かす: https://go.dev/play/p/tr3HrACqN0c ）
+（Go Playground で動かす: https://go.dev/play/p/uDdRXVMggVb ）
 
 実行結果:
 
 ```
-value: 42
+ユーザー gopher のポイントは 42 です
 string
 ```
 
@@ -34,7 +34,7 @@ string
 ## 設問 1: `Sprintf` は何を返す？ `%s` や `%d` は何を意味する？
 
 `fmt.Println` は画面に出力しますが、この `fmt.Sprintf` は何を返しているのでしょうか。
-また、`%s` や `%d` の部分に `label` と `count` がどう対応しているのか確かめてみましょう。
+また、`%s` や `%d` の部分に `name` と `points` がどう対応しているのか確かめてみましょう。
 
 <details>
 <summary>ヒント</summary>
@@ -59,14 +59,14 @@ string
 - `fmt.Sprintf` は、`Printf` と同じ書式指定でフォーマットした結果を **画面に出力せず `string` として返す** 関数です（`S` は String の S）。作った文字列を変数に入れて後で使いたいときに使います。
 - `%s`: 引数を文字列として埋め込む verb。
 - `%d`: 引数を 10 進整数として埋め込む verb。
-- `format` に書いた `%s` `%d` が、後ろに渡した引数 `label` `count` に左から順に対応します。
+- `format` に書いた `%s` `%d` が、後ろに渡した引数 `name` `points` に左から順に対応します。
 
 ```go
-label := "value"
-count := 42
-msg := fmt.Sprintf("%s: %d", label, count)
+name := "gopher"
+points := 42
+msg := fmt.Sprintf("ユーザー %s のポイントは %d です", name, points)
 fmt.Println(msg)
-// 出力: value: 42
+// 出力: ユーザー gopher のポイントは 42 です
 fmt.Printf("%T\n", msg)
 // 出力: string
 ```

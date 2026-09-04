@@ -10,20 +10,20 @@ package main
 import "fmt"
 
 func main() {
-	label := "value"
-	count := 42
-	msg := fmt.Sprintf("%s: %d", label, count)
+	name := "gopher"
+	points := 42
+	msg := fmt.Sprintf("User %s has %d points", name, points)
 	fmt.Println(msg)
 	fmt.Printf("%T\n", msg)
 }
 ```
 
-([Run it in the Go Playground](https://go.dev/play/p/tr3HrACqN0c))
+([Run it in the Go Playground](https://go.dev/play/p/u99kEiMPNJA))
 
 Output:
 
 ```text
-value: 42
+User gopher has 42 points
 string
 ```
 
@@ -31,7 +31,7 @@ Let’s investigate what `fmt.Sprintf` does.
 
 ## Question 1: What does `Sprintf` return? What do `%s` and `%d` mean?
 
-`fmt.Println` prints to the screen, but what does this `fmt.Sprintf` return? Also, find out how `label` and `count` correspond to `%s` and `%d`.
+`fmt.Println` prints to the screen, but what does this `fmt.Sprintf` return? Also, find out how `name` and `points` correspond to `%s` and `%d`.
 
 <details>
 <summary>Hint</summary>
@@ -56,14 +56,14 @@ Let’s investigate what `fmt.Sprintf` does.
 - `fmt.Sprintf` uses the same formatting directives as `Printf`, but **returns the formatted result as a `string` instead of printing it**. Use it when you want to store the constructed string and use it later.
 - `%s`: a verb that inserts an argument as a string.
 - `%d`: a verb that inserts an argument as a decimal integer.
-- The `%s` and `%d` in `format` correspond to the following arguments, `label` and `count`, from left to right.
+- The `%s` and `%d` in `format` correspond to the following arguments, `name` and `points`, from left to right.
 
 ```go
-label := "value"
-count := 42
-msg := fmt.Sprintf("%s: %d", label, count)
+name := "gopher"
+points := 42
+msg := fmt.Sprintf("User %s has %d points", name, points)
 fmt.Println(msg)
-// Output: value: 42
+// Output: User gopher has 42 points
 fmt.Printf("%T\n", msg)
 // Output: string
 ```
