@@ -9,7 +9,7 @@
 
 1. Web で調べるときは、まず [Go Command](https://go.dev/cmd/go/) を開く。`go` コマンド全体の公式ドキュメントへの入口になる。
 2. 手元で `go help <サブコマンド>` を実行する（例: `go help run`, `go help generate`, `go help vet`）。`go` 本体に同梱されているサブコマンドは、これだけで概要と主要フラグが読める。
-3. 同じ内容を Web で読むなら [`pkg.go.dev/cmd/go`](https://pkg.go.dev/cmd/go) を開き、Ctrl+F / Cmd+F でサブコマンド名を検索してその節（`#hdr-...` で終わる URL）へ移動する。`cmd/go` は公開識別子を持たないため、`f` の Jump to には何も出ない。
+3. 同じ内容を Web で読むなら [`pkg.go.dev/cmd/go`](https://pkg.go.dev/cmd/go) を開き、Ctrl+F / Cmd+F でサブコマンド名を検索してその節（`#hdr-...` で終わる URL）へ移動する。`cmd/go` は関数や型を公開していないため、`f` の Jump to には何も出ない。
 4. `go tool <サブコマンド>` として提供されるツール（`vet`、`pprof`、`trace`、`cover` など）は `go tool <サブコマンド> -h` や `go tool <サブコマンド> help` で使い方を確認できる。
 
 ## 2. コマンドの詳しい仕様やフラグを知りたい
