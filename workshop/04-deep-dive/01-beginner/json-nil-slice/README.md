@@ -4,7 +4,7 @@
 
 ![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
 
-案件詳細 API のレスポンスをフロントエンドと確認していたところ、担当者がいない案件だけ `{"assignees":null}` が返っていました。画面側は常に配列として処理したいので、空のときも `{"assignees":[]}` で返す契約です。
+担当者がいないとき、API が `{"assignees":null}` を返していました。画面側は常に配列として処理したいので、空のときも `{"assignees":[]}` で返す契約です。
 
 レビューで次の `json.Marshal` を見かけました。どんなものか調べてみましょう。
 
@@ -41,7 +41,7 @@ empty: {"assignees":[]}
 
 ## 設問 1: 同じ長さ 0 なのに、なぜ JSON が違うのか？
 
-`assigneeResponse{}` と `assigneeResponse{Assignees: []string{}}` は、どちらも `len` が 0 です。それでも `null` と `[]` に分かれる理由を、スライスの値と `json.Marshal` の規則から説明してください。
+観測した二つの値は、どちらも `len` が 0 です。それでも `null` と `[]` に分かれる理由を、スライスの値と `json.Marshal` の規則から説明してください。
 
 <details>
 <summary>ヒント</summary>

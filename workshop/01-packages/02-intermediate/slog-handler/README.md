@@ -4,7 +4,7 @@
 
 ![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
 
-ログの出力を YAML 形式で行うという意思決定がされました。
+ログを YAML 形式で出力したいです。
 そのためには slog のログハンドラーを自作する必要があります。
 一次情報のみを辿って、実装や単体テストに必要な情報を集めましょう。
 
@@ -16,7 +16,9 @@ slog.Handler インタフェースにはメソッドがいくつあり、それ�
 どのメソッドがハンドラーの中心になるか考えてみましょう。
 また、標準でこのインタフェースを実装している型も探してみましょう。
 
-例えば `logger.Info("login", "user", "alice")` を呼ぶと、ログを受け取って出力する役割と、出力前に共通属性を付ける役割は同じでしょうか。ログがハンドラーへ届く流れを想像してから、4つのメソッドを分類してみましょう。
+例えば `logger.Info("login", "user", "alice")` を呼ぶとします。
+ログを受け取って出力する役割と、出力前に共通属性を付ける役割は同じでしょうか。
+ログがハンドラーへ届く流れを想像してから、4つのメソッドを分類してみましょう。
 
 <details>
 <summary>ヒント</summary>
@@ -65,7 +67,11 @@ Example の [LevelHandler](https://pkg.go.dev/log/slog#example-Handler-LevelHand
 - slog.Handler を埋め込んで、必要なメソッドだけ実装するのはなぜダメなのでしょうか？
 - slog.Value の Resolve メソッドを呼ばないと、どんなログがうまく出力されなくなるのでしょうか？
 
-次のコードで、2つの注意点を同じ入力から観測してください。[Go Playground で実行する](https://go.dev/play/p/wXj_QdVwc19) と、埋め込みだけのハンドラーで panic が起きることと、`Resolve` の有無でパスワードの表示が変わることを確認できます。
+次のコードで、2つの注意点を同じ入力から観測してください。
+[Go Playground で実行する](https://go.dev/play/p/wXj_QdVwc19) と、次の 2 点を確認できます。
+
+- 埋め込みだけのハンドラーで panic が起きる
+- `Resolve` の有無でパスワードの表示が変わる
 
 ```go
 package main
@@ -157,7 +163,9 @@ with Resolve: REDACTED
 
 ## 設問 3: slog.Handler のテスト API を使い分けよう
 
-自作ハンドラーが `slog.Handler` の決まりごとを守れているか、標準パッケージで確認する方法を調べましょう。`testing/slogtest` の `TestHandler` と `Run` は、どちらも何を検査し、失敗の報告方法とハンドラーの作り方がどう違うでしょうか。
+自作ハンドラーが `slog.Handler` の決まりごとを守れているか、標準パッケージで確認する方法を調べましょう。
+`testing/slogtest` の `TestHandler` と `Run` は、どちらも何を検査するのでしょうか。
+また、失敗の報告方法とハンドラーの作り方はどう違うでしょうか。
 
 <details>
 <summary>ヒント</summary>

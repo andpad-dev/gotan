@@ -37,7 +37,7 @@ direct: started
 
 ## 設問 1: `defer` した関数呼び出しの引数はいつ評価されるのか？
 
-`status` を `completed` へ代入するのは、最初の `defer fmt.Println("direct:", status)` より後です。それでも `direct` が `started` になる理由を、`defer` 文の評価時点と実行時点を分けて説明してください。
+コードでは、最初に `defer fmt.Println("direct:", status)` を書いています。`status` を `completed` へ代入するのは、その後です。それでも `direct` が `started` になる理由を、`defer` 文の評価時点と実行時点を分けて説明してください。
 
 <details>
 <summary>ヒント</summary>
@@ -64,7 +64,7 @@ Go 言語仕様で `defer` 文を探します。関数呼び出しそのもの�
 
 ## 設問 2: なぜ `closure` は完了後の値で、先に表示されるのか？
 
-無名関数側は `completed` を表示し、しかも `direct` より先に表示されます。無名関数が `status` を読む時点と、複数の `defer` の実行順を調べ、冒頭の監査ログが古い状態を記録した理由を説明してください。
+無名関数側は `completed` を表示し、しかも `direct` より先に表示されます。無名関数が `status` を読む時点と、複数の `defer` の実行順を調べてください。冒頭の監査ログが古い状態を記録した理由を説明してください。
 
 <details>
 <summary>ヒント</summary>

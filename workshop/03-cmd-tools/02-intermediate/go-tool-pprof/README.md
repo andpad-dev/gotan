@@ -4,9 +4,7 @@
 
 ![実行環境: Go 1.27 以上](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%201.27%20%E4%BB%A5%E4%B8%8A-F39C12)
 
-顧客向けのコード発行バッチでは、利用者に渡すコードを毎晩まとめて発行しています。処理開始までの余裕は短く、CI の計測ではコード発行テストだけで約 600ms かかっていました。
-
-「ループ回数を減らせば速そう」と言う人もいますが、座席コードはすでに別システムと照合しています。出力を変えずに速くするには、まず**実際に CPU を使っている場所**を確かめなければなりません。
+コード発行バッチのテストは、CI の計測で**約 600ms** かかっていました。発行する座席コードは既存の別システムと照合されるため、**出力は変えられません**。
 
 CPU時間を実際に使っている関数と行を特定し、互換性を保った改善の根拠を作りたいです。何を採取し、どう読めばよいか調べましょう。
 
@@ -33,7 +31,7 @@ func main() {
 
 （[Go Playground で動かす](https://go.dev/play/p/5Qwd1dKuD3I)）
 
-同じコードを [main.go](./main.go)、テストを [main_test.go](./main_test.go) として、`go 1.27` の [go.mod](./go.mod) と一緒に置いてあります。このディレクトリで、そのまま次のコマンドを実行できます。
+同じコードを [main.go](./main.go)、テストを [main_test.go](./main_test.go) として置いてあります。`go 1.27` の [go.mod](./go.mod) もあります。このディレクトリで、そのまま次のコマンドを実行できます。
 
 ```console
 $ go version
@@ -44,7 +42,7 @@ $ go run main.go
 
 **`main_test.go`**
 
-このテストとbenchmarkは `main.go` を使う複数ファイルの例なので、Go Playgroundではなく同梱ファイルをローカルで実行します。
+このテストとbenchmarkは、`main.go` を使う複数ファイルの例です。Go Playgroundではなく、同梱ファイルをローカルで実行します。
 
 ```go
 package main
@@ -70,9 +68,9 @@ func BenchmarkSeatCode(b *testing.B) {
 }
 ```
 
-Go 1.27.0 / macOS（Apple M1 Max）で、コード発行バッチのテストを profile 付きで実行しました。時間とサンプル数は環境・実行ごとに変わるので、自分の出力も記録してください。
+Go 1.27.0 / macOS（Apple M1 Max）で、テストを profile 付きで実行しました。時間とサンプル数は環境・実行ごとに変わるので、自分の出力も記録してください。
 
-Go 1.25以降の配布物では、ビルドやテストに常用しないtoolは事前ビルドされず、`go tool` が初回に必要なtoolをソースからビルドします（[Go 1.25リリースノート](https://go.dev/doc/go1.25#go-command)）。最初の `go tool pprof` だけ少し待つ場合があります。
+Go 1.25以降の配布物では、ビルドやテストに常用しないtoolは事前ビルドされません。`go tool` が初回に必要なtoolをソースからビルドします（[Go 1.25リリースノート](https://go.dev/doc/go1.25#go-command)）。最初の `go tool pprof` だけ少し待つ場合があります。
 
 ```console
 $ go test -run '^TestIssueCodes$' -cpuprofile=cpu.out
@@ -92,9 +90,13 @@ Showing nodes accounting for 460ms, 100% of 460ms total
          0     0%   100%      460ms   100%  testing.tRunner
 ```
 
-`cpu.out` と、同時に残った `pprof-demo.test` がそれぞれ何を持つのかを確かめながら、コード発行処理の CPU 時間がどこへ消えたかを追いましょう。
+`cpu.out` と、同時に残った `pprof-demo.test` がそれぞれ何を持つのかを確かめましょう。そのうえで、CPU 時間がどこへ消えたかを追います。
 
-チームで進める場合は、「採取するprofileの選択とバイナリ有無の実験」「`top`から`list`へ降りる調査」「テストとbenchmarkによる変更前後の比較」に分かれ、最後にPRへ残す調査手順を統合してみましょう。
+チームで進める場合は、次の3つを分担し、最後にPRへ残す調査手順を統合しましょう。
+
+- 採取するprofileの選択とバイナリ有無の実験
+- `top`から`list`へ降りる調査
+- テストとbenchmarkによる変更前後の比較
 
 ---
 
@@ -142,7 +144,7 @@ $ mv pprof-demo.test.hidden pprof-demo.test
 **答え**
 
 - `-cpuprofile=cpu.out` は、テスト実行中の CPU profile を `cpu.out` に書き出します。`go help testflag` は、coverage以外のprofileを生成するflagが、分析に使えるようテストバイナリも `pkg.test` として残すと説明しています。
-- ただし、このGo 1.27.0のCPU profileは採取時にシンボル化されており、profile自体に関数名・ファイル名・行番号が入っています。実測どおり、バイナリを退避しても `go tool pprof -top cpu.out` と `-list='seatCode' cpu.out` は読めます。「Goのprofileはバイナリなしでは関数名を出せない」と一般化してはいけません。
+- ただし、このGo 1.27.0のCPU profileは採取時にシンボル化されており、profile自体に関数名・ファイル名・行番号が入っています。手元で動かすと、バイナリを退避しても `go tool pprof -top cpu.out` と `-list='seatCode' cpu.out` は読めます。「Goのprofileはバイナリなしでは関数名を出せない」と一般化してはいけません。
 - バイナリは不要なのではなく、機械語を読む `-disasm` や、ローカルで追加のシンボル化が必要なprofileで使われます。同梱例ではバイナリ退避後の `-disasm='TestIssueCodes'` が、profileに記録されたビルド時の一時バイナリを開けず終了コード2になります。バイナリの要否は、profileの内容と生成するreportによって変わります。
 - `flat` はそのlocation自体の値、`cum` はそのlocationとすべての子孫の合計です。`seatCode` のように処理本体で時間を使う関数はflatが大きく、呼び出し先で時間を使う上位関数はflatが0でもcumが大きくなります。
 - CPU profile は「実行中にCPUを消費した時間」を見るため、sleepやI/O待ちは目立ちません。同期プリミティブでの待機はblock profile、mutex競合はmutex profile、スケジューリング・syscall・ネットワークを含む広いレイテンシー調査はexecution traceというように、観測したい待ちへ道具を合わせます。
@@ -179,7 +181,7 @@ $ mv pprof-demo.test.hidden pprof-demo.test
 
 **答え**
 
-実測では、次のように繰り返し本体が中心でした（時間はマシンや実行ごとに変わります。`ROUTINE` 行の絶対ファイルパスだけ省略しています）。
+実行すると、次のように繰り返し本体が中心でした（時間はマシンや実行ごとに変わります。`ROUTINE` 行の絶対ファイルパスだけ省略しています）。
 
 ```console
 $ go tool pprof -list='seatCode' cpu.out
@@ -201,7 +203,7 @@ ROUTINE ======================== example.com/pprof-demo.seatCode
 
 ## 設問 3: 「速くなった」と、互換性を崩さずに報告するには？
 
-バッチ処理チームは、変更前後の比較を再現できる形で PR に残したいと考えています。
+変更前後の比較を、再現できる形で PR に残したいです。
 
 この例にすでにあるテストと benchmark をどう使い分けますか。次のコマンドを実行して、何を比較対象として記録すべきかを説明してください。
 
