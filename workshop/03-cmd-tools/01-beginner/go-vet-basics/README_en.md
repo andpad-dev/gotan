@@ -107,7 +107,7 @@ Digging into this package's directory structure lets you find the list of analyz
 1. `go tool vet help` gives you the analyzer list.
 2. To see an overview of `printf` on the command line, run `go tool vet help printf`.
 3. Running `go doc vet` guides you to [golang.org/x/tools/go/analysis](https://pkg.go.dev/golang.org/x/tools/go/analysis); open that page.
-3. Reading the `Analyzer` section shows you the analyzer list, the `printf` details, and where the files live.
+4. Reading the `Analyzer` section shows you the analyzer list, the `printf` details, and where the files live.
 
 **Answer**
 
