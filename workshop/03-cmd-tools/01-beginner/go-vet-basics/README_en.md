@@ -92,7 +92,7 @@ Extra hint: `go help vet`, `go tool vet help`, `go doc vet`
 
 Digging further into Hint 1 leads you to [`golang.org/x/tools/go/analysis`](https://pkg.go.dev/golang.org/x/tools/go/analysis).
 Digging into this package's directory structure lets you find the list of analyzers and the `printf` details page.
-
+</details>
 <details>
 <summary>Answer</summary>
 
