@@ -197,17 +197,21 @@ Go 1.27.0 で実際にコンパイルすると、compiler が同じことを言�
 
 ## 設問 3: `Slice[T]` に `Map[F any]` を生やして動かそう
 
-冒頭の `Slice[T].Map[F any]` を完成させましょう。
-Go 1.27 以降の手元環境か Playground で動かします。
-呼び出し側で型引数を明示しなくても済むか（型推論が効くか）も確かめてください。
+[Go 1.26 までの書き方](https://go.dev/play/p/MpoXrhxatOW) を用意しました。まず開いて実行し、出力を確認してください。
+`Map` はメソッドではなく、パッケージ全体をスコープにした関数 `MapSlice` として書いてあります。Go 1.26 まではメソッドに型パラメータを置けなかったためです。
+
+これを **`Slice[T]` のメソッド** に書き換えて、同じ出力になるようにしましょう。ゼロから書く必要はありません。書き換えるのは関数の宣言と、呼び出し側の2箇所だけです。
+
+書き換えたあと、呼び出し側で型引数を明示しなくても済むか（型推論が効くか）も確かめてください。
 
 <details>
 <summary>ヒント</summary>
 
-- 手元で試す場合は、空の作業ディレクトリに完成したコードを `main.go` として保存する。`go mod init example.com/generic-methods` の後、`go.mod` の `go` 行を `1.27` にし、`go run .` を実行する
-- Playground の実行結果に表示される Go バージョンも確認する
-- `go.mod` は `go 1.27` にする。Go 1.27 toolchain でも `go 1.26` のままだと、`generic method requires go1.27 or later` という言語バージョンのエラーになる
+- 書き換えるのは `func MapSlice[T, F any](s Slice[T], f func(T) F) Slice[F]` の宣言と、`main` の中の2つの呼び出しだけ。本体はそのまま使える
+- レシーバをどこに置き、型パラメータをどこに置くかは、設問 1 で見た EBNF のとおり
 - 呼び出し側は `s.Map(func(n int) string { ... })` のように書ける（型引数 `F` は関数リテラルから推論される）
+- Playground の実行結果に表示される Go バージョンも確認する
+- 手元で試す場合は `go.mod` を `go 1.27` にする。Go 1.27 のツールチェーンでも `go 1.26` のままだと `generic method requires go1.27 or later` という言語バージョンのエラーになる
 
 </details>
 
@@ -217,7 +221,7 @@ Go 1.27 以降の手元環境か Playground で動かします。
 **調査ルート**
 
 1. 設問 1 の EBNF を思い出しつつ、メソッド名の直後に `[F any]` を置く。
-2. Playground で走らせるか、空の作業ディレクトリに `main.go` と `go 1.27` の `go.mod` を用意して `go run .` し、出力を確認する。
+2. [書き換えた版](https://go.dev/play/p/jkaRcPCnUaN) を走らせ、関数版と同じ出力になることを確かめる。
 3. 型推論の効き方は [仕様書の Type inference](https://go.dev/ref/spec#Type_inference) と同じ。関数引数から `F` が推論される。
 
 **答え**

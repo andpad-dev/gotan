@@ -60,6 +60,16 @@ isolated=["a" "b" "x"]
 
 スライス式の仕様で、添字を二つだけ指定したときの容量を確認します。次に `append` の仕様で、容量が足りる場合と足りない場合の違いを調べます。
 
+手を動かして確かめるなら、長さ・容量・先頭要素のアドレスをまとめて出す関数を用意すると、どこが共有されているか目で見えます。
+
+```go
+func inspect(label string, s []string) {
+	fmt.Printf("%-18s len=%d cap=%d ptr=%p %q\n", label, len(s), cap(s), s, s)
+}
+```
+
+[Go Playground で実行](https://go.dev/play/p/CO7LglBp1qa)
+
 </details>
 
 <details>
