@@ -1,4 +1,4 @@
-[シナリオ一覧](../SCENARIOS.md) | [ワークショップ進行ガイド](../README.md) | [01-packages の調べ方](../01-packages/README.md)
+[シナリオ一覧](../SCENARIOS.md) | [ワークショップ進行ガイド](../README.md)
 
 # チュートリアル: fmt.Printf の書式指定子を調べよう
 
@@ -138,5 +138,4 @@ func main() {
 ## 調査の入り口
 
 - [Go Documentation](https://go.dev/doc/)
-- [01-packages の調べ方](../01-packages/README.md)
 - [package fmt](https://pkg.go.dev/fmt)

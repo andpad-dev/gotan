@@ -1,4 +1,4 @@
-[Scenario index (Japanese)](../SCENARIOS.md) | [Workshop guide (Japanese)](../README.md) | [How to research 01-packages](../01-packages/README.md)
+[Scenario index (Japanese)](../SCENARIOS.md) | [Workshop guide (Japanese)](../README.md)
 
 # Tutorial: Investigate fmt.Printf verbs
 
@@ -136,5 +136,4 @@ Remember to write flags before the argument index.
 ## Starting points for investigation
 
 - [Go Documentation](https://go.dev/doc/)
-- [How to research 01-packages](../01-packages/README.md)
 - [package fmt](https://pkg.go.dev/fmt)
