@@ -118,7 +118,7 @@ Go の公式サイトのドキュメントを参照し、
 1. `go tool vet help` でアナライザー一覧を取得できる。
 2. `printf` の概要をコマンドラインで確認するには `go tool vet help printf` とする。 
 3. `go doc vet` を実行すると [golang.org/x/tools/go/analysis](https://pkg.go.dev/golang.org/x/tools/go/analysis) がガイドされているのでそのページを開く。
-3. `Analyzer` セクションを読むとアナライザー一覧と `printf` 詳細を読むことができるどこにファイルが配置されているか分かる。
+4. `Analyzer` セクションを読むとアナライザー一覧と `printf` の詳細、ファイルの保存場所が表示されます。
 
 **答え**
 
