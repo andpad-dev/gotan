@@ -122,18 +122,20 @@ Go の公式サイトのドキュメントを参照し、
 <details>
 <summary>答え</summary>
 
-**調査ルート:Web**
+**調査ルート**
+
+Web からたどる場合。
 
 1. [Go Documentation](https://go.dev/doc/) を開き `References` > `Command Documentation` を開く。さらに `vet` のページを開く。
 2. [golang.org/x/tools/go/analysis](https://pkg.go.dev/golang.org/x/tools/go/analysis) がガイドされているのでそのページを開く。
-3. `Analyzer` セクションを読むとアナライザー一覧と `printf` 詳細を読むことができるどこにファイルが配置されているか分かる。
+3. `Analyzer` セクションを読むと、アナライザー一覧と `printf` の詳細、およびファイルの配置場所が分かる。
 
-**調査ルート:コマンドライン**
+コマンドラインからたどる場合。
 
 1. `go tool vet help` でアナライザー一覧を取得できる。
-2. `printf` の概要をコマンドラインで確認するには `go tool vet help printf` とする。 
+2. `printf` の概要をコマンドラインで確認するには `go tool vet help printf` とする。
 3. `go doc vet` を実行すると [golang.org/x/tools/go/analysis](https://pkg.go.dev/golang.org/x/tools/go/analysis) がガイドされているのでそのページを開く。
-4. `Analyzer` セクションを読むとアナライザー一覧と `printf` の詳細、ファイルの保存場所が表示されます。
+4. `Analyzer` セクションを読むと、アナライザー一覧と `printf` の詳細、ファイルの保存場所が分かる。
 
 **答え**
 

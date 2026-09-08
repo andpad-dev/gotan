@@ -96,13 +96,15 @@ Digging into this package's directory structure lets you find the list of analyz
 <details>
 <summary>Answer</summary>
 
-**Investigation path: Web**
+**Investigation path**
+
+From the web documentation.
 
 1. Open [Go Documentation](https://go.dev/doc/) and go to `References` > `Command Documentation`. Then open the `vet` page.
 2. It guides you to [golang.org/x/tools/go/analysis](https://pkg.go.dev/golang.org/x/tools/go/analysis); open that page.
 3. Reading the `Analyzer` section shows you the analyzer list, the `printf` details, and where the files live.
 
-**Investigation path: Command line**
+From the command line.
 
 1. `go tool vet help` gives you the analyzer list.
 2. To see an overview of `printf` on the command line, run `go tool vet help printf`.
