@@ -2,7 +2,7 @@
 
 # シナリオ一覧
 
-取り組みたいテーマと難易度を選び、シナリオを開いてください。各シナリオの先頭から、この一覧、進行ガイド、カテゴリの調べ方に戻れます。
+取り組みたいテーマと難易度を選び、シナリオを開いてください。各シナリオの先頭から、この一覧、進行ガイド、カテゴリの調べ方に戻れます。チュートリアルで使う教材はこの一覧には載せず、[00-tutorial](00-tutorial/README.md) に置いています。
 
 実行環境の欄は、そのシナリオを進めるのに何が要るかを示します。
 水色は [Go Playground](https://go.dev/play/) だけで完結するもの、オレンジは手元に Go が要るもの、グレーはコードを実行しないものです。
@@ -14,7 +14,6 @@
 | 難易度 | シナリオ | 実行環境 |
 | --- | --- | --- |
 | 初級 | [`cmp.Or`](01-packages/01-beginner/cmp-or/README.md) | ![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8) |
-| 初級 | [`fmt.Printf`](01-packages/01-beginner/fmt-printf/README.md) | ![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8) |
 | 初級 | [`fmt.Sprintf`](01-packages/01-beginner/fmt-sprintf/README.md) | ![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8) |
 | 初級 | [for 文の仕様](01-packages/01-beginner/lang-spec-basics/README.md) | ![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8) |
 | 初級 | [`strings.Cut`](01-packages/01-beginner/strings-cut/README.md) | ![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8) |

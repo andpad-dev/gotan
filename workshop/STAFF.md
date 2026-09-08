@@ -63,12 +63,12 @@ done
 ### チュートリアルのデモ台本（00:05 - 00:25）
 
 ファシリテーターは、次の操作を画面で実演します。
-[fmt-printf](01-packages/01-beginner/fmt-printf/README.md) を画面共有し、次の台本に沿ってライブデモを進めます。
-参加者には、fmt-printf の README と <https://pkg.go.dev/fmt> を手元で開いて同じ操作を追ってもらいます（README のチュートリアルセクションで案内済みです）。
+[チュートリアルの README](00-tutorial/README.md) を画面共有し、次の台本に沿ってライブデモを進めます。
+参加者には、チュートリアルの README と <https://pkg.go.dev/fmt> を手元で開いて同じ操作を追ってもらいます（README のチュートリアルセクションで案内済みです）。
 
 #### 1. シナリオを確認する（2分）
 
-[fmt-printf の README](01-packages/01-beginner/fmt-printf/README.md) を開き、シナリオのコードを見せます。
+[チュートリアルの README](00-tutorial/README.md) を開き、シナリオのコードを見せます。
 
 ```go
 fmt.Printf("%#[1]v %[1]T\n", value)

@@ -101,11 +101,11 @@ Go の公式ドキュメント、リリースノート、Issue、ソースコー
 
 ## 00:05 チュートリアルワーク（20分）
 
-**01-packages** の **01-beginner** にある [fmt-printf](01-packages/01-beginner/fmt-printf) を題材に、調べ方をライブデモで体験します。
+[チュートリアル](00-tutorial/README.md) を題材に、調べ方をライブデモで体験します。
 
 ファシリテーターが画面共有で操作するので、参加者は次の2つを手元で開き、同じ操作を追ってください。
 
-- [fmt-printf の README](01-packages/01-beginner/fmt-printf/README.md)
+- [チュートリアルの README](00-tutorial/README.md)
 - <https://pkg.go.dev/fmt>
 
 デモは次の流れで進みます。
@@ -158,7 +158,7 @@ Go の公式ドキュメント、リリースノート、Issue、ソースコー
 続いて、[チームでの進め方](TEAM_GUIDE.md) を開き、班ごとに **「今日深く調べたいテーマ」** を1つ決めます。
 テーマの決め方は次の2通り、どちらでも構いません。
 
-1. **用意されたシナリオから選ぶ:** [シナリオ一覧](SCENARIOS.md) から、チュートリアルで使わなかった興味のあるものを選びます。カテゴリは次の4つです。
+1. **用意されたシナリオから選ぶ:** [シナリオ一覧](SCENARIOS.md) から、興味のあるものを選びます。カテゴリは次の4つです。
    - [01-packages](01-packages/): Goのパッケージに関する出題
    - [02-features](02-features/): Goの機能に関する出題
    - [03-cmd-tools](03-cmd-tools/): Goのtoolに関する出題
