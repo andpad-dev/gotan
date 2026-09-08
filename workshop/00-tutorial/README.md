@@ -1,6 +1,6 @@
-[シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [01-packages の調べ方](../../README.md)
+[シナリオ一覧](../SCENARIOS.md) | [ワークショップ進行ガイド](../README.md) | [01-packages の調べ方](../01-packages/README.md)
 
-# fmt.Printf の書式指定子を調べよう
+# チュートリアル: fmt.Printf の書式指定子を調べよう
 
 ![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
 
@@ -138,5 +138,5 @@ func main() {
 ## 調査の入り口
 
 - [Go Documentation](https://go.dev/doc/)
-- [01-packages の調べ方](../../README.md)
+- [01-packages の調べ方](../01-packages/README.md)
 - [package fmt](https://pkg.go.dev/fmt)

@@ -8,6 +8,7 @@ This repository contains the Go Conference 2026 workshop materials for Go探無�
 - Use a descriptive English kebab-case topic name, such as `fmt-printf` or `slog-handler`; do not add sequence numbers.
 - Do not create separate solution files or directories. Put hints and answers in the scenario README inside `<details>` blocks.
 - Each category root must have a README with reverse-search guidance. If the target category lacks one, propose creating it.
+- Keep the tutorial material at `workshop/00-tutorial/README.md`; it is not a scenario under a difficulty directory, so do not list it in the `workshop/SCENARIOS.md` table.
 
 ## Difficulty and Scenario Format
 
