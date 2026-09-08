@@ -9,7 +9,7 @@
 
 1. Web で調べるときは、まず [Go Command](https://go.dev/cmd/go/) を開く。`go` コマンド全体の公式ドキュメントへの入口になる。
 2. 手元で `go help <サブコマンド>` を実行する（例: `go help run`, `go help generate`, `go help vet`）。`go` 本体に同梱されているサブコマンドは、これだけで概要と主要フラグが読める。
-3. 同じ内容を Web で読むなら [`pkg.go.dev/cmd/go`](https://pkg.go.dev/cmd/go) のページで `f` キーを押し、サブコマンド名を検索してその節（`#hdr-...` で終わる URL）に直接ジャンプできる。
+3. 同じ内容を Web で読むなら [`pkg.go.dev/cmd/go`](https://pkg.go.dev/cmd/go) を開き、Ctrl+F / Cmd+F でサブコマンド名を検索してその節（`#hdr-...` で終わる URL）へ移動する。`cmd/go` は関数や型を公開していないため、`f` の Jump to には何も出ない。
 4. `go tool <サブコマンド>` として提供されるツール（`vet`、`pprof`、`trace`、`cover` など）は `go tool <サブコマンド> -h` や `go tool <サブコマンド> help` で使い方を確認できる。
 
 ## 2. コマンドの詳しい仕様やフラグを知りたい
@@ -27,7 +27,7 @@
 
 1. cmd/go の実装は https://cs.opensource.google/go/go の `src/cmd/go/internal/` 以下に、サブコマンドごとにパッケージが分かれている（例: `go run` → `internal/run`、`go build` → `internal/work`、`go generate` → `internal/generate`）。単体コマンド（`vet`, `pprof` など）は `https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/<サブコマンド>/` を直接開くか、pkg.go.dev のコマンドページ末尾のソースリンクをたどる。
 2. サブコマンド名と同じ名前のファイル（`run.go` など）を開き、`Cmd*.Run` に登録されている関数（`runRun` など）を探す。ここが挙動を追いかけるエントリポイント。単体コマンドの場合は `doc.go` に `go help` で出るヘルプ本文が書かれていることが多く、まずここを読むと全体像がつかめる。
-3. `f` キーでページ内検索しながら、その関数が呼んでいる関数へ 1 つずつジャンプする。呼び出し先の実装まで実際に読んで確認する。コメントや関数名の雰囲気だけで判断しない。
+3. Ctrl+F / Cmd+F でページ内を検索しながら、その関数が呼んでいる関数へ 1 つずつジャンプする。呼び出し先の実装まで実際に読んで確認する。コメントや関数名の雰囲気だけで判断しない。
 4. バージョンタグを手元の環境に合わせる。URL 中の `refs/tags/go1.27.0` のような部分は、`go version` の結果と揃える。
 
 ## 5. いつ・なぜ追加された機能か知りたい

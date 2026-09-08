@@ -32,7 +32,7 @@ const (
 <details>
 <summary>ヒント</summary>
 
-- Go 言語仕様書は 1 枚 HTML なので、`f` キー（ブラウザのページ内検索）で `iota` を探すのが早いです。
+- Go 言語仕様書は 1 枚 HTML なので、ブラウザの Ctrl+F / Cmd+F で `iota` を探すのが早いです。
 - `Constant declarations` セクションの中に、`Iota` という見出しがあります。
 - 仕様書の [Iota](https://go.dev/ref/spec#Iota) と [Predeclared identifiers](https://go.dev/ref/spec#Predeclared_identifiers) を順に読み、`iota` がキーワード一覧にあるかも確認します。
 
