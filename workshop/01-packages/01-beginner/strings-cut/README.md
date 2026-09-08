@@ -35,9 +35,12 @@ func main() {
 <details>
 <summary>調査の入り口</summary>
 
-1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方を確かめます。
-2. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `strings` パッケージを開きます。
-3. [package strings](https://pkg.go.dev/strings) を開きます。`Cut` 関数の説明はこのページにあります。
+まず [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go Documentation](https://go.dev/doc/) — 標準ライブラリの `strings` パッケージを開く入口
+- [package strings](https://pkg.go.dev/strings) — `Cut` 関数の説明はこのページにある
 
 </details>
 

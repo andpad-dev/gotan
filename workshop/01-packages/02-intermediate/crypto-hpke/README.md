@@ -55,9 +55,12 @@ different info rejected: true
 <details>
 <summary>調査の入り口</summary>
 
-1. [01-packages の調べ方](../../README.md) を開き、標準パッケージの Overview の読み方を確かめます。
-2. [Go 1.26 Release Notes](https://go.dev/doc/go1.26) を開きます。`crypto/hpke` が追加されたときのリリースノートです。
-3. [package crypto/hpke](https://pkg.go.dev/crypto/hpke) を開きます。サンプルで使っている型と関数の説明はこのページにあります。
+まず [01-packages の調べ方](../../README.md) を開き、標準パッケージの Overview の読み方を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 1.26 Release Notes](https://go.dev/doc/go1.26) — `crypto/hpke` が追加されたときのリリースノート
+- [package crypto/hpke](https://pkg.go.dev/crypto/hpke) — サンプルで使っている型と関数の説明はこのページにある
 
 </details>
 

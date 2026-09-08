@@ -24,9 +24,12 @@ const (
 <details>
 <summary>調査の入り口</summary>
 
-1. [02-features の調べ方](../../README.md) を開き、言語仕様・公式ブログ・プロポーザルの逆引き手順を確かめます。
-2. [Go 言語仕様](https://go.dev/ref/spec) を開きます。言語仕様の全文で、`iota` の定義もここにあります。
-3. [Effective Go](https://go.dev/doc/effective_go) を開きます。仕様書とは別に、慣用的な書き方を例で示した文書です。
+まず [02-features の調べ方](../../README.md) を開き、言語仕様・公式ブログ・プロポーザルの逆引き手順を確かめます。
+
+そのうえで、次のどちらかから入ります。
+
+- [Go 言語仕様](https://go.dev/ref/spec) — 言語仕様の全文。`iota` の定義もここにある
+- [Effective Go](https://go.dev/doc/effective_go) — 仕様書とは別に、慣用的な書き方を例で示した文書
 
 </details>
 

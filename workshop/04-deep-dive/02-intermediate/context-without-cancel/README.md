@@ -54,9 +54,12 @@ limited: context deadline exceeded
 <details>
 <summary>調査の入り口</summary>
 
-1. [04-deep-dive の調べ方](../../README.md)を開き、Go の公式ドキュメントを起点にします。
-2. [Go 1.21 リリースノート: context](https://go.dev/doc/go1.21#context) で追加された API の目的を調べます。
-3. リリースノートから `context` パッケージのドキュメントへ進みます。
+まず [04-deep-dive の調べ方](../../README.md)を開き、Go の公式ドキュメントを起点にします。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 1.21 リリースノート: context](https://go.dev/doc/go1.21#context) — 追加された API の目的
+- リリースノートから `context` パッケージのドキュメントへ進む
 
 </details>
 

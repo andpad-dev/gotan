@@ -27,12 +27,15 @@ func main() { println("hello world") }
 <details>
 <summary>調査の入り口</summary>
 
-1. [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
-2. [Go command](https://go.dev/cmd/go/) は `go` コマンドのドキュメントです。ここから `cmd/go` のソースへたどれます。
-3. [Go 1.27.0 の `run_hello.txt`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/testdata/script/run_hello.txt) は題材のテキストそのもの、[`script_test.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/script_test.go;l=39) はそれを実行するテストコードです。
-4. [Go Testing By Example](https://research.swtch.com/testing) は、2023 年に公開されたテストの書き方に関する記事です。
-5. [2018 年の script test 導入 commit](https://github.com/golang/go/commit/5890e25b7ccb2d2249b2f8a02ef5dbc36047868b) は、この仕組みを `cmd/go` に追加した変更です。
-6. [`golang.org/x/tools/txtar@v0.47.0`](https://pkg.go.dev/golang.org/x/tools/txtar@v0.47.0) と [`rsc.io/script@v0.0.2`](https://pkg.go.dev/rsc.io/script@v0.0.2) は、Go 本体の外で公開されている関連 module のドキュメントです。
+まず [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go command](https://go.dev/cmd/go/) — `go` コマンドのドキュメント。ここから `cmd/go` のソースへたどれる
+- [Go 1.27.0 の `run_hello.txt`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/testdata/script/run_hello.txt) と [`script_test.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/script_test.go;l=39) — 題材のテキストそのものと、それを実行するテストコード
+- [Go Testing By Example](https://research.swtch.com/testing) — 2023 年に公開されたテストの書き方に関する記事
+- [2018 年の script test 導入 commit](https://github.com/golang/go/commit/5890e25b7ccb2d2249b2f8a02ef5dbc36047868b) — この仕組みを `cmd/go` に追加した変更
+- [`golang.org/x/tools/txtar@v0.47.0`](https://pkg.go.dev/golang.org/x/tools/txtar@v0.47.0) と [`rsc.io/script@v0.0.2`](https://pkg.go.dev/rsc.io/script@v0.0.2) — Go 本体の外で公開されている関連 module のドキュメント
 
 </details>
 

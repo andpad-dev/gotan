@@ -40,9 +40,12 @@ isolated=["a" "b" "x"]
 <details>
 <summary>調査の入り口</summary>
 
-1. [04-deep-dive の調べ方](../../README.md)を開き、Go 言語仕様を起点にします。
-2. [Go 言語仕様: Slice expressions](https://go.dev/ref/spec#Slice_expressions) で `len` と `cap` を調べます。
-3. [Go 言語仕様: Appending and copying slices](https://go.dev/ref/spec#Appending_and_copying_slices) で追加時の規則を確かめます。
+まず [04-deep-dive の調べ方](../../README.md)を開き、Go 言語仕様を起点にします。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 言語仕様: Slice expressions](https://go.dev/ref/spec#Slice_expressions) — `len` と `cap`
+- [Go 言語仕様: Appending and copying slices](https://go.dev/ref/spec#Appending_and_copying_slices) — 追加時の規則
 
 </details>
 

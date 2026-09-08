@@ -11,11 +11,14 @@
 <details>
 <summary>調査の入り口</summary>
 
-1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方を確かめます。
-2. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `log/slog` を開きます。
-3. [package log/slog](https://pkg.go.dev/log/slog) を開きます。`Handler` インタフェースの定義はこのページにあります。
-4. [slog handler guide](https://go.dev/s/slog-handler-guide) を開きます。ハンドラーを自作する人向けの公式ガイドです。
-5. [package testing/slogtest](https://pkg.go.dev/testing/slogtest) を開きます。自作ハンドラーの検査に使う標準パッケージです。
+まず [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go Documentation](https://go.dev/doc/) — 標準ライブラリの `log/slog` を開く入口
+- [package log/slog](https://pkg.go.dev/log/slog) — `Handler` インタフェースの定義はこのページにある
+- [slog handler guide](https://go.dev/s/slog-handler-guide) — ハンドラーを自作する人向けの公式ガイド
+- [package testing/slogtest](https://pkg.go.dev/testing/slogtest) — 自作ハンドラーの検査に使う標準パッケージ
 
 </details>
 

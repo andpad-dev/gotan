@@ -9,9 +9,12 @@
 <details>
 <summary>調査の入り口</summary>
 
-1. [01-packages の調べ方](../../README.md) を開き、言語仕様の節の探し方を確かめます。
-2. [Go Documentation](https://go.dev/doc/) を入口に、Language Specification から Go 言語仕様を開きます。
-3. [Go 言語仕様](https://go.dev/ref/spec) を開きます。`for` 文と `switch` 文の規則は、この 1 ページにまとまった仕様書の中にあります。
+まず [01-packages の調べ方](../../README.md) を開き、言語仕様の節の探し方を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go Documentation](https://go.dev/doc/) — Language Specification から Go 言語仕様を開く入口
+- [Go 言語仕様](https://go.dev/ref/spec) — `for` 文と `switch` 文の規則は、この 1 ページにまとまった仕様書の中にある
 
 </details>
 

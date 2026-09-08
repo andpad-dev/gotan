@@ -86,11 +86,14 @@ total:					(statements)	66.7%
 <details>
 <summary>調査の入り口</summary>
 
-1. [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
-2. [Go のコマンド一覧](https://go.dev/doc/cmd) は、Go に同梱されるコマンドとツールの一覧です。
-3. [cover の公式ドキュメント](https://go.dev/cmd/cover/) は、`cover` ツールの説明です。
-4. 手元で `go help testflag` と `go tool cover -help` を実行し、それぞれのヘルプを読みます。
-5. [Go 1.27.0 の `cmd/cover` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/cover/doc.go) は、`cover` ツールのソースコードにある説明です。
+まず [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go のコマンド一覧](https://go.dev/doc/cmd) — Go に同梱されるコマンドとツールの一覧
+- [cover の公式ドキュメント](https://go.dev/cmd/cover/) — `cover` ツールの説明
+- 手元の `go help testflag` と `go tool cover -help` — それぞれのヘルプ
+- [Go 1.27.0 の `cmd/cover` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/cover/doc.go) — `cover` ツールのソースコードにある説明
 
 </details>
 

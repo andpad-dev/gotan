@@ -33,13 +33,16 @@ $ GOTOOLCHAIN=go1.27.0 go version -m "$(GOTOOLCHAIN=go1.27.0 go env GOTOOLDIR)/c
 <details>
 <summary>調査の入り口</summary>
 
-1. [04-deep-dive の調べ方](../../README.md) を開き、仕様・実装・設計背景をたどる順番を確かめます。
-2. [Go Documentation](https://go.dev/doc) から Go コマンドのドキュメントへ進み、`go version` の `-m` の説明を読みます。
-3. [Go compiler](https://go.dev/cmd/compile/) は、Go コンパイラ `cmd/compile` の公式ドキュメントです。
-4. [Installing Go from source](https://go.dev/doc/install/source#go14) は、ソースから Go をビルドする公式手順で、ブートストラップの要件を扱います。
-5. [Perfectly Reproducible, Verified Go Toolchains](https://go.dev/blog/rebuild) は、再現可能なビルドと検証済みツールチェーンを説明する Go Blog の記事です。
-6. [Go Reproducible Build Report](https://go.dev/rebuild) は、公開された Go ツールチェーンを再ビルドした結果のレポートです。
-7. [Running the “Reflections on Trusting Trust” Compiler](https://research.swtch.com/nih) は、Russ Cox がコンパイラ攻撃の現代版を実演した記事です。
+まず [04-deep-dive の調べ方](../../README.md) を開き、仕様・実装・設計背景をたどる順番を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go Documentation](https://go.dev/doc) — Go コマンドのドキュメントへ進み、`go version` の `-m` の説明を読む入口
+- [Go compiler](https://go.dev/cmd/compile/) — Go コンパイラ `cmd/compile` の公式ドキュメント
+- [Installing Go from source](https://go.dev/doc/install/source#go14) — ソースから Go をビルドする公式手順。ブートストラップの要件を扱う
+- [Perfectly Reproducible, Verified Go Toolchains](https://go.dev/blog/rebuild) — 再現可能なビルドと検証済みツールチェーンを説明する Go Blog の記事
+- [Go Reproducible Build Report](https://go.dev/rebuild) — 公開された Go ツールチェーンを再ビルドした結果のレポート
+- [Running the “Reflections on Trusting Trust” Compiler](https://research.swtch.com/nih) — Russ Cox がコンパイラ攻撃の現代版を実演した記事
 
 </details>
 

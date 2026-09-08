@@ -35,11 +35,14 @@ invalid operation: v1 == v2 (struct containing [0]func() cannot be compared)
 <details>
 <summary>調査の入り口</summary>
 
-1. [04-deep-dive の調べ方](../../README.md) を開き、仕様・実装・設計背景をたどる順番を確かめます。
-2. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `log/slog` パッケージを開きます。
-3. [The Go Programming Language Specification](https://go.dev/ref/spec) は Go 言語仕様です。`==` の規則もここで定義されています。
-4. [go1.27.0 の src/log/slog/value.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/log/slog/value.go;l=21) は、`slog.Value` の型定義です。
-5. [`==` を禁止した CL 479516](https://go-review.googlesource.com/c/go/+/479516) と [Issue #56345](https://github.com/golang/go/issues/56345) は、`==` を禁止した変更と、その背景の issue です。
+まず [04-deep-dive の調べ方](../../README.md) を開き、仕様・実装・設計背景をたどる順番を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go Documentation](https://go.dev/doc/) — 標準ライブラリの `log/slog` パッケージを開く入口
+- [The Go Programming Language Specification](https://go.dev/ref/spec) — Go 言語仕様。`==` の規則もここで定義されている
+- [go1.27.0 の src/log/slog/value.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/log/slog/value.go;l=21) — `slog.Value` の型定義
+- [`==` を禁止した CL 479516](https://go-review.googlesource.com/c/go/+/479516) と [Issue #56345](https://github.com/golang/go/issues/56345) — `==` を禁止した変更と、その背景の issue
 
 </details>
 

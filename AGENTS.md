@@ -29,7 +29,9 @@ Use this structure:
 1. `# <title>`.
 2. One execution-environment badge, so readers can tell before opening whether they need Go installed.
 3. An introduction framed as a workplace problem. The observation, purpose, and investigation should connect naturally without requiring a fixed sentence. Link every runnable Go example to Go Playground.
-4. A `<details><summary>調査の入り口</summary>` block placed **before the first question**, so readers meet it before they start. Write it as a numbered list whose first item links the category README (`../../README.md`). Each item names a source and says, in one sentence, what that source covers — never a bare link with no explanation.
+4. A `<details><summary>調査の入り口</summary>` block placed **before the first question**, so readers meet it before they start.
+
+   Open with one sentence pointing at the category README (`まず [<category> の調べ方](../../README.md) を開き、…`), then `そのうえで、次のどれかから入ります。`, then a **bulleted** list — not numbered. The sources are alternatives, not steps; a numbered list of ten reads as a ten-step procedure. Each bullet is `- [source](url) — short description`, naming the source and what it covers. Never a bare link with no explanation.
 
    Because readers see this block **before** they read the questions, it must not spoil the hints. Keep the two apart:
 

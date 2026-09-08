@@ -13,12 +13,15 @@ pkg.go.dev のブラウザ UI には、パッケージを「インポート数�
 <details>
 <summary>調査の入り口</summary>
 
-1. [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
-2. [Go Documentation](https://go.dev/doc/) を入口に、pkg.go.dev API ドキュメントと Go Modules Reference を探します。
-3. [pkg.go.dev API ドキュメント](https://pkg.go.dev/v1/api) は、pkg.go.dev API の公式リファレンスです。
-4. [pkgsite internal/api](https://pkg.go.dev/golang.org/x/pkgsite/internal/api) は、API のレスポンス型を定義しているパッケージのドキュメントです。
-5. [pkgsite のソースコード](https://cs.opensource.google/go/x/pkgsite) は、pkg.go.dev 自体（pkgsite）のソースです。
-6. [Go Modules Reference](https://go.dev/ref/mod) は、Go のモジュールシステムの公式リファレンスです。
+まず [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go Documentation](https://go.dev/doc/) — pkg.go.dev API ドキュメントと Go Modules Reference を探す入口
+- [pkg.go.dev API ドキュメント](https://pkg.go.dev/v1/api) — pkg.go.dev API の公式リファレンス
+- [pkgsite internal/api](https://pkg.go.dev/golang.org/x/pkgsite/internal/api) — API のレスポンス型を定義しているパッケージのドキュメント
+- [pkgsite のソースコード](https://cs.opensource.google/go/x/pkgsite) — pkg.go.dev 自体（pkgsite）のソース
+- [Go Modules Reference](https://go.dev/ref/mod) — Go のモジュールシステムの公式リファレンス
 
 </details>
 

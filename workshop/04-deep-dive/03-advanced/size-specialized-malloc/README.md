@@ -33,11 +33,14 @@ Go 1.27.0 での出力:
 <details>
 <summary>調査の入り口</summary>
 
-1. [04-deep-dive の調べ方](../../README.md) を開き、仕様・実装・設計背景をたどる順番を確かめます。
-2. [Go 1.27 リリースノート「Faster Memory Allocation」](https://go.dev/doc/go1.27) を読み、`<80 byte` の要約と `GOEXPERIMENT=nosizespecializedmalloc` の段落を確認します。
-3. [size-specialized malloc を直接呼ぶコンパイラ変更](https://go-review.googlesource.com/c/go/+/707856) は、`cmd/compile` 側の変更 CL です。
-4. ランタイム側の [`runtime/_mkmalloc/constants.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/_mkmalloc/constants.go;l=25) は、割り当て関数の生成に使う定数を定義しています。
-5. コンパイラ側の [`cmd/compile` の `specializedMallocSym`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/compile/internal/ssagen/ssa.go;l=804) は、size-specialized な呼び出しを扱う箇所です。
+まず [04-deep-dive の調べ方](../../README.md) を開き、仕様・実装・設計背景をたどる順番を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 1.27 リリースノート「Faster Memory Allocation」](https://go.dev/doc/go1.27) — `<80 byte` の要約と `GOEXPERIMENT=nosizespecializedmalloc` の段落
+- [size-specialized malloc を直接呼ぶコンパイラ変更](https://go-review.googlesource.com/c/go/+/707856) — `cmd/compile` 側の変更 CL
+- ランタイム側の [`runtime/_mkmalloc/constants.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/_mkmalloc/constants.go;l=25) — 割り当て関数の生成に使う定数の定義
+- コンパイラ側の [`cmd/compile` の `specializedMallocSym`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/compile/internal/ssagen/ssa.go;l=804) — size-specialized な呼び出しを扱う箇所
 
 </details>
 

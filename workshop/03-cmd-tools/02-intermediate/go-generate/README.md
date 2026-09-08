@@ -42,11 +42,14 @@ GOFILE=main.go GOLINE=5 GOPACKAGE=main
 <details>
 <summary>調査の入り口</summary>
 
-1. [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
-2. [Go command の generate 説明](https://go.dev/cmd/go/#hdr-Generate_Go_files_by_processing_source) は、`go generate` サブコマンドのドキュメントです。手元の `go help generate` でも読めます。
-3. [`go generate` の公式ブログ記事](https://go.dev/blog/generate) は、`go generate` を導入したときの Go 公式ブログの記事です。
-4. [`go generate` のプロポーザル](https://go.googlesource.com/proposal/+/refs/heads/master/design/go-generate.md) は、`go generate` の設計文書です。
-5. [Go 1.27.0 の generate.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/generate/generate.go) は、`go generate` サブコマンドの実装です。
+まず [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go command の generate 説明](https://go.dev/cmd/go/#hdr-Generate_Go_files_by_processing_source) — `go generate` サブコマンドのドキュメント。手元の `go help generate` でも読める
+- [`go generate` の公式ブログ記事](https://go.dev/blog/generate) — `go generate` を導入したときの Go 公式ブログの記事
+- [`go generate` のプロポーザル](https://go.googlesource.com/proposal/+/refs/heads/master/design/go-generate.md) — `go generate` の設計文書
+- [Go 1.27.0 の generate.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/generate/generate.go) — `go generate` サブコマンドの実装
 
 </details>
 

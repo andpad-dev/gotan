@@ -40,11 +40,14 @@ reset timer fired
 <details>
 <summary>調査の入り口</summary>
 
-1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方と、`go version` などの実行環境の記録手順を確かめます。
-2. [Go 1.27 Release Notes](https://go.dev/doc/go1.27) を開きます。実行環境に指定している Go 1.27 のリリースノートです。
-3. [Go Wiki: Go 1.23 Timer Channel Changes](https://go.dev/wiki/Go123Timer) を開きます。Go 1.23 のタイマー変更を解説する公式 Wiki です。
-4. [Hash-Based Bisect Debugging in Compilers and Runtimes](https://research.swtch.com/bisect) を開きます。Russ Cox がタイマー障害の調査を題材に書いた記事です。
-5. [package time](https://pkg.go.dev/time) を開きます。`Timer` の説明はこのページにあります。
+まず [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方と、`go version` などの実行環境の記録手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 1.27 Release Notes](https://go.dev/doc/go1.27) — 実行環境に指定している Go 1.27 のリリースノート
+- [Go Wiki: Go 1.23 Timer Channel Changes](https://go.dev/wiki/Go123Timer) — Go 1.23 のタイマー変更を解説する公式 Wiki
+- [Hash-Based Bisect Debugging in Compilers and Runtimes](https://research.swtch.com/bisect) — Russ Cox がタイマー障害の調査を題材に書いた記事
+- [package time](https://pkg.go.dev/time) — `Timer` の説明はこのページにある
 
 </details>
 

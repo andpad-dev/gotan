@@ -41,9 +41,12 @@ short="XY" err=EOF
 <details>
 <summary>調査の入り口</summary>
 
-1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのメソッド一覧の開き方を確かめます。
-2. [Go 1.26 Release Notes](https://go.dev/doc/go1.26) を開きます。`Buffer.Peek` が追加されたときのリリースノートです。
-3. [package bytes](https://pkg.go.dev/bytes) を開きます。`Buffer` のメソッド一覧と各メソッドの説明はこのページにあります。
+まず [01-packages の調べ方](../../README.md) を開き、標準パッケージのメソッド一覧の開き方を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 1.26 Release Notes](https://go.dev/doc/go1.26) — `Buffer.Peek` が追加されたときのリリースノート
+- [package bytes](https://pkg.go.dev/bytes) — `Buffer` のメソッド一覧と各メソッドの説明はこのページにある
 
 </details>
 

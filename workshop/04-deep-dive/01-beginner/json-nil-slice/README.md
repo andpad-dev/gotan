@@ -40,9 +40,12 @@ empty: {"values":[]}
 <details>
 <summary>調査の入り口</summary>
 
-1. [04-deep-dive の調べ方](../../README.md)を開き、Go 言語仕様を起点にします。
-2. [Go 言語仕様: Slice types](https://go.dev/ref/spec#Slice_types) で `nil` と空スライスを調べます。
-3. 仕様ページから標準ライブラリのドキュメントへ進み、`encoding/json` を確認します。
+まず [04-deep-dive の調べ方](../../README.md)を開き、Go 言語仕様を起点にします。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 言語仕様: Slice types](https://go.dev/ref/spec#Slice_types) — `nil` と空スライス
+- 仕様ページから標準ライブラリのドキュメントへ進み、`encoding/json` を確認
 
 </details>
 

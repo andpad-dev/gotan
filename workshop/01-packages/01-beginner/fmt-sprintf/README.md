@@ -34,9 +34,12 @@ string
 <details>
 <summary>調査の入り口</summary>
 
-1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメント（pkg.go.dev）の開き方を確かめます。
-2. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `fmt` パッケージを開きます。
-3. [package fmt](https://pkg.go.dev/fmt) を開きます。`Sprintf` の説明と、書式指定子の説明（Overview）はこのページにあります。
+まず [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメント（pkg.go.dev）の開き方を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go Documentation](https://go.dev/doc/) — 標準ライブラリの `fmt` パッケージを開く入口
+- [package fmt](https://pkg.go.dev/fmt) — `Sprintf` の説明と、書式指定子の説明（Overview）はこのページにある
 
 </details>
 

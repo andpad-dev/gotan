@@ -36,10 +36,13 @@ direct: started
 <details>
 <summary>調査の入り口</summary>
 
-1. [04-deep-dive の調べ方](../../README.md)を開き、Go 言語仕様を起点にします。
-2. [Go 言語仕様: Defer statements](https://go.dev/ref/spec#Defer_statements) は、`defer` 文の規則を定義する節です。
-3. [Go 言語仕様: Function literals](https://go.dev/ref/spec#Function_literals) は、関数リテラルの規則を定義する節です。
-4. [Go Blog: Defer, Panic, and Recover](https://go.dev/blog/defer-panic-and-recover) で観測結果を照合します。
+まず [04-deep-dive の調べ方](../../README.md)を開き、Go 言語仕様を起点にします。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 言語仕様: Defer statements](https://go.dev/ref/spec#Defer_statements) — `defer` 文の規則を定義する節
+- [Go 言語仕様: Function literals](https://go.dev/ref/spec#Function_literals) — 関数リテラルの規則を定義する節
+- [Go Blog: Defer, Panic, and Recover](https://go.dev/blog/defer-panic-and-recover) — 観測結果の照合先
 
 </details>
 

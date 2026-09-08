@@ -30,8 +30,10 @@ func main() {
 <details>
 <summary>調査の入り口</summary>
 
-1. [Go Documentation](https://go.dev/doc/) を開き、標準ライブラリの `fmt` パッケージへ進みます。
-2. [package fmt](https://pkg.go.dev/fmt) を開きます。書式指定子の説明は Overview にあります。
+次のどちらかから入ります。
+
+- [Go Documentation](https://go.dev/doc/) — Go の公式ドキュメントの入口。標準ライブラリはここからたどれる
+- [package fmt](https://pkg.go.dev/fmt) — 書式指定子の説明は Overview にある
 
 </details>
 

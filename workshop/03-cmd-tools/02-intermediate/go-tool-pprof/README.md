@@ -101,13 +101,16 @@ Showing nodes accounting for 460ms, 100% of 460ms total
 <details>
 <summary>調査の入り口</summary>
 
-1. [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
-2. [Go の診断ツール案内](https://go.dev/doc/diagnostics) は、Go の profiling / tracing / debugging ツールを俯瞰する公式ページです。
-3. [pprof の公式ドキュメント](https://go.dev/cmd/pprof/) は、`go tool pprof` の使い方の説明です。
-4. 手元で `go help testflag` と `go tool pprof -h` を実行し、ヘルプを読みます。
-5. [Go 同梱版 google/pprof の固定版ドキュメント](https://github.com/google/pprof/blob/92041b743c96/doc/README.md) は、Go に同梱されている google/pprof の README です（版を固定したリンク）。
-6. [Go 1.27.0 の `cmd/pprof` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/pprof/doc.go) は `go tool pprof` の実装、[Go 1.27.0 の `runtime/pprof` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/pprof/proto.go) は profile を書き出す側の実装です。
-7. [PGO の公式ガイド](https://go.dev/doc/pgo) は、profile をコンパイラ最適化に使う PGO の公式ガイドです。
+まず [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go の診断ツール案内](https://go.dev/doc/diagnostics) — Go の profiling / tracing / debugging ツールを俯瞰する公式ページ
+- [pprof の公式ドキュメント](https://go.dev/cmd/pprof/) — `go tool pprof` の使い方の説明
+- 手元の `go help testflag` と `go tool pprof -h` — それぞれのヘルプ
+- [Go 同梱版 google/pprof の固定版ドキュメント](https://github.com/google/pprof/blob/92041b743c96/doc/README.md) — Go に同梱されている google/pprof の README（版を固定したリンク）
+- [Go 1.27.0 の `cmd/pprof` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/pprof/doc.go) と [Go 1.27.0 の `runtime/pprof` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/pprof/proto.go) — 前者は `go tool pprof` の実装、後者は profile を書き出す側の実装
+- [PGO の公式ガイド](https://go.dev/doc/pgo) — profile をコンパイラ最適化に使う PGO の公式ガイド
 
 </details>
 

@@ -36,9 +36,12 @@ all unavailable: ""
 <details>
 <summary>調査の入り口</summary>
 
-1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方を確かめます。
-2. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `cmp` パッケージを開きます。
-3. [package cmp](https://pkg.go.dev/cmp) を開きます。`Or` 関数の説明はこのページにあります。
+まず [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go Documentation](https://go.dev/doc/) — 標準ライブラリの `cmp` パッケージを開く入口
+- [package cmp](https://pkg.go.dev/cmp) — `Or` 関数の説明はこのページにある
 
 </details>
 
