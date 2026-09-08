@@ -310,8 +310,8 @@ func run(args []string, stdout, stderr io.Writer, cwd string) int {
 		}
 	}
 
-	if !strings.Contains(text, "## 調査の入り口") {
-		report.emit("FAIL", "## 調査の入り口 is missing", 0)
+	if !strings.Contains(text, "<summary>調査の入り口</summary>") {
+		report.emit("FAIL", "調査の入り口 block is missing", 0)
 	}
 
 	questionMatches := questionRE.FindAllStringSubmatchIndex(text, -1)
@@ -366,18 +366,18 @@ func run(args []string, stdout, stderr io.Writer, cwd string) int {
 		}
 	}
 
-	entryStart := strings.Index(text, "## 調査の入り口")
+	entryStart := strings.Index(text, "<summary>調査の入り口</summary>")
 	if entryStart >= 0 {
 		entry := text[entryStart:]
-		if next := strings.Index(entry[3:], "\n## "); next >= 0 {
-			entry = entry[:next+3]
+		if next := strings.Index(entry, "</details>"); next >= 0 {
+			entry = entry[:next]
 		}
 		entryURL := firstURL(entry)
 		switch {
 		case entryURL == "":
-			report.emit("FAIL", "## 調査の入り口 has no external starting URL", 0)
+			report.emit("FAIL", "調査の入り口 has no external starting URL", 0)
 		case host(entryURL) != "go.dev":
-			report.emit("FAIL", fmt.Sprintf("## 調査の入り口 starts at %s; first URL must be go.dev", entryURL), 0)
+			report.emit("FAIL", fmt.Sprintf("調査の入り口 starts at %s; first URL must be go.dev", entryURL), 0)
 		}
 	}
 

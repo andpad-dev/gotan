@@ -82,6 +82,26 @@ func main() {
 
 この `go fix` は一体何者で、どこまで面倒を見てくれるのでしょうか。
 
+<details>
+<summary>調査の入り口</summary>
+
+まず [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- 手元の `go help fix` と `go tool fix help` — それぞれのヘルプ
+- 手元の `go tool fix help <analyzer>` — analyzer ごとのヘルプ
+- [Go 1.26 リリースノート](https://go.dev/doc/go1.26#go-command) と [Go 1.27 リリースノートの `go fix` 節](https://go.dev/doc/go1.27#go-fix) — それぞれの版での `go` コマンドの変更点
+- [cmd/fix](https://pkg.go.dev/cmd/fix) と [cmd/vet](https://pkg.go.dev/cmd/vet) — それぞれのツールのパッケージドキュメント
+- [`cmd/go` の「Apply fixes suggested by static checkers」節](https://pkg.go.dev/cmd/go#hdr-Apply_fixes_suggested_by_static_checkers) — `go` コマンドのドキュメントのうち `go fix` サブコマンドの節
+- [`go/analysis/passes/modernize`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/modernize) — modernizer のパッケージドキュメント
+- [inline analyzer のドキュメント](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/inline) — `inline` アナライザのパッケージドキュメント
+- [Go 1.27.0 の fix suite](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/vendor/golang.org/x/tools/go/analysis/suite/fix/fix.go) — Go 1.27.0 に vendor されている `go fix` 向け analyzer suite のソース
+- [go/analysis](https://pkg.go.dev/golang.org/x/tools/go/analysis) — 静的解析ツールを作るためのフレームワークのパッケージドキュメント
+- [Using go fix to modernize Go code](https://go.dev/blog/gofix) — 新しい `go fix` を紹介する Go 公式ブログの記事
+
+</details>
+
 ---
 
 ## 設問 1: 新しい `go fix` の位置づけを調べよう
@@ -246,16 +266,3 @@ $ go fix -inline -diff ./...
 - `strings.Builder` への書き換えを提案する `stringsbuilder` のように、ループ内の文字列結合による**準・DoS 級のパフォーマンス問題**を潰す fix もあります。旧コードのパフォーマンス改善カード切りにも使えます。
 
 </details>
-
----
-
-## 調査の入り口
-
-- 手元コマンド: `go help fix` / `go tool fix help`
-- 個別 analyzer の説明: `go tool fix help <analyzer>`
-- リリースノート: [Go 1.26 の刷新](https://go.dev/doc/go1.26#go-command) / [Go 1.27 の analyzer 変更](https://go.dev/doc/go1.27#go-fix)
-- コマンドのドキュメント: [cmd/fix](https://pkg.go.dev/cmd/fix) / [cmd/vet](https://pkg.go.dev/cmd/vet) / [cmd/go の該当節](https://pkg.go.dev/cmd/go#hdr-Apply_fixes_suggested_by_static_checkers)
-- Modernizer の一次情報: [modernize パッケージ](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/modernize) / [inline analyzer](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/inline)
-- `go fix` の登録集合: [Go 1.27.0 の fix suite](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/vendor/golang.org/x/tools/go/analysis/suite/fix/fix.go)
-- 基盤: [go/analysis](https://pkg.go.dev/golang.org/x/tools/go/analysis)
-- 解説記事: [Using go fix to modernize Go code](https://go.dev/blog/gofix)

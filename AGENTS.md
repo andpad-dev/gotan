@@ -29,13 +29,24 @@ Use this structure:
 1. `# <title>`.
 2. One execution-environment badge, so readers can tell before opening whether they need Go installed.
 3. An introduction framed as a workplace problem. The observation, purpose, and investigation should connect naturally without requiring a fixed sentence. Link every runnable Go example to Go Playground.
-4. `## 設問 N: <heading>` sections, using the question count for the difficulty. Each section contains the problem, an optional `<details><summary>ヒント</summary>` hint, and an `<details><summary>答え</summary>` explanation with **調査ルート** (primary sources and order) and **答え**.
-5. An optional `<details><summary>こぼれ話</summary>` section for interesting but nonessential findings.
-6. `## 調査の入り口` with primary-source starting links.
+4. A `<details><summary>調査の入り口</summary>` block placed **before the first question**, so readers meet it before they start.
+
+   Open with one sentence pointing at the category README (`まず [<category> の調べ方](../../README.md) を開き、…`), then `そのうえで、次のどれかから入ります。`, then a **bulleted** list — not numbered. The sources are alternatives, not steps; a numbered list of ten reads as a ten-step procedure. Each bullet is `- [source](url) — short description`, naming the source and what it covers. Never a bare link with no explanation.
+
+   Because readers see this block **before** they read the questions, it must not spoil the hints. Keep the two apart:
+
+   | | Include | Exclude |
+   | --- | --- | --- |
+   | 調査の入り口 | which document to open; what that document covers | section names, search terms, what to compare, the order to follow |
+   | ヒント | section names, search terms, what to compare | the conclusion |
+
+   A term already disclosed in the question text is not a spoiler and may stay. A section name that is already part of the linked URL (`#hdr-...`) may stay in the link text.
+5. `## 設問 N: <heading>` sections, using the question count for the difficulty. Each section contains the problem, an optional `<details><summary>ヒント</summary>` hint, and an `<details><summary>答え</summary>` explanation with **調査ルート** (primary sources and order) and **答え**.
+6. An optional `<details><summary>こぼれ話</summary>` section for interesting but nonessential findings.
 
 Formatting:
 
-- Separate question, trivia, and entry-point sections with `---`.
+- Separate the entry-point block, questions, and trivia with `---`.
 - Do not use Markdown headings inside `<details>`; use bold labels instead.
 - Keep common investigation triggers, such as “press `f` to search first,” visible in the category README rather than hiding them in hints.
 

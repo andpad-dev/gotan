@@ -15,6 +15,24 @@
 手元で試す例: https://go.dev/play/p/_BqTu8xBI9h
 このディレクトリの [main.go](./main.go) も同じ内容です。`go run` してそのまま調査に使えます。
 
+<details>
+<summary>調査の入り口</summary>
+
+まず [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go コマンドの公式ドキュメント](https://go.dev/cmd/go/) — `go` の各サブコマンドとフラグの説明
+- [`pkg.go.dev/cmd/go` の「Compile and run Go program」節](https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program)（`go help run` と同じ内容） — `go run` サブコマンドの説明
+- [Go 1.24 リリースノートの Go command 節](https://go.dev/doc/go1.24#go-command) — Go 1.24 での `go` コマンドの変更点
+- [提案 Issue #69290](https://go.dev/issue/69290) — 上のリリースノートに載った変更のもとになった提案の議論
+- [Go 1.27.0 の `cmd/go/internal/run/run.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/run/run.go) — `go run` サブコマンドの実装が置かれているファイル
+- [Go 1.27.0 の `cmd/go/internal/work/action.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/action.go)、[`exec.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/exec.go)、[`buildid.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/buildid.go) — `go run` と `go build` が共有するビルド処理（`work` パッケージ）のファイル
+
+</details>
+
+---
+
 ## 設問 1: `go run` は、ソースコードをインタプリタのように解釈しながら実行している？
 
 `go run` は、ソースコードを 1 行ずつ解釈しながら動かしているのでしょうか。
@@ -294,16 +312,3 @@ if !cfg.BuildWork {
 `go help environment` の `GOTMPDIR` の説明でも確認できます。
 
 </details>
-
----
-
-## 調査の入り口
-
-- https://go.dev/cmd/go/
-- https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program
-- https://go.dev/doc/go1.24#go-command
-- https://go.dev/issue/69290
-- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/run/run.go
-- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/action.go
-- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/exec.go
-- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/buildid.go

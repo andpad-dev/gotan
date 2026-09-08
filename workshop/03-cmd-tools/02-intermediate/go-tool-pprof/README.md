@@ -98,6 +98,22 @@ Showing nodes accounting for 460ms, 100% of 460ms total
 - `top`から`list`へ降りる調査
 - テストとbenchmarkによる変更前後の比較
 
+<details>
+<summary>調査の入り口</summary>
+
+まず [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go の診断ツール案内](https://go.dev/doc/diagnostics) — Go の profiling / tracing / debugging ツールを俯瞰する公式ページ
+- [pprof の公式ドキュメント](https://go.dev/cmd/pprof/) — `go tool pprof` の使い方の説明
+- 手元の `go help testflag` と `go tool pprof -h` — それぞれのヘルプ
+- [Go 同梱版 google/pprof の固定版ドキュメント](https://github.com/google/pprof/blob/92041b743c96/doc/README.md) — Go に同梱されている google/pprof の README（版を固定したリンク）
+- [Go 1.27.0 の `cmd/pprof` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/pprof/doc.go) と [Go 1.27.0 の `runtime/pprof` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/pprof/proto.go) — 前者は `go tool pprof` の実装、後者は profile を書き出す側の実装
+- [PGO の公式ガイド](https://go.dev/doc/pgo) — profile をコンパイラ最適化に使う PGO の公式ガイド
+
+</details>
+
 ---
 
 ## 設問 1: まず何を採取し、何を採取していない？
@@ -258,14 +274,3 @@ BenchmarkTransform-10	     230	   5173286 ns/op	       0 B/op	       0 allocs/op
 `go tool pprof -http=localhost:0 cpu.out` を使うと、空いているローカルポートで Web UI を開けます。機械語表示も使うならバイナリを第1引数に追加します。ただし、まず `-top` と `-list` だけで仮説を小さくしておくと、CI のログやペア作業でも同じ調査を共有しやすくなります。profile は代表的な負荷で採取することが重要なので、実サービスを測るときは [PGO の公式ガイド](https://go.dev/doc/pgo) の「代表的な本番負荷」の注意も確認してください。
 
 </details>
-
----
-
-## 調査の入り口
-
-1. [Go の診断ツール案内](https://go.dev/doc/diagnostics)
-2. [pprof の公式ドキュメント](https://go.dev/cmd/pprof/)
-3. 手元の `go help testflag` と `go tool pprof -h`
-4. [Go同梱版google/pprofの固定版ドキュメント](https://github.com/google/pprof/blob/92041b743c96/doc/README.md)
-5. [Go 1.27.0 の `cmd/pprof`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/pprof/doc.go) / [`runtime/pprof`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/pprof/proto.go) ソース
-6. [PGO の公式ガイド](https://go.dev/doc/pgo)

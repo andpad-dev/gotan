@@ -37,6 +37,18 @@ isolatedSource=["a" "b" "c"]
 isolated=["a" "b" "x"]
 ```
 
+<details>
+<summary>調査の入り口</summary>
+
+まず [04-deep-dive の調べ方](../../README.md)を開き、Go 言語仕様を起点にします。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 言語仕様: Slice expressions](https://go.dev/ref/spec#Slice_expressions) — `len` と `cap`
+- [Go 言語仕様: Appending and copying slices](https://go.dev/ref/spec#Appending_and_copying_slices) — 追加時の規則
+
+</details>
+
 ---
 
 ## 設問 1: 元の 3 番目はなぜ置き換わったのか？
@@ -47,6 +59,16 @@ isolated=["a" "b" "x"]
 <summary>ヒント</summary>
 
 スライス式の仕様で、添字を二つだけ指定したときの容量を確認します。次に `append` の仕様で、容量が足りる場合と足りない場合の違いを調べます。
+
+手を動かして確かめるなら、長さ・容量・先頭要素のアドレスをまとめて出す関数を用意すると、どこが共有されているか目で見えます。
+
+```go
+func inspect(label string, s []string) {
+	fmt.Printf("%-18s len=%d cap=%d ptr=%p %q\n", label, len(s), cap(s), s, s)
+}
+```
+
+[Go Playground で実行](https://go.dev/play/p/CO7LglBp1qa)
 
 </details>
 
@@ -122,11 +144,3 @@ isolated=["a" "b" "x"]
 完全スライス式は「次の `append` でこの範囲を越えて書き換えない」と容量で表す方法です。一方、最初から `append([]string(nil), source[:2]...)` のようにコピーすれば、コピーした時点で別の基底配列を持つことを明示できます。どちらも要素そのものは浅くコピーします。どちらを選ぶかは、容量制限を活用する意図と、最初から独立した一覧を作る意図のどちらを読み手へ強く伝えたいかで決めます。
 
 </details>
-
----
-
-## 調査の入り口
-
-1. [04-deep-dive の調べ方](../../README.md)を開き、Go 言語仕様を起点にします。
-2. [Go 言語仕様: Slice expressions](https://go.dev/ref/spec#Slice_expressions) で `len` と `cap` を調べます。
-3. [Go 言語仕様: Appending and copying slices](https://go.dev/ref/spec#Appending_and_copying_slices) で追加時の規則を確かめます。

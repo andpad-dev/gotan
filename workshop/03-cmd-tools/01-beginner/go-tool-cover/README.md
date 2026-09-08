@@ -83,6 +83,20 @@ example.com/cover-demo/main.go:15:	main		0.0%
 total:					(statements)	66.7%
 ```
 
+<details>
+<summary>調査の入り口</summary>
+
+まず [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go のコマンド一覧](https://go.dev/doc/cmd) — Go に同梱されるコマンドとツールの一覧
+- [cover の公式ドキュメント](https://go.dev/cmd/cover/) — `cover` ツールの説明
+- 手元の `go help testflag` と `go tool cover -help` — それぞれのヘルプ
+- [Go 1.27.0 の `cmd/cover` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/cover/doc.go) — `cover` ツールのソースコードにある説明
+
+</details>
+
 ---
 
 ## 設問 1: 66.7% と 80.0% は、誰の何を数えている？
@@ -174,12 +188,3 @@ total:					(statements)	66.7%
 複数パッケージの実行をまとめて測りたいときは、`go test` の `-coverpkg` で計測対象を指定できます。まずは `go help testflag` の `-coverpkg` と `-covermode` を読み、どのパッケージを計測対象とみなすかを決めてから広げましょう。数値を大きくするためだけに対象を増やすと、今回のように見るべき分岐が埋もれます。
 
 </details>
-
----
-
-## 調査の入り口
-
-1. [Go のコマンド一覧](https://go.dev/doc/cmd)
-2. [cover の公式ドキュメント](https://go.dev/cmd/cover/)
-3. 手元の `go help testflag` と `go tool cover -help`
-4. [Go 1.27.0 の `cmd/cover` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/cover/doc.go)

@@ -85,6 +85,24 @@ PASS
 ok  	example.com/trace-demo	0.853s
 ```
 
+<details>
+<summary>調査の入り口</summary>
+
+まず [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go の診断ツール案内](https://go.dev/doc/diagnostics) — Go の profiling / tracing / debugging ツールを俯瞰する公式ページ
+- [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof) — pprof の CPU profiler の仕組みを解説した 2013 年の記事
+- [trace の公式ドキュメント](https://go.dev/cmd/trace/) — `go tool trace` の使い方の説明
+- 手元の `go help testflag`、`go tool trace -h`、`go tool pprof -h` — それぞれのヘルプ
+- [Go 1.27.0 の `cmd/trace` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/trace/doc.go) — `go tool trace` の実装にある説明
+- [Go 1.21 リリースノート](https://go.dev/doc/go1.21) と [Go 1.22 リリースノート](https://go.dev/doc/go1.22) — それぞれの版の変更点
+- [execution tracer overhaul の設計文書](https://go.googlesource.com/proposal/+/refs/heads/master/design/60773-execution-tracer-overhaul.md) と [Issue #63185](https://github.com/golang/go/issues/63185) — 前者は execution tracer の作り直しの設計文書、後者はそれに続く提案の Issue
+- [Go 1.27 リリースノート](https://go.dev/doc/go1.27) — Go 1.27 の変更点
+
+</details>
+
 ---
 
 ## 設問 1: CPU が暇そうなのに、なぜ trace を採る？
@@ -266,16 +284,3 @@ Go 1.27 で変わった `go tool trace -http=:6060` の扱いを、一次情報�
 `go tool trace` は trace から `net`、`sync`、`syscall`、`sched` の pprof-like profile を出せます。今回のように「鍵待ち」が仮説なら `sync` から始められますが、スケジューラに載るまでの遅れなら `sched`、ネットワーク待ちなら `net` と、観測したい待ち方に合わせて選びます。まず CPU profile と trace を混ぜずに採り、必要な問いに合う profile だけを読むのが調査を短くするコツです。
 
 </details>
-
----
-
-## 調査の入り口
-
-1. [Go の診断ツール案内](https://go.dev/doc/diagnostics)
-2. [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof)
-3. [trace の公式ドキュメント](https://go.dev/cmd/trace/)
-4. 手元の `go help testflag`、`go tool trace -h`、`go tool pprof -h`
-5. [Go 1.27.0 の `cmd/trace` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/trace/doc.go)
-6. [Go 1.21 リリースノート](https://go.dev/doc/go1.21) と [Go 1.22 リリースノート](https://go.dev/doc/go1.22)
-7. [execution tracer overhaul の設計文書](https://go.googlesource.com/proposal/+/refs/heads/master/design/60773-execution-tracer-overhaul.md) と [Issue #63185](https://github.com/golang/go/issues/63185)
-8. [Go 1.27 リリースノート](https://go.dev/doc/go1.27)

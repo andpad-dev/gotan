@@ -42,6 +42,24 @@ main.go:7:21: fmt.Printf format %d has arg name of wrong type string
 
 `go vet` はビルドやテストとは別に、何を見ているのでしょうか。
 
+<details>
+<summary>調査の入り口</summary>
+
+まず [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go Documentation](https://go.dev/doc/) — Go の公式ドキュメントの入口。`go vet` の公式ドキュメントもここからたどれる
+- [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) — `vet` ツールのパッケージドキュメント
+- [`pkg.go.dev/cmd/go` の「Report likely mistakes in packages」節](https://pkg.go.dev/cmd/go#hdr-Report_likely_mistakes_in_packages) — `go` コマンドのドキュメントのうち `go vet` サブコマンドの節
+- [`pkg.go.dev/cmd/go` の「Test packages」節](https://pkg.go.dev/cmd/go#hdr-Test_packages) — 同じドキュメントの `go test` サブコマンドの節
+- [`pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf) — `printf` アナライザのパッケージドキュメント
+- [Go 1.27 のリリースノート](https://go.dev/doc/go1.27#go-test) — Go 1.27 での `go test` の変更点
+
+</details>
+
+---
+
 ## 設問 1: `go vet` は何を報告するコマンド？ コンパイルとの違いは？
 
 `go vet` の役割と、コンパイラでは検出できない領域について、一次情報から確認してみましょう。
@@ -151,14 +169,3 @@ Web からたどる場合。
 つまり Go 1.27 からは、`go.mod` の `go` バージョンや `//go:build` タグで許容されているより **新しすぎる標準ライブラリのシンボル** を使っていないかも、テスト時に自動チェックされるようになります。「`go vet` を CI に足そう」という PR が続くのは、こうした流れが背景にあります。
 
 </details>
-
----
-
-## 調査の入り口
-
-- https://go.dev/doc/
-- https://pkg.go.dev/cmd/vet
-- https://pkg.go.dev/cmd/go#hdr-Report_likely_mistakes_in_packages
-- https://pkg.go.dev/cmd/go#hdr-Test_packages
-- https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf
-- https://go.dev/doc/go1.27#go-test

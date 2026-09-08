@@ -33,6 +33,19 @@ closure: completed
 direct: started
 ```
 
+<details>
+<summary>調査の入り口</summary>
+
+まず [04-deep-dive の調べ方](../../README.md)を開き、Go 言語仕様を起点にします。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 言語仕様: Defer statements](https://go.dev/ref/spec#Defer_statements) — `defer` 文の規則を定義する節
+- [Go 言語仕様: Function literals](https://go.dev/ref/spec#Function_literals) — 関数リテラルの規則を定義する節
+- [Go Blog: Defer, Panic, and Recover](https://go.dev/blog/defer-panic-and-recover) — 観測結果の照合先
+
+</details>
+
 ---
 
 ## 設問 1: `defer` した関数呼び出しの引数はいつ評価されるのか？
@@ -89,12 +102,3 @@ Go 言語仕様では、無名関数を `Function literals` と呼びます。�
 `direct` が古い値を出すのは、引数が `defer` 文の実行時に評価・保存されていたからです。値をいつ固定したいのかを決めて、無名関数か引数かを選びます。
 
 </details>
-
----
-
-## 調査の入り口
-
-1. [04-deep-dive の調べ方](../../README.md)を開き、Go 言語仕様を起点にします。
-2. [Go 言語仕様: Defer statements](https://go.dev/ref/spec#Defer_statements) で評価時点と実行順を調べます。
-3. [Go 言語仕様: Function literals](https://go.dev/ref/spec#Function_literals) で、無名関数が外側の変数を参照する規則を調べます。
-4. [Go Blog: Defer, Panic, and Recover](https://go.dev/blog/defer-panic-and-recover) で観測結果を照合します。

@@ -103,6 +103,25 @@ goroutineleak profile: total 4
 この 1 個の差は何を意味するのでしょうか。  
 ランタイムは「絶対に起きない」と「そうでない」をどう判別しているのでしょうか。
 
+<details>
+<summary>調査の入り口</summary>
+
+まず [02-features の調べ方](../../README.md) を開き、言語仕様・公式ブログ・プロポーザルの逆引き手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 1.27 リリースノート](https://go.dev/doc/go1.27) — `goroutineleak` プロファイルが正式機能になった版のリリースノート
+- [A Tour of Go](https://research.swtch.com/gotour) — 2012 年の Russ Cox の講演記録。質疑応答も載っている
+- [Go 1.26 リリースノート](https://go.dev/doc/go1.26) — 同じ機能が experiment として入った版のリリースノート
+- [`runtime/pprof` パッケージドキュメント](https://pkg.go.dev/runtime/pprof) — 冒頭のコードが `pprof.Lookup` で呼んでいるパッケージ
+- [`net/http/pprof` パッケージドキュメント](https://pkg.go.dev/net/http/pprof) — 冒頭で見た `/debug/pprof/` 配下のエンドポイントを提供するパッケージ
+
+> ※ 2026-08-31 にローカルの Go 1.27.0 と Go Playground の両方で実行した。  
+> 先頭行は `go version: go1.27.0`、プロファイル件数は 5 と 4 だった。  
+> 共有コード自身が実行版を表示するため、後日試す場合は先頭行も結果と一緒に記録する。
+
+</details>
+
 ---
 
 ## 設問 1: `goroutine` プロファイルと `goroutineleak` プロファイル、二つの定義はどう違うのか？
@@ -334,17 +353,3 @@ Go でメインループを止める慣用イディオムに `select{}`（case �
 「解析中は leak として扱い続ける（そのほうが検出精度が高いので）、最終的なプロファイル出力の直前だけ status を戻す」――Go の慣用イディオムを尊重するためのちょっとした特別扱いが、Go 1.27 のランタイムの中に隠れています。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go 1.27 リリースノート](https://go.dev/doc/go1.27)（`Goroutine leak profile` 節。現在の定義と制約）
-- [A Tour of Go](https://research.swtch.com/gotour)（2012 年の講演 Q&A。blocked goroutine を回収しない当時の理由）
-- [Go 1.26 リリースノート](https://go.dev/doc/go1.26)（`Experimental goroutine leak profile` 節。同じ機能の experiment 版、proposal issue へのリンク、リークするサンプルコード）
-- [`runtime/pprof` パッケージドキュメント](https://pkg.go.dev/runtime/pprof)（予約プロファイル名の一覧）
-- [`net/http/pprof` パッケージドキュメント](https://pkg.go.dev/net/http/pprof)（`/debug/pprof/goroutineleak` の登録）
-
-> ※ 2026-08-31 にローカルの Go 1.27.0 と Go Playground の両方で実行した。  
-> 先頭行は `go version: go1.27.0`、プロファイル件数は 5 と 4 だった。  
-> 共有コード自身が実行版を表示するため、後日試す場合は先頭行も結果と一緒に記録する。

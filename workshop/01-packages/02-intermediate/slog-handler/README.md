@@ -8,6 +8,20 @@
 そのためには slog のログハンドラーを自作する必要があります。
 一次情報のみを辿って、実装や単体テストに必要な情報を集めましょう。
 
+<details>
+<summary>調査の入り口</summary>
+
+まず [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go Documentation](https://go.dev/doc/) — 標準ライブラリの `log/slog` を開く入口
+- [package log/slog](https://pkg.go.dev/log/slog) — `Handler` インタフェースの定義はこのページにある
+- [slog handler guide](https://go.dev/s/slog-handler-guide) — ハンドラーを自作する人向けの公式ガイド
+- [package testing/slogtest](https://pkg.go.dev/testing/slogtest) — 自作ハンドラーの検査に使う標準パッケージ
+
+</details>
+
 ---
 
 ## 設問 1: slog.Handler インタフェースについて調べよう
@@ -198,13 +212,3 @@ with Resolve: REDACTED
 どちらも仕様準拠の共通ケースを提供するため、自分で同じ検査項目を一から列挙する必要はありません。ただし、自作ハンドラー固有の YAML 形式やエラー処理は、別のテストで補います。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go Documentation](https://go.dev/doc/)
-- [01-packages の調べ方](../../README.md)
-- https://pkg.go.dev/log/slog
-- [slog handler guide](https://go.dev/s/slog-handler-guide)
-- [package testing/slogtest](https://pkg.go.dev/testing/slogtest)

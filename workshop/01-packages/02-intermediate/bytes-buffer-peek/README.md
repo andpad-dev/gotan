@@ -38,6 +38,18 @@ after mutation remaining="aBCDrest"
 short="XY" err=EOF
 ```
 
+<details>
+<summary>調査の入り口</summary>
+
+まず [01-packages の調べ方](../../README.md) を開き、標準パッケージのメソッド一覧の開き方を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 1.26 Release Notes](https://go.dev/doc/go1.26) — `Buffer.Peek` が追加されたときのリリースノート
+- [package bytes](https://pkg.go.dev/bytes) — `Buffer` のメソッド一覧と各メソッドの説明はこのページにある
+
+</details>
+
 ---
 
 ## 設問 1: 読み取らずに先頭を確認するには？
@@ -143,11 +155,3 @@ short="XY" err=EOF
 `Buffer.Peek` は Go 1.26 で追加されました。古いツールチェーンも対象にするモジュールでは、その最小 Go バージョンと `go.mod` の `go` 行を確認してから採用しましょう。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go 1.26 Release Notes](https://go.dev/doc/go1.26)
-- [01-packages の調べ方](../../README.md)
-- [package bytes](https://pkg.go.dev/bytes)
