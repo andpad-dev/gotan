@@ -76,35 +76,55 @@ main.go:7:21: fmt.Printf format %d has arg name of wrong type string
 
 ---
 
-## 設問 2: `go vet` にはどんなチェッカーがあり、`printf` の詳細はどこで読める？
+## 設問 2: `go vet` にはどんなアナライザーがあり、`printf` の詳細はどこで読める？
 
 さきほどの `printf` 指摘は、`go vet` に組み込まれた多数のアナライザ（analyzer）のひとつです。全体像とアナライザ単位の詳細ドキュメントの在り処を調べましょう。
 
 <details>
-<summary>ヒント</summary>
+<summary>ヒント 1-a: webドキュメントから探す場合</summary>
 
-- 手元で `go tool vet help` を実行すると、`Registered analyzers:` の直後に現在のツールチェーンの一覧が出る
-- [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) にもアナライザ一覧はあるが、`Registered analyzers` という見出しではない
-- `go tool vet help printf` を実行すると個別アナライザの詳細が読める
-- `printf` アナライザの公式パッケージ文書は [`golang.org/x/tools`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf) で読める
+Go の公式サイトのドキュメントを参照し、
+`Command Documentation` を詳細に読むとヒントがある。
 
 </details>
 
 <details>
+<summary>ヒント 1-b: コマンドラインから探す場合</summary>
+
+コマンドラインから go vet のヘルプを参照しよう。
+コメントを詳細に読むとヒントがある。
+
+追加ヒント: `go help vet`, `go tool vet help`, `go doc vet`
+
+</details>
+
+<details>
+<summary>ヒント 2</summary>
+
+ヒント 1 を掘り下げて読んでいくと [`golang.org/x/tools/go/analysis`](https://pkg.go.dev/golang.org/x/tools/go/analysis) に到達する。
+このパッケージ詳細のディレクトリ構造を掘り下げるとアナライザーの一覧と `printf` の詳細ページが参照できる。
+</details>
+<details>
 <summary>答え</summary>
 
-**調査ルート**
+**調査ルート:Web**
 
-1. [Go Documentation](https://go.dev/doc/) を入口に、`vet` の公式ドキュメントを探す。
-2. `go tool vet help` を実行し、`Registered analyzers:` の一覧を読む。Go 1.27.0 では 35 個だが、数や名前は版によって変わるので自分の出力を記録する。
-3. [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) の Overview にある「To list the available checks...」以降も読む。CLI と同じ見出しではないため、一覧を探す操作を混同しない。
-4. `go tool vet help printf` を実行し、そのアナライザ専用のドキュメントとフラグを確認する。
-5. `printf` アナライザのパッケージ文書は [`pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf) にある。`fmt.Printf` / `fmt.Sprintf` などの書式文字列と引数の整合性を検査すると説明されている。
+1. [Go Documentation](https://go.dev/doc/) を開き `References` > `Command Documentation` を開く。さらに `vet` のページを開く。
+2. [golang.org/x/tools/go/analysis](https://pkg.go.dev/golang.org/x/tools/go/analysis) がガイドされているのでそのページを開く。
+3. `Analyzer` セクションを読むとアナライザー一覧と `printf` 詳細を読むことができるどこにファイルが配置されているか分かる。
+
+**調査ルート:コマンドライン**
+
+1. `go tool vet help` でアナライザー一覧を取得できる。
+2. `printf` の概要をコマンドラインで確認するには `go tool vet help printf` とする。 
+3. `go doc vet` を実行すると [golang.org/x/tools/go/analysis](https://pkg.go.dev/golang.org/x/tools/go/analysis) がガイドされているのでそのページを開く。
+4. `Analyzer` セクションを読むとアナライザー一覧と `printf` の詳細、ファイルの保存場所が表示されます。
 
 **答え**
 
 - `go vet` は単一のチェッカーではなく、**個別のアナライザの集合体**。実行中の版で正確な一覧を得るには、`go tool vet help` の `Registered analyzers:` を確認する。
 - 各アナライザは [`golang.org/x/tools/go/analysis`](https://pkg.go.dev/golang.org/x/tools/go/analysis) フレームワーク上で書かれた独立したモジュールで、実装や詳細ドキュメントはたいてい `passes/<アナライザ名>` パッケージにある。
+- `printf` アナライザのパッケージ文書は [`pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf) にある。`fmt.Printf` / `fmt.Sprintf` などの書式文字列と引数の整合性を検査すると説明されている。
 - 今回の指摘を出したのは `printf` アナライザ。カバー範囲や、追加で検査させたい関数名を指定する `-printf.funcs` フラグの詳細は、`go tool vet help printf` と `pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf` の両方に載っている。
 
 </details>
