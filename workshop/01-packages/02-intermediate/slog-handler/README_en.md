@@ -2,7 +2,7 @@
 
 # Implement the `slog.Handler` Interface
 
-The team has decided that logs should be output in YAML format.
+Logs need to be output in YAML format.
 To do that, we need to write a custom `slog` log handler.
 Let's follow only primary sources and gather the information needed for the implementation and unit tests.
 
@@ -12,7 +12,7 @@ How many methods does the `slog.Handler` interface have, and what does each meth
 Consider which method is at the center of a handler.
 Also look for the types that implement this interface in the standard library.
 
-For example, when `logger.Info("login", "user", "alice")` is called, are the role of receiving and outputting the log and the role of adding common attributes before output the same? Imagine the flow by which a log reaches a handler, then classify the four methods.
+For example, when `logger.Info("event", "key", "value")` is called, are the role of receiving and outputting the log and the role of adding common attributes before output the same? Follow how a log reaches a handler, then classify the four methods.
 
 <details>
 <summary>Hint</summary>

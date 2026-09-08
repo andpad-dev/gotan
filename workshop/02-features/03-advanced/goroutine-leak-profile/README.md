@@ -4,7 +4,7 @@
 
 ![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
 
-本番サービスの `/debug/pprof/goroutine` で、goroutine の数がじりじり増えています。  
+動かしているプログラムの `/debug/pprof/goroutine` で、goroutine の数がじりじり増えています。
 スタックを開くと、`chan send` で止まったものが積み上がっています。  
 既存の `goroutine` プロファイルには、今存在する goroutine が全部並びます。  
 「永遠に起きられないもの」と「長生きしているだけのもの」を区別できません。

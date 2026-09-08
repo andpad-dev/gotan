@@ -2,7 +2,7 @@
 
 # Use the pkg.go.dev API (v1)
 
-Our team must choose an HTTP router library. We want to compare and sort candidates by import count and maintenance status, but the pkg.go.dev browser UI has no such feature.
+The pkg.go.dev browser UI cannot compare and sort package candidates by import count and maintenance status.
 
 We considered scraping, but the **pkg.go.dev API**, released in beta in [June 2026](https://opensource.googleblog.com/2026/06/a-new-pkggodev-api-for-go.html), provides structured JSON directly.
 

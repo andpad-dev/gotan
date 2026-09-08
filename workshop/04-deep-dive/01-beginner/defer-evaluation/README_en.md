@@ -2,7 +2,7 @@
 
 # Beginner: Investigate defer argument evaluation and execution order
 
-An import process records its started and completed states in an audit log. Although the process has completed, the cleanup log shows only `started`. You are using `defer` to ensure that the log is written.
+Code changes a state from `started` to `completed` and uses two deferred calls. Investigate why they print different values.
 
 You came across the following `defer` code. Let’s investigate what it does.
 
@@ -62,7 +62,7 @@ The function value and arguments written in a `defer` statement are evaluated wh
 
 ## Question 2: Why does `closure` show the completed value and print first?
 
-The anonymous function prints `completed`, and it prints before `direct`. Investigate when the anonymous function reads `status` and the execution order of multiple `defer` calls, then explain why the opening audit log recorded the old state.
+The anonymous function prints `completed`, and it prints before `direct`. Investigate when the anonymous function reads `status` and the execution order of multiple `defer` calls.
 
 <details>
 <summary>Hint</summary>
@@ -84,7 +84,7 @@ The Go language specification calls an anonymous function a `Function literal`. 
 
 A function literal shares the `status` variable with its surrounding function. Because `status` is not passed as an argument that would fix its value for the anonymous function, the body reads the variable when the deferred call executes. The assignment has happened by then, so the value is `completed`. Deferred calls also execute in reverse order from the order in which they were registered, so the anonymous function registered later prints first.
 
-In short, the opening `direct` log is old not because it was printed during cleanup, but because its argument was evaluated and saved when the `defer` statement ran. For an audit log that must record the final state, decide when the value should be fixed and choose an argument or an anonymous function accordingly.
+The `direct` value is old because its argument was evaluated and saved when the `defer` statement ran. Decide when the value should be fixed and choose an argument or an anonymous function accordingly.
 
 </details>
 

@@ -2,7 +2,7 @@
 
 # Build strings with fmt.Sprintf
 
-You came across the following code in a senior colleague’s work, building a string by inserting values.
+You came across the following code while reviewing how it builds a string by inserting values.
 
 ```go
 package main
@@ -76,7 +76,7 @@ It is useful to remember the pair this way: `fmt.Printf(...)` formats and prints
 
 ## Question 2: Aligning digits and padding with zeros
 
-Logs and reports often need numbers to have the same width, to be zero-padded like `007`, or to have a fixed number of digits after the decimal point. Find out how to specify width and precision for `%d` and `%f`.
+Numbers sometimes need the same width, zero-padding like `007`, or a fixed number of digits after the decimal point. Find out how to specify width and precision for `%d` and `%f`.
 
 Run this code first and relate each requested width or precision to the observed output before looking up the syntax.
 

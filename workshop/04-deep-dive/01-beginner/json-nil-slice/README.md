@@ -4,11 +4,11 @@
 
 ![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
 
-担当者がいないとき、API が `{"assignees":null}` を返していました。画面側は常に配列として処理したいので、空のときも `{"assignees":[]}` で返す契約です。
+API が `{"values":null}` を返していました。利用側は常に配列として処理するため、空のときも `{"values":[]}` で返す契約です。
 
 レビューで次の `json.Marshal` を見かけました。どんなものか調べてみましょう。
 
-まずは、空に見える二つの値で出力がどう変わるかを [Go Playground で実行](https://go.dev/play/p/M_lGwwe4dMX) して観測します。
+まずは、空に見える二つの値で出力がどう変わるかを [Go Playground で実行](https://go.dev/play/p/jz0RLXHZtWU) して観測します。
 
 ```go
 package main
@@ -18,13 +18,13 @@ import (
 	"fmt"
 )
 
-type assigneeResponse struct {
-	Assignees []string `json:"assignees"`
+type response struct {
+	Values []string `json:"values"`
 }
 
 func main() {
-	nilJSON, _ := json.Marshal(assigneeResponse{})
-	emptyJSON, _ := json.Marshal(assigneeResponse{Assignees: []string{}})
+	nilJSON, _ := json.Marshal(response{})
+	emptyJSON, _ := json.Marshal(response{Values: []string{}})
 	fmt.Println("nil:", string(nilJSON))
 	fmt.Println("empty:", string(emptyJSON))
 }
@@ -33,8 +33,8 @@ func main() {
 Go 1.26.4 での実行結果です。
 
 ```text
-nil: {"assignees":null}
-empty: {"assignees":[]}
+nil: {"values":null}
+empty: {"values":[]}
 ```
 
 ---
@@ -61,7 +61,7 @@ empty: {"assignees":[]}
 
 **答え**
 
-ゼロ値の `[]string` は `nil` スライスです。一方、`[]string{}` は長さ 0 でも初期化済みの空スライスです。`encoding/json` は `nil` スライスを JSON の `null` として、初期化済みスライスを JSON 配列としてエンコードします。そのため、前者が `{"assignees":null}`、後者が `{"assignees":[]}` になります。
+ゼロ値の `[]string` は `nil` スライスです。一方、`[]string{}` は長さ 0 でも初期化済みの空スライスです。`encoding/json` は `nil` スライスを JSON の `null` として、初期化済みスライスを JSON 配列としてエンコードします。そのため、前者が `{"values":null}`、後者が `{"values":[]}` になります。
 
 </details>
 
@@ -69,7 +69,7 @@ empty: {"assignees":[]}
 
 ## 設問 2: API 契約どおりに空配列を返すには？
 
-この API では、担当者がいないことも `assignees` フィールドを残して `[]` で表す契約です。`omitempty` を付ける案ではなく、レスポンスをどう組み立てればよいでしょうか。また、なぜ `omitempty` はこの契約に合わないのでしょうか。
+この API では、要素がなくても `values` フィールドを残して `[]` で表す契約です。`omitempty` を付ける案ではなく、レスポンスをどう組み立てればよいでしょうか。また、なぜ `omitempty` はこの契約に合わないのでしょうか。
 
 <details>
 <summary>ヒント</summary>
@@ -89,9 +89,9 @@ empty: {"assignees":[]}
 
 **答え**
 
-レスポンスを作るときに `Assignees: []string{}` のように空スライスを明示して初期化します。そうすれば JSON は `[]` になり、フィールドも残ります。`omitempty` は長さ 0 のスライスをフィールドごと省略するため、この API で必要な「担当者はいないが、一覧という項目はある」という表現には使えません。
+レスポンスを作るときに `Values: []string{}` のように空スライスを明示して初期化します。そうすれば JSON は `[]` になり、フィールドも残ります。`omitempty` は長さ 0 のスライスをフィールドごと省略するため、この契約には使えません。
 
-`null`、空配列、フィールドなしのどれを契約にするかは API 設計上の選択です。この画面との契約では配列を常に反復できる `[]` を選んでいるため、初期化済みの空スライスを返します。
+`null`、空配列、フィールドなしのどれを契約にするかは API 設計上の選択です。ここでは常に反復できる `[]` を選んでいるため、初期化済みの空スライスを返します。
 
 </details>
 

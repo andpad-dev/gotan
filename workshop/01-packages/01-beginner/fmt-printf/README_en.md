@@ -2,7 +2,7 @@
 
 # Investigate fmt.Printf verbs
 
-You came across format verbs in a senior colleague’s `fmt.Printf` code. Let’s investigate what they do.
+You came across format verbs in `fmt.Printf` code. Let’s investigate what they do.
 
 ```go
 package main

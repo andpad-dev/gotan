@@ -2,9 +2,9 @@
 
 # Decode the Routing Rules of `http.ServeMux`
 
-The administration API registers `/reports/latest` and `/reports/{id}` in the same `ServeMux`. The more specific route is selected without relying on registration order, and a wrong method returns 405. Why does this happen? Let's investigate the background.
+The same `ServeMux` registers `/x/fixed` and `/x/{value}`. The more specific route is selected without relying on registration order, and a wrong method returns 405. Why does this happen? Let's investigate the background.
 
-When you [run the following code in the Go Playground](https://go.dev/play/p/fbR5kWMHL2Z), you can observe the behavior of the literal `latest`, the wildcard, and a method mismatch.
+When you [run the following code in the Go Playground](https://go.dev/play/p/DhW53RiIwwY), you can observe a literal match, a wildcard match, and a method mismatch.
 
 This scenario includes a `go.mod` that enables the routing rules introduced in Go 1.22 and later, plus a `main.go` containing the code above. To try it locally, run `go run .` in this directory. Before running it, also check `go version`, `go env GOMOD`, and `go env GODEBUG`.
 
@@ -19,38 +19,38 @@ import (
 
 func main() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /reports/latest", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "latest")
+	mux.HandleFunc("GET /x/fixed", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "fixed")
 	})
-	mux.HandleFunc("GET /reports/{id}", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "report=%s", r.PathValue("id"))
+	mux.HandleFunc("GET /x/{value}", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "value=%s", r.PathValue("value"))
 	})
 
-	for _, path := range []string{"/reports/latest", "/reports/2026-08"} {
+	for _, path := range []string{"/x/fixed", "/x/other"} {
 		recorder := httptest.NewRecorder()
 		mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
 		fmt.Printf("GET %s -> %d %q\n", path, recorder.Code, recorder.Body.String())
 	}
 
 	recorder := httptest.NewRecorder()
-	mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/reports/2026-08", nil))
-	fmt.Printf("POST /reports/2026-08 -> %d\n", recorder.Code)
+	mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/x/other", nil))
+	fmt.Printf("POST /x/other -> %d\n", recorder.Code)
 }
 ```
 
 Output:
 
 ```text
-GET /reports/latest -> 200 "latest"
-GET /reports/2026-08 -> 200 "report=2026-08"
-POST /reports/2026-08 -> 405
+GET /x/fixed -> 200 "fixed"
+GET /x/other -> 200 "value=other"
+POST /x/other -> 405
 ```
 
 ---
 
 ## Question 1: Which route wins?
 
-Regardless of whether `GET /reports/latest` is registered before or after `GET /reports/{id}`, which handler receives `GET /reports/latest`? Explain the conditions under which `POST /reports/2026-08` becomes 405.
+Regardless of whether `GET /x/fixed` is registered before or after `GET /x/{value}`, which handler receives `GET /x/fixed`? Explain the conditions under which `POST /x/other` becomes 405.
 
 <details>
 <summary>Hint</summary>
@@ -72,9 +72,9 @@ Regardless of whether `GET /reports/latest` is registered before or after `GET /
 
 **Answer**
 
-`GET /reports/latest` requires the literal `latest`, so its set of matching requests is narrower than that of `GET /reports/{id}` for the same method, making it more specific. Therefore, the `latest` handler is selected regardless of registration order.
+`GET /x/fixed` requires the literal `fixed`, so its set of matching requests is narrower than that of `GET /x/{value}` for the same method, making it more specific. Therefore, the `fixed` handler is selected regardless of registration order.
 
-`POST /reports/2026-08` does not match either `GET` pattern. However, because there is a pattern for another method at the same path, `ServeMux` returns 405 Method Not Allowed.
+`POST /x/other` does not match either `GET` pattern. However, because there is a pattern for another method at the same path, `ServeMux` returns 405 Method Not Allowed.
 
 </details>
 
@@ -82,9 +82,9 @@ Regardless of whether `GET /reports/latest` is registered before or after `GET /
 
 ## Question 2: Why do these two patterns conflict when registered?
 
-Using this scenario's `go.mod` (`go 1.22`) without `httpmuxgo121`, an API developer tries to register `GET /reports/{id}` and `/reports/latest`. Both match some GET requests, but why can neither always be called “more specific,” causing `HandleFunc` to panic?
+Using this scenario's `go.mod` (`go 1.22`) without `httpmuxgo121`, register `GET /x/{value}` and `/x/fixed`. Both match some GET requests, but why can neither always be called “more specific,” causing `HandleFunc` to panic?
 
-First, run the actual registration code in the [Go Playground](https://go.dev/play/p/iMHQSYKMgpE). With the standard Go 1.22-or-later routing behavior, the second `HandleFunc` call panics and `registered` is not printed.
+First, run the actual registration code in the [Go Playground](https://go.dev/play/p/-wtRzMO5UHB). With the standard Go 1.22-or-later routing behavior, the second `HandleFunc` call panics and `registered` is not printed.
 
 ```go
 package main
@@ -96,8 +96,8 @@ import (
 
 func main() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /reports/{id}", func(http.ResponseWriter, *http.Request) {})
-	mux.HandleFunc("/reports/latest", func(http.ResponseWriter, *http.Request) {})
+	mux.HandleFunc("GET /x/{value}", func(http.ResponseWriter, *http.Request) {})
+	mux.HandleFunc("/x/fixed", func(http.ResponseWriter, *http.Request) {})
 	fmt.Println("registered")
 }
 ```
@@ -119,7 +119,7 @@ If it does not panic locally, inspect `go version`, `go env GOMOD`, and `go env 
 
 **Investigation path**
 
-1. Run the [shared Go Playground code](https://go.dev/play/p/iMHQSYKMgpE) with the standard behavior and observe the panic at the second registration and the absence of `registered`.
+1. Run the [shared Go Playground code](https://go.dev/play/p/-wtRzMO5UHB) with the standard behavior and observe the panic at the second registration and the absence of `registered`.
 2. Re-read the enhanced routing patterns section of the [Go 1.22 Release Notes](https://go.dev/doc/go1.22).
 3. Read the explanation of Precedence and conflicts in [http.ServeMux](https://pkg.go.dev/net/http#ServeMux).
 4. Check `httpmuxgo121` in [Go, Backwards Compatibility, and GODEBUG](https://go.dev/doc/godebug).
@@ -127,7 +127,7 @@ If it does not panic locally, inspect `go version`, `go env GOMOD`, and `go env 
 
 **Answer**
 
-`GET /reports/{id}` accepts only GET but accepts any ID, while `/reports/latest` accepts any method but only accepts `latest`. `GET /reports/latest` matches both, but one pattern is narrower only in its method and the other only in its path.
+`GET /x/{value}` accepts only GET but accepts any value, while `/x/fixed` accepts any method but only accepts `fixed`. `GET /x/fixed` matches both, but one pattern is narrower only in its method and the other only in its path.
 
 Neither matching set is a strict subset of the other, so precedence cannot be determined. The design panics during registration to expose the ambiguity early. If both patterns are needed, align their methods or paths so that one is clearly narrower.
 
@@ -170,7 +170,7 @@ The migration setting `httpmuxgo121=1` restores the old behavior. First test exi
 
 ## Question 4: Why is it not “the last registered pattern wins”?
 
-Trace the proposal issue and implementation, then explain what benefits order-independent precedence and registration-time conflict detection provide when multiple teams maintain administration API routes.
+Trace the proposal issue and implementation, then explain what benefits order-independent precedence and registration-time conflict detection provide when routes are registered from multiple places.
 
 <details>
 <summary>Hint</summary>
@@ -192,9 +192,9 @@ Trace the proposal issue and implementation, then explain what benefits order-in
 
 **Answer**
 
-If the result changed with registration order, simply adding a route by another team could change the destination of an existing API. Selecting the more specific pattern as a set means that the destination can be explained by the rules rather than by the order of configuration.
+If the result changed with registration order, adding a route elsewhere could change an existing destination. Selecting the more specific pattern as a set means that the destination can be explained by the rules rather than by the order of configuration.
 
-At the same time, overlapping patterns that cannot be compared are not left hidden until runtime; `ServeMux` panics during registration. The implementation searches more specific patterns first and detects conflicts at startup. When reviewing administration API changes, teams can also discuss which sets of requests are added or removed.
+At the same time, overlapping patterns that cannot be compared are not left hidden until runtime; `ServeMux` panics during registration. The implementation searches more specific patterns first and detects conflicts at startup. Changes can be reviewed in terms of which request sets are added or removed.
 
 </details>
 
