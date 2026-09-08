@@ -87,10 +87,10 @@ total:					(statements)	66.7%
 <summary>調査の入り口</summary>
 
 1. [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
-2. [Go のコマンド一覧](https://go.dev/doc/cmd) を開き、`cover` を探します。
-3. [cover の公式ドキュメント](https://go.dev/cmd/cover/) で、`go test -coverprofile` が出力する profile を解析するコマンドであることと、計測の単位が basic block であることを確かめます。
-4. 手元で `go help testflag` を実行して `-coverprofile` の説明を読み、`go tool cover -help` で `-func` と `-html` が受け取るものを確かめます。
-5. [Go 1.27.0 の `cmd/cover` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/cover/doc.go) の説明で、実装上の注意を読みます。
+2. [Go のコマンド一覧](https://go.dev/doc/cmd) は、Go に同梱されるコマンドとツールの一覧です。
+3. [cover の公式ドキュメント](https://go.dev/cmd/cover/) は、`cover` ツールの説明です。
+4. 手元で `go help testflag` と `go tool cover -help` を実行し、それぞれのヘルプを読みます。
+5. [Go 1.27.0 の `cmd/cover` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/cover/doc.go) は、`cover` ツールのソースコードにある説明です。
 
 </details>
 

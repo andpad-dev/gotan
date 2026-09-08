@@ -89,14 +89,14 @@ ok  	example.com/trace-demo	0.853s
 <summary>調査の入り口</summary>
 
 1. [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
-2. [Go の診断ツール案内](https://go.dev/doc/diagnostics) で、Profiling と Execution tracer を見比べ、CPU profile と execution trace がそれぞれ何を観測するかを確かめます。
-3. [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof) の「Profiling with pprof」と「Interpreting the data」で、周期的に得たスタックの標本を数える設計を読みます。2013 年の記事なので、現在のランタイム仕様としては扱いません。
-4. [trace の公式ドキュメント](https://go.dev/cmd/trace/) で、trace ファイルを作れる経路と、`-pprof=sync` のように trace から pprof-like profile を出す書式を確かめます。
-5. 手元で `go help testflag` の `-trace`、`go tool trace -h` の `-http=addr`、`go tool pprof -h` の `-list` の説明を確かめます。
-6. [Go 1.27.0 の `cmd/trace` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/trace/doc.go) で、公式ドキュメントと同じ用途と profile type を裏取りします。
-7. [Go 1.21 リリースノート](https://go.dev/doc/go1.21) で trace 採取コストの低下を、[Go 1.22 リリースノート](https://go.dev/doc/go1.22) で trace 実装の作り直しと partition を確かめます。
-8. [execution tracer overhaul の設計文書](https://go.googlesource.com/proposal/+/refs/heads/master/design/60773-execution-tracer-overhaul.md) の Background / Goals で従来の課題を、[Issue #63185](https://github.com/golang/go/issues/63185) で flight recording の提案を追います。
-9. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) の Trace 節で、`-http=:6060` の listen address の変更を確かめます。
+2. [Go の診断ツール案内](https://go.dev/doc/diagnostics) は、Go の profiling / tracing / debugging ツールを俯瞰する公式ページです。
+3. [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof) は、pprof の CPU profiler の仕組みを解説した 2013 年の記事です。
+4. [trace の公式ドキュメント](https://go.dev/cmd/trace/) は、`go tool trace` の使い方の説明です。
+5. 手元で `go help testflag`、`go tool trace -h`、`go tool pprof -h` を実行し、ヘルプを読みます。
+6. [Go 1.27.0 の `cmd/trace` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/trace/doc.go) は、`go tool trace` の実装にある説明です。
+7. [Go 1.21 リリースノート](https://go.dev/doc/go1.21) と [Go 1.22 リリースノート](https://go.dev/doc/go1.22) は、それぞれの版の変更点です。
+8. [execution tracer overhaul の設計文書](https://go.googlesource.com/proposal/+/refs/heads/master/design/60773-execution-tracer-overhaul.md) は execution tracer の作り直しの設計文書、[Issue #63185](https://github.com/golang/go/issues/63185) はそれに続く提案の Issue です。
+9. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) は、Go 1.27 の変更点です。
 
 </details>
 

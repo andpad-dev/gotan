@@ -15,10 +15,10 @@ pkg.go.dev のブラウザ UI には、パッケージを「インポート数�
 
 1. [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
 2. [Go Documentation](https://go.dev/doc/) を入口に、pkg.go.dev API ドキュメントと Go Modules Reference を探します。
-3. [pkg.go.dev API ドキュメント](https://pkg.go.dev/v1/api) で、「Routes」の各エンドポイントのレスポンス型、「Requests」の filter とパッケージパスの曖昧性、「Rate Limiting」と「Pagination」を確かめます。
-4. [pkgsite internal/api](https://pkg.go.dev/golang.org/x/pkgsite/internal/api) で、`SearchResult` などレスポンス型のフィールドを確かめます。
-5. [pkgsite のソースコード](https://cs.opensource.google/go/x/pkgsite) で、`SearchResult` の定義とページネーションの実装を確かめます。
-6. [Go Modules Reference](https://go.dev/ref/mod) で、モジュールパスとパッケージパスの関係と、モジュールの境界を確かめます。
+3. [pkg.go.dev API ドキュメント](https://pkg.go.dev/v1/api) は、pkg.go.dev API の公式リファレンスです。
+4. [pkgsite internal/api](https://pkg.go.dev/golang.org/x/pkgsite/internal/api) は、API のレスポンス型を定義しているパッケージのドキュメントです。
+5. [pkgsite のソースコード](https://cs.opensource.google/go/x/pkgsite) は、pkg.go.dev 自体（pkgsite）のソースです。
+6. [Go Modules Reference](https://go.dev/ref/mod) は、Go のモジュールシステムの公式リファレンスです。
 
 </details>
 

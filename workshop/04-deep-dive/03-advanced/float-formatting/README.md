@@ -54,11 +54,11 @@ without last digit: 1.000000000000000 (false)
 <summary>調査の入り口</summary>
 
 1. [04-deep-dive の調べ方](../../README.md) を開き、仕様・実装・設計背景をたどる順番を確かめます。
-2. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) を開き、`strconv` と浮動小数点変換の記載があるかを確認します。
+2. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) は、Go 1.27 の変更点をまとめたリリースノートです。
 3. [`strconv.FormatFloat` の公式ドキュメント](https://go.dev/pkg/strconv/#FormatFloat) で `prec = -1` の説明を読み、「最短」の定義を確かめます。
-4. [変更コミット `71300e8`: internal/strconv: use fast unrounded scaling for floating-point](https://go.dev/change/71300e80113c6ca56105aac524e9c1b0db43910f) で、目的、削除されたコード、ベンチマーク表、変更ファイルを読みます。
-5. [Floating Point Formatting シリーズ](https://research.swtch.com/fp-all) で 2011 年から 2026 年までの 4 本の位置づけを確認し、コミットが参照する 2026 年の記事へ進みます。
-6. [Go 1.27.0 タグの `internal/strconv/uscale.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/internal/strconv/uscale.go) で `unrounded`、`shortFloat`、`uscale` を照合します。
+4. [変更コミット `71300e8`: internal/strconv: use fast unrounded scaling for floating-point](https://go.dev/change/71300e80113c6ca56105aac524e9c1b0db43910f) は、Go 1.27 で浮動小数点変換の実装を入れ替えた変更コミットです。
+5. [Floating Point Formatting シリーズ](https://research.swtch.com/fp-all) は、Russ Cox による浮動小数点の文字列変換に関する記事シリーズです。
+6. [Go 1.27.0 タグの `internal/strconv/uscale.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/internal/strconv/uscale.go) は、Go 1.27.0 で追加された変換の共通部品の実装です。
 
 </details>
 

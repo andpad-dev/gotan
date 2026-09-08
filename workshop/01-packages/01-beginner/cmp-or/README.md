@@ -38,7 +38,7 @@ all unavailable: ""
 
 1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方を確かめます。
 2. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `cmp` パッケージを開きます。
-3. [package cmp](https://pkg.go.dev/cmp) で `Or` の説明を読み、引数をどの順番で見てどの値を返すか、すべてゼロ値のときに何を返すかを確かめます。
+3. [package cmp](https://pkg.go.dev/cmp) を開きます。`Or` 関数の説明はこのページにあります。
 
 </details>
 

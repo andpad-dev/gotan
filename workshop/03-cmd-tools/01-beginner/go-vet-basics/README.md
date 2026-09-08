@@ -46,12 +46,12 @@ main.go:7:21: fmt.Printf format %d has arg name of wrong type string
 <summary>調査の入り口</summary>
 
 1. [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
-2. [Go Documentation](https://go.dev/doc/) を入口に、`go vet` の公式ドキュメントを探します。
-3. [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) の Overview で、ヒューリスティックを使うという性質と、アナライザ一覧の探し方を確かめます。
-4. [`pkg.go.dev/cmd/go` の「Report likely mistakes in packages」節](https://pkg.go.dev/cmd/go#hdr-Report_likely_mistakes_in_packages) で、`go` コマンド内での `go vet` の位置づけを確かめます。
-5. [`pkg.go.dev/cmd/go` の「Test packages」節](https://pkg.go.dev/cmd/go#hdr-Test_packages) で、`go test` が既定で走らせる `go vet` のサブセットを確かめます。
-6. [`pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf) で、`printf` アナライザが検査する内容と `-printf.funcs` フラグを確かめます。
-7. [Go 1.27 のリリースノート](https://go.dev/doc/go1.27#go-test) で、`go test` が `stdversion` を既定で実行するようになったことを確かめます。
+2. [Go Documentation](https://go.dev/doc/) は、Go の公式ドキュメントの入口です。`go vet` の公式ドキュメントもここからたどれます。
+3. [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) は、`vet` ツールのパッケージドキュメントです。
+4. [`pkg.go.dev/cmd/go` の「Report likely mistakes in packages」節](https://pkg.go.dev/cmd/go#hdr-Report_likely_mistakes_in_packages) は、`go` コマンドのドキュメントのうち `go vet` サブコマンドの節です。
+5. [`pkg.go.dev/cmd/go` の「Test packages」節](https://pkg.go.dev/cmd/go#hdr-Test_packages) は、同じドキュメントの `go test` サブコマンドの節です。
+6. [`pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf) は、`printf` アナライザのパッケージドキュメントです。
+7. [Go 1.27 のリリースノート](https://go.dev/doc/go1.27#go-test) は、Go 1.27 での `go test` の変更点です。
 
 </details>
 

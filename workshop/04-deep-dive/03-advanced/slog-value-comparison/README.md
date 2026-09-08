@@ -37,9 +37,9 @@ invalid operation: v1 == v2 (struct containing [0]func() cannot be compared)
 
 1. [04-deep-dive の調べ方](../../README.md) を開き、仕様・実装・設計背景をたどる順番を確かめます。
 2. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `log/slog` パッケージを開きます。
-3. [The Go Programming Language Specification](https://go.dev/ref/spec) の「Comparison operators」で、構造体・配列・関数の比較可能性のルールを読みます。
-4. [go1.27.0 の src/log/slog/value.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/log/slog/value.go;l=21) で `type Value struct` の定義を読み、`_ [0]func()` のフィールドとコメントを確認します。
-5. [`==` を禁止した CL 479516](https://go-review.googlesource.com/c/go/+/479516) と [Issue #56345](https://github.com/golang/go/issues/56345) をたどり、変更理由と文字列の例を読みます。
+3. [The Go Programming Language Specification](https://go.dev/ref/spec) は Go 言語仕様です。`==` の規則もここで定義されています。
+4. [go1.27.0 の src/log/slog/value.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/log/slog/value.go;l=21) は、`slog.Value` の型定義です。
+5. [`==` を禁止した CL 479516](https://go-review.googlesource.com/c/go/+/479516) と [Issue #56345](https://github.com/golang/go/issues/56345) は、`==` を禁止した変更と、その背景の issue です。
 
 </details>
 

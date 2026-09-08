@@ -28,11 +28,11 @@ func main() { println("hello world") }
 <summary>調査の入り口</summary>
 
 1. [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
-2. [Go command](https://go.dev/cmd/go/) を開き、Source Files から `cmd/go` のテスト用ファイルへたどります。
-3. [Go 1.27.0 の `run_hello.txt`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/testdata/script/run_hello.txt) で題材の 1 枚の構成を、[`script_test.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/script_test.go;l=39) で `TestScript` が `testdata/script/*.txt` を列挙し、`ExtractFiles` と `scripttest.Run` を呼ぶ流れを確かめます。
-4. [Go Testing By Example](https://research.swtch.com/testing) の Tip 13〜18 で、複数ファイルを束ねる txtar、小さな言語、script という読み方と、公開 module の候補を確かめます。2023 年の記事なので、2018 年の採用理由の証拠にはしません。
-5. [2018 年の script test 導入 commit](https://github.com/golang/go/commit/5890e25b7ccb2d2249b2f8a02ef5dbc36047868b) で、shell script、Go 製 test framework、新方式の 3 段階の比較と、当時報告された実行結果を確かめます。
-6. [`golang.org/x/tools/txtar@v0.47.0`](https://pkg.go.dev/golang.org/x/tools/txtar@v0.47.0) で公開 package が担当する範囲を、[`rsc.io/script@v0.0.2`](https://pkg.go.dev/rsc.io/script@v0.0.2) で script engine の提供範囲とサポート方針を確かめます。
+2. [Go command](https://go.dev/cmd/go/) は `go` コマンドのドキュメントです。ここから `cmd/go` のソースへたどれます。
+3. [Go 1.27.0 の `run_hello.txt`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/testdata/script/run_hello.txt) は題材のテキストそのもの、[`script_test.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/script_test.go;l=39) はそれを実行するテストコードです。
+4. [Go Testing By Example](https://research.swtch.com/testing) は、2023 年に公開されたテストの書き方に関する記事です。
+5. [2018 年の script test 導入 commit](https://github.com/golang/go/commit/5890e25b7ccb2d2249b2f8a02ef5dbc36047868b) は、この仕組みを `cmd/go` に追加した変更です。
+6. [`golang.org/x/tools/txtar@v0.47.0`](https://pkg.go.dev/golang.org/x/tools/txtar@v0.47.0) と [`rsc.io/script@v0.0.2`](https://pkg.go.dev/rsc.io/script@v0.0.2) は、Go 本体の外で公開されている関連 module のドキュメントです。
 
 </details>
 

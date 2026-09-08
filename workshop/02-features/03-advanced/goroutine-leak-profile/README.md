@@ -107,11 +107,11 @@ goroutineleak profile: total 4
 <summary>調査の入り口</summary>
 
 1. [02-features の調べ方](../../README.md) を開き、言語仕様・公式ブログ・プロポーザルの逆引き手順を確かめます。
-2. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) を開き、`Goroutine leak profile` 節で leaked goroutine の定義と、到達可能性に基づくため検出できないリークがあるという但し書きを読みます。
-3. [A Tour of Go](https://research.swtch.com/gotour) で、2012 年の講演 Q&A にある「If a goroutine is stuck reading from a channel ...」という質問を探し、blocked goroutine を回収しない当時の理由を読みます。
-4. [Go 1.26 リリースノート](https://go.dev/doc/go1.26) の `Experimental goroutine leak profile` 節で、同じ機能の experiment 版とリークするサンプルコードを確かめ、proposal issue #74609 へのリンクをたどります。
-5. [`runtime/pprof` パッケージドキュメント](https://pkg.go.dev/runtime/pprof) の `type Profile` で、予約プロファイル名の一覧から `goroutine` と `goroutineleak` の 1 行説明を照合します。
-6. [`net/http/pprof` パッケージドキュメント](https://pkg.go.dev/net/http/pprof) で、`/debug/pprof/goroutineleak` が登録されていることを確かめます。
+2. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) を開きます。`goroutineleak` プロファイルが正式機能になった版のリリースノートです。
+3. [A Tour of Go](https://research.swtch.com/gotour) を開きます。2012 年の Russ Cox の講演記録で、質疑応答も載っています。
+4. [Go 1.26 リリースノート](https://go.dev/doc/go1.26) を開きます。同じ機能が experiment として入った版のリリースノートです。
+5. [`runtime/pprof` パッケージドキュメント](https://pkg.go.dev/runtime/pprof) を開きます。冒頭のコードが `pprof.Lookup` で呼んでいるパッケージです。
+6. [`net/http/pprof` パッケージドキュメント](https://pkg.go.dev/net/http/pprof) を開きます。冒頭で見た `/debug/pprof/` 配下のエンドポイントを提供するパッケージです。
 
 > ※ 2026-08-31 にローカルの Go 1.27.0 と Go Playground の両方で実行した。  
 > 先頭行は `go version: go1.27.0`、プロファイル件数は 5 と 4 だった。  

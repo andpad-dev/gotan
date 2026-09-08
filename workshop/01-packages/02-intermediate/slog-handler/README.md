@@ -13,9 +13,9 @@
 
 1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方を確かめます。
 2. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `log/slog` を開きます。
-3. [package log/slog](https://pkg.go.dev/log/slog) で `Handler` インタフェースの 4 メソッドのコメントと、Overview の「Writing a handler」節を読みます。
-4. [slog handler guide](https://go.dev/s/slog-handler-guide) で、埋め込み、`WithAttrs` / `WithGroup`、値の解決、テストに関する節を読みます。
-5. [package testing/slogtest](https://pkg.go.dev/testing/slogtest) で `TestHandler` と `Run` のシグネチャと説明を比べます。
+3. [package log/slog](https://pkg.go.dev/log/slog) を開きます。`Handler` インタフェースの定義はこのページにあります。
+4. [slog handler guide](https://go.dev/s/slog-handler-guide) を開きます。ハンドラーを自作する人向けの公式ガイドです。
+5. [package testing/slogtest](https://pkg.go.dev/testing/slogtest) を開きます。自作ハンドラーの検査に使う標準パッケージです。
 
 </details>
 

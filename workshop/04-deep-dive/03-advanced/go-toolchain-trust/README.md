@@ -35,11 +35,11 @@ $ GOTOOLCHAIN=go1.27.0 go version -m "$(GOTOOLCHAIN=go1.27.0 go env GOTOOLDIR)/c
 
 1. [04-deep-dive の調べ方](../../README.md) を開き、仕様・実装・設計背景をたどる順番を確かめます。
 2. [Go Documentation](https://go.dev/doc) から Go コマンドのドキュメントへ進み、`go version` の `-m` の説明を読みます。
-3. [Go compiler](https://go.dev/cmd/compile/) でコンパイラの役割を確認し、ソースを読み込んでコンパイルする処理を調査対象にします。
-4. [Installing Go from source](https://go.dev/doc/install/source#go14) のブートストラップ要件を読み、Go 1.N が必要とする Go 1.M の求め方を確認します。
-5. [Perfectly Reproducible, Verified Go Toolchains](https://go.dev/blog/rebuild) を読み、「perfectly reproducible」の定義とブートストラップ段階を確認します。
-6. [Go Reproducible Build Report](https://go.dev/rebuild) で実行日時、対象バージョン、各配布物の結果を読み、`PASS` までのログを確認します。
-7. [Running the “Reflections on Trusting Trust” Compiler](https://research.swtch.com/nih) の「A Modern Version」で、クリーンなソースへ戻してもコンパイラに変更が残る仕組みを追います。
+3. [Go compiler](https://go.dev/cmd/compile/) は、Go コンパイラ `cmd/compile` の公式ドキュメントです。
+4. [Installing Go from source](https://go.dev/doc/install/source#go14) は、ソースから Go をビルドする公式手順で、ブートストラップの要件を扱います。
+5. [Perfectly Reproducible, Verified Go Toolchains](https://go.dev/blog/rebuild) は、再現可能なビルドと検証済みツールチェーンを説明する Go Blog の記事です。
+6. [Go Reproducible Build Report](https://go.dev/rebuild) は、公開された Go ツールチェーンを再ビルドした結果のレポートです。
+7. [Running the “Reflections on Trusting Trust” Compiler](https://research.swtch.com/nih) は、Russ Cox がコンパイラ攻撃の現代版を実演した記事です。
 
 </details>
 

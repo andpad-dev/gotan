@@ -37,7 +37,7 @@ func main() {
 
 1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方を確かめます。
 2. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `strings` パッケージを開きます。
-3. [package strings](https://pkg.go.dev/strings) で `Cut` の 3 つの戻り値の名前と、区切り記号がない場合の一文、「first instance」の説明を確かめます。
+3. [package strings](https://pkg.go.dev/strings) を開きます。`Cut` 関数の説明はこのページにあります。
 
 </details>
 

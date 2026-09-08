@@ -31,7 +31,7 @@ func main() {
 <summary>調査の入り口</summary>
 
 1. [Go Documentation](https://go.dev/doc/) を開き、標準ライブラリの `fmt` パッケージへ進みます。
-2. [package fmt](https://pkg.go.dev/fmt) の Overview で、「Printing」の verb の表から `%v`、`%#v`、`%T` の 3 行を比べ、`[` をページ内検索して「Explicit argument indexes」を読みます。
+2. [package fmt](https://pkg.go.dev/fmt) を開きます。書式指定子の説明は Overview にあります。
 
 </details>
 

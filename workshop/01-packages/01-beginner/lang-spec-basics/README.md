@@ -11,7 +11,7 @@
 
 1. [01-packages の調べ方](../../README.md) を開き、言語仕様の節の探し方を確かめます。
 2. [Go Documentation](https://go.dev/doc/) を入口に、Language Specification から Go 言語仕様を開きます。
-3. [Go 言語仕様](https://go.dev/ref/spec) の目次から「For statements」「Switch statements」を選び、下位の「For statements with range clause」「Expression switches」まで進んで規則を確かめます。
+3. [Go 言語仕様](https://go.dev/ref/spec) を開きます。`for` 文と `switch` 文の規則は、この 1 ページにまとまった仕様書の中にあります。
 
 </details>
 

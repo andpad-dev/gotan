@@ -36,7 +36,7 @@ string
 
 1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメント（pkg.go.dev）の開き方を確かめます。
 2. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `fmt` パッケージを開きます。
-3. [package fmt](https://pkg.go.dev/fmt) で `Sprintf` のシグネチャ（戻り値の型）と、Overview の「Printing」にある verb の一覧表、「Width and precision」の指定方法を確かめます。
+3. [package fmt](https://pkg.go.dev/fmt) を開きます。`Sprintf` の説明と、書式指定子の説明（Overview）はこのページにあります。
 
 </details>
 

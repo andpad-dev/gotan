@@ -41,10 +41,10 @@ reset timer fired
 <summary>調査の入り口</summary>
 
 1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方と、`go version` などの実行環境の記録手順を確かめます。
-2. [Go 1.27 Release Notes](https://go.dev/doc/go1.27) の GODEBUG 節と Runtime 節で、`asynctimerchan` が削除されたことを確かめます。
-3. [Go Wiki: Go 1.23 Timer Channel Changes](https://go.dev/wiki/Go123Timer) の「Debugging」で、互換設定を全体で切り替えた後に `bisect` で依存箇所を絞る手順を読みます。
-4. [Hash-Based Bisect Debugging in Compilers and Runtimes](https://research.swtch.com/bisect) で、`git bisect` と `bisect` が何を二分探索するかの違いと、揺らぐ失敗への対処を読みます。
-5. [package time](https://pkg.go.dev/time) で `NewTimer` の `Before Go 1.23` の説明と、`Stop` / `Reset` の保証を読みます。
+2. [Go 1.27 Release Notes](https://go.dev/doc/go1.27) を開きます。実行環境に指定している Go 1.27 のリリースノートです。
+3. [Go Wiki: Go 1.23 Timer Channel Changes](https://go.dev/wiki/Go123Timer) を開きます。Go 1.23 のタイマー変更を解説する公式 Wiki です。
+4. [Hash-Based Bisect Debugging in Compilers and Runtimes](https://research.swtch.com/bisect) を開きます。Russ Cox がタイマー障害の調査を題材に書いた記事です。
+5. [package time](https://pkg.go.dev/time) を開きます。`Timer` の説明はこのページにあります。
 
 </details>
 

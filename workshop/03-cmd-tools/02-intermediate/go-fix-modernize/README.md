@@ -86,16 +86,16 @@ func main() {
 <summary>調査の入り口</summary>
 
 1. [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
-2. 手元で `go help fix` と `go tool fix help` を実行し、`-diff` の動作と、`Registered analyzers:` に並ぶ現在の一覧を確かめます。
-3. `go tool fix help <analyzer>` で、個別 analyzer の対象コードと必要な Go バージョンを確かめます（例: `go tool fix help slicessort`、`go tool fix help inline`）。
-4. [Go 1.26 リリースノート](https://go.dev/doc/go1.26#go-command) の Tools 節で `go fix` の刷新を、[Go 1.27 リリースノートの `go fix` 節](https://go.dev/doc/go1.27#go-fix) で追加・削除・改名された analyzer を確かめます。
-5. [cmd/fix](https://pkg.go.dev/cmd/fix) と [cmd/vet](https://pkg.go.dev/cmd/vet) の Overview を並べて読み、fixer と checker の違いを確かめます。
-6. [`cmd/go` の「Apply fixes suggested by static checkers」節](https://pkg.go.dev/cmd/go#hdr-Apply_fixes_suggested_by_static_checkers) で、`go` コマンド側の `go fix` の説明を読みます。
-7. [`go/analysis/passes/modernize`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/modernize) で、modernizer 全体の説明を読みます。パッケージが提供する analyzer と `go fix` が登録する analyzer は同一視しません。
-8. [inline analyzer のドキュメント](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/inline) で、関数・定数・型エイリアスごとの制約を確かめます。
-9. [Go 1.27.0 の fix suite](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/vendor/golang.org/x/tools/go/analysis/suite/fix/fix.go) で、`go fix` が実際に登録する analyzer の集合を CLI 出力と照合します。
-10. [go/analysis](https://pkg.go.dev/golang.org/x/tools/go/analysis) の Overview で、checker と fixer の関係を確かめます。
-11. [Using go fix to modernize Go code](https://go.dev/blog/gofix) の "The Go analysis framework" 節で背景を、"self-service" パラダイム節で `//go:fix inline` の位置づけを確かめます。
+2. 手元で `go help fix` と `go tool fix help` を実行し、ヘルプを読みます。
+3. `go tool fix help <analyzer>` も手元で実行できます。
+4. [Go 1.26 リリースノート](https://go.dev/doc/go1.26#go-command) と [Go 1.27 リリースノートの `go fix` 節](https://go.dev/doc/go1.27#go-fix) は、それぞれの版での `go` コマンドの変更点です。
+5. [cmd/fix](https://pkg.go.dev/cmd/fix) と [cmd/vet](https://pkg.go.dev/cmd/vet) は、それぞれのツールのパッケージドキュメントです。
+6. [`cmd/go` の「Apply fixes suggested by static checkers」節](https://pkg.go.dev/cmd/go#hdr-Apply_fixes_suggested_by_static_checkers) は、`go` コマンドのドキュメントのうち `go fix` サブコマンドの節です。
+7. [`go/analysis/passes/modernize`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/modernize) は、modernizer のパッケージドキュメントです。
+8. [inline analyzer のドキュメント](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/inline) は、`inline` アナライザのパッケージドキュメントです。
+9. [Go 1.27.0 の fix suite](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/vendor/golang.org/x/tools/go/analysis/suite/fix/fix.go) は、Go 1.27.0 に vendor されている `go fix` 向け analyzer suite のソースです。
+10. [go/analysis](https://pkg.go.dev/golang.org/x/tools/go/analysis) は、静的解析ツールを作るためのフレームワークのパッケージドキュメントです。
+11. [Using go fix to modernize Go code](https://go.dev/blog/gofix) は、新しい `go fix` を紹介する Go 公式ブログの記事です。
 
 </details>
 

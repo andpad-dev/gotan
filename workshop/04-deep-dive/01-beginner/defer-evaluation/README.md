@@ -37,8 +37,8 @@ direct: started
 <summary>調査の入り口</summary>
 
 1. [04-deep-dive の調べ方](../../README.md)を開き、Go 言語仕様を起点にします。
-2. [Go 言語仕様: Defer statements](https://go.dev/ref/spec#Defer_statements) で評価時点と実行順を調べます。
-3. [Go 言語仕様: Function literals](https://go.dev/ref/spec#Function_literals) で、無名関数が外側の変数を参照する規則を調べます。
+2. [Go 言語仕様: Defer statements](https://go.dev/ref/spec#Defer_statements) は、`defer` 文の規則を定義する節です。
+3. [Go 言語仕様: Function literals](https://go.dev/ref/spec#Function_literals) は、関数リテラルの規則を定義する節です。
 4. [Go Blog: Defer, Panic, and Recover](https://go.dev/blog/defer-panic-and-recover) で観測結果を照合します。
 
 </details>

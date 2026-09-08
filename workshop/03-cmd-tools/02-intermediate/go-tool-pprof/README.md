@@ -102,12 +102,12 @@ Showing nodes accounting for 460ms, 100% of 460ms total
 <summary>調査の入り口</summary>
 
 1. [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
-2. [Go の診断ツール案内](https://go.dev/doc/diagnostics) で、CPU / block / mutex profile と execution trace がそれぞれ何を対象にするか、profile と benchmark の役割の違いを確かめます。
-3. [pprof の公式ドキュメント](https://go.dev/cmd/pprof/) で、`[binary] <source>` のようにバイナリが省略可能であることと、関数やソース行ごとの表示形式を確かめます。
-4. 手元で `go help testflag` を実行して `-cpuprofile` の説明とテストバイナリが残る注意書き、`-bench` / `-benchmem` / `-count` を読み、`go tool pprof -h` で `-list`、`-raw`、`-disasm` の役割を確かめます。
-5. [Go 同梱版 google/pprof の固定版ドキュメント](https://github.com/google/pprof/blob/92041b743c96/doc/README.md) で、`flat` と `cum` の定義と、`-list` がソース行ごとに表示する内容を確かめます。
-6. [Go 1.27.0 の `cmd/pprof` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/pprof/doc.go) で実装の入口を、[Go 1.27.0 の `runtime/pprof` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/pprof/proto.go) で `emitLocation` が関数名・ファイル名・行番号を profile に書く処理を確かめます。
-7. [PGO の公式ガイド](https://go.dev/doc/pgo) で、profile を代表的な負荷で採取することについての注意を確かめます。
+2. [Go の診断ツール案内](https://go.dev/doc/diagnostics) は、Go の profiling / tracing / debugging ツールを俯瞰する公式ページです。
+3. [pprof の公式ドキュメント](https://go.dev/cmd/pprof/) は、`go tool pprof` の使い方の説明です。
+4. 手元で `go help testflag` と `go tool pprof -h` を実行し、ヘルプを読みます。
+5. [Go 同梱版 google/pprof の固定版ドキュメント](https://github.com/google/pprof/blob/92041b743c96/doc/README.md) は、Go に同梱されている google/pprof の README です（版を固定したリンク）。
+6. [Go 1.27.0 の `cmd/pprof` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/pprof/doc.go) は `go tool pprof` の実装、[Go 1.27.0 の `runtime/pprof` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/pprof/proto.go) は profile を書き出す側の実装です。
+7. [PGO の公式ガイド](https://go.dev/doc/pgo) は、profile をコンパイラ最適化に使う PGO の公式ガイドです。
 
 </details>
 

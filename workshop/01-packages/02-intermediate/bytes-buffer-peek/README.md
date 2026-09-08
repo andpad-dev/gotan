@@ -42,8 +42,8 @@ short="XY" err=EOF
 <summary>調査の入り口</summary>
 
 1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのメソッド一覧の開き方を確かめます。
-2. [Go 1.26 Release Notes](https://go.dev/doc/go1.26) で `Buffer.Peek` が Go 1.26 で追加されたことを確かめます。
-3. [package bytes](https://pkg.go.dev/bytes) で `Buffer.Peek` と `Buffer.Next` の説明を比べ、読み取り位置を進めるか、要求より少ないときの返り値、返されたスライスの有効期間を確かめます。
+2. [Go 1.26 Release Notes](https://go.dev/doc/go1.26) を開きます。`Buffer.Peek` が追加されたときのリリースノートです。
+3. [package bytes](https://pkg.go.dev/bytes) を開きます。`Buffer` のメソッド一覧と各メソッドの説明はこのページにあります。
 
 </details>
 

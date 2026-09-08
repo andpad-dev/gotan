@@ -25,8 +25,8 @@ const (
 <summary>調査の入り口</summary>
 
 1. [02-features の調べ方](../../README.md) を開き、言語仕様・公式ブログ・プロポーザルの逆引き手順を確かめます。
-2. [Go 言語仕様](https://go.dev/ref/spec) を開き、ページ内検索で `Iota` を探して `Constant declarations` の中の `Iota` 節を読み、同じセクションで式リストが省略されたときの規則（implicit repetition）を確かめます。
-3. [Effective Go](https://go.dev/doc/effective_go) の Constants 節で、`1 << iota` を使った `ByteSize` の例を確かめます。
+2. [Go 言語仕様](https://go.dev/ref/spec) を開きます。言語仕様の全文で、`iota` の定義もここにあります。
+3. [Effective Go](https://go.dev/doc/effective_go) を開きます。仕様書とは別に、慣用的な書き方を例で示した文書です。
 
 </details>
 

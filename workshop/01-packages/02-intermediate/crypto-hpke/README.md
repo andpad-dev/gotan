@@ -56,8 +56,8 @@ different info rejected: true
 <summary>調査の入り口</summary>
 
 1. [01-packages の調べ方](../../README.md) を開き、標準パッケージの Overview の読み方を確かめます。
-2. [Go 1.26 Release Notes](https://go.dev/doc/go1.26) で `crypto/hpke` が新しい標準パッケージであることを確かめます。
-3. [package crypto/hpke](https://pkg.go.dev/crypto/hpke) の Overview で KEM・KDF・AEAD の型を確認し、`Seal` / `Open` のシグネチャと `KEM.NewPublicKey` の説明を読みます。
+2. [Go 1.26 Release Notes](https://go.dev/doc/go1.26) を開きます。`crypto/hpke` が追加されたときのリリースノートです。
+3. [package crypto/hpke](https://pkg.go.dev/crypto/hpke) を開きます。サンプルで使っている型と関数の説明はこのページにあります。
 
 </details>
 

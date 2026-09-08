@@ -52,8 +52,8 @@ POST /x/other -> 405
 <summary>調査の入り口</summary>
 
 1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方を確かめます。
-2. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) の enhanced routing patterns と、互換性に関する段落を読みます。
-3. [package net/http](https://pkg.go.dev/net/http) で `ServeMux` の Patterns、Precedence、conflict の説明を読みます。
+2. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) を開きます。`ServeMux` のルーティング規則が変わったときのリリースノートです。
+3. [package net/http](https://pkg.go.dev/net/http) を開きます。`ServeMux` 型の説明にルーティング規則が書かれています。
 
 </details>
 

@@ -34,15 +34,15 @@ Go 1.27 では「ジェネリックメソッド」が正式に使えるように
 <summary>調査の入り口</summary>
 
 1. [02-features の調べ方](../../README.md) を開き、言語仕様・公式ブログ・プロポーザルの逆引き手順を確かめます。
-2. [Go 1.27 リリースノートの Changes to the language 節](https://go.dev/doc/go1.27#language) を開き、`generic methods` の段落と、そこに書かれたインタフェースメソッドに関する二つの制約を読みます。
-3. [Go 言語仕様: Method declarations](https://go.dev/ref/spec#Method_declarations) で `MethodDecl` の EBNF に `[ TypeParameters ]` が入ったことを確かめ、[Go 言語仕様: Type parameter declarations](https://go.dev/ref/spec#Type_parameter_declarations) でメソッド名の直後に置く型パラメータリスト `[F any]` の書き方を照合します。
-4. [proposal #77273 "spec: generic methods for Go"](https://go.dev/issue/77273) を開き、Proposal 節で旧新の EBNF の対比を、Background 節でインタフェースメソッドに型パラメータを許さない理由を、Examples 節で `Reader.Read[E any]` と `io.Reader` の関係を確かめます。
-5. [#77549 x/tools: plan for generic methods](https://github.com/golang/go/issues/77549) で、gopls や vulncheck など `x/tools` 側の追随作業がどう集められているかを確かめます。
-6. [Go Code Owners](https://dev.golang.org/owners) で、パッケージごとの担当候補と Gerrit 履歴を探す入口を確かめます。
+2. [Go 1.27 リリースノートの Changes to the language 節](https://go.dev/doc/go1.27#language) を開きます。Go 1.27 で言語に入った変更の一覧です。
+3. [Go 言語仕様: Method declarations](https://go.dev/ref/spec#Method_declarations) と [Go 言語仕様: Type parameter declarations](https://go.dev/ref/spec#Type_parameter_declarations) を開きます。メソッド宣言と型パラメータの構文を定めた節です。
+4. [proposal #77273 "spec: generic methods for Go"](https://go.dev/issue/77273) を開きます。ジェネリックメソッドを導入した提案の本文と議論です。
+5. [#77549 x/tools: plan for generic methods](https://github.com/golang/go/issues/77549) を開きます。言語機能に対するツール側の追随を扱う Issue です。
+6. [Go Code Owners](https://dev.golang.org/owners) を開きます。Go のパッケージごとの担当者一覧です。
 7. 先行議論として、[#49085 proposal: spec: allow type parameters in methods](https://go.dev/issue/49085) を開きます。
-8. 同じく先行議論の [Type Parameters Proposal の No parameterized methods 節](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#No-parameterized-methods) で、メソッドに型パラメータを許さなかった当時の議論を読みます。
-9. 実行環境として、`go version` と `go.mod` の `go` 行が `1.27` 以降であることを確かめます。`go 1.26` のままだと `generic method requires go1.27 or later` というエラーになります。
-10. 動かすときは、Go Playground で実行するか、設問 3 のヒントの手順で空の作業ディレクトリに `main.go` と `go 1.27` の `go.mod` を用意して `go run .` します。
+8. 同じく先行議論の [Type Parameters Proposal の No parameterized methods 節](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#No-parameterized-methods) を開きます。ジェネリクス導入時の設計文書です。
+9. 実行環境として、手元の Go のバージョンが 1.27 以降であることを確かめます。
+10. 動かすときは、Go Playground で実行するか、手元の Go 1.27 以降で実行します。手元での手順は設問 3 のヒントにあります。
 
 </details>
 
