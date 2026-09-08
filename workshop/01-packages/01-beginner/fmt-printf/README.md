@@ -80,7 +80,7 @@ fmt.Printf("%#[1]v %[1]T\n", value)
 <details>
 <summary>ヒント</summary>
 
-- ドキュメントの Overview で `[` を検索してみよう
+- ドキュメントの Overview で `[` をページ内検索（Ctrl+F / Cmd+F）してみよう
 - 例えば `fmt.Printf("%[1]s / %[1]s\n", "gopher")` は、1つの引数を何回使うでしょうか。
 
 </details>
@@ -91,7 +91,7 @@ fmt.Printf("%#[1]v %[1]T\n", value)
 **調査ルート**
 
 1. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `fmt` パッケージを開く。
-2. [fmt の Overview](https://pkg.go.dev/fmt) で `[` を検索する。
+2. [fmt の Overview](https://pkg.go.dev/fmt) で `[` をページ内検索する。
 3. [Explicit argument indexes](https://pkg.go.dev/fmt#hdr-Explicit_argument_indexes) にたどり着き、`[n]` がどの引数を選ぶかを読む。
 
 **答え**
