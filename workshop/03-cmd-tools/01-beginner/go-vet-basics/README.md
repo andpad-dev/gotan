@@ -103,7 +103,7 @@ Go の公式サイトのドキュメントを参照し、
 
 ヒント 1 を掘り下げて読んでいくと [`golang.org/x/tools/go/analysis`](https://pkg.go.dev/golang.org/x/tools/go/analysis) に到達する。
 このパッケージ詳細のディレクトリ構造を掘り下げるとアナライザーの一覧と `printf` の詳細ページが参照できる。
-
+</details>
 <details>
 <summary>答え</summary>
 
