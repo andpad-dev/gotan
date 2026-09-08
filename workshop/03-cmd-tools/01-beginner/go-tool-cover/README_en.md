@@ -2,6 +2,8 @@
 
 # Check test coverage
 
+This directory includes `go.mod`, `main.go`, and `main_test.go`. Run the local commands from this directory.
+
 You saw `coverage: 66.7%` in the results of a CI test. Let’s investigate what it means.
 
 ```
@@ -65,13 +67,13 @@ func TestCalculate(t *testing.T) {
 }
 ```
 
-These are the results of running the following commands with Go 1.26.4.
+These are the results of running the following commands with Go 1.27.0. Elapsed time varies by environment.
 
 ```console
 $ go test -coverprofile=cover.out
 PASS
 coverage: 66.7% of statements
-ok  	example.com/cover-demo	0.226s
+ok  	example.com/cover-demo	0.781s
 
 $ go tool cover -func=cover.out
 example.com/cover-demo/main.go:5:	calculate	80.0%
@@ -104,7 +106,7 @@ total:					(statements)	66.7%
 
 1. Find `cover` in the [Go command list](https://go.dev/doc/cmd) and open the [official cover documentation](https://go.dev/cmd/cover/). You will learn that `cover` analyzes the coverage profile produced by `go test -coverprofile=cover.out`.
 2. Run `go help testflag` locally and confirm that `-coverprofile` writes a coverage profile after the tests succeed.
-3. Run `go tool cover -help` and use `-func` to display coverage by function. Also read the implementation notes in the [Go 1.26.4 `cmd/cover` source](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/cover/doc.go).
+3. Run `go tool cover -help` and use `-func` to display coverage by function. Also read the implementation notes in the [Go 1.27.0 `cmd/cover` source](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/cover/doc.go).
 
 **Answer**
 
@@ -178,4 +180,4 @@ When you want to measure execution across multiple packages, use `-coverpkg` wit
 1. [Go command list](https://go.dev/doc/cmd)
 2. [Official cover documentation](https://go.dev/cmd/cover/)
 3. `go help testflag` and `go tool cover -help` locally
-4. [Go 1.26.4 `cmd/cover` source](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/cover/doc.go)
+4. [Go 1.27.0 `cmd/cover` source](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/cover/doc.go)

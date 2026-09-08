@@ -142,12 +142,12 @@ In Go 1.23, the module's `go` line was involved in enabling the new behavior. Ho
 
 In this question, first observe the “new behavior” through the `cap` / `len` of the channel from `time.NewTimer(0)`. For “compatibility settings,” distinguish the environment variable `GODEBUG`, the `godebug` directive in `go.mod`, and `//go:debug` in source code, and organize which execution conditions each one affects.
 
-The following Go 1.27.0 Playground observations are your starting point. Investigate why the third program fails before it can print the capacity.
+The Playground toolchain changes over time, so the following table records a fresh run with Go 1.27.1 on 2026-09-04. Investigate why the third program fails before it can print the capacity.
 
-| Experiment | Result with Go 1.27.0 |
+| Experiment | Playground result (Go 1.27.1) |
 | --- | --- |
-| [Default](https://go.dev/play/p/zAkeGmN14Q7) | `go1.27.0 0 0` |
-| [`//go:debug asynctimerchan=0`](https://go.dev/play/p/V8esF3Hmib8) | `go1.27.0 0 0` |
+| [Default](https://go.dev/play/p/zAkeGmN14Q7) | `go1.27.1 0 0` |
+| [`//go:debug asynctimerchan=0`](https://go.dev/play/p/V8esF3Hmib8) | `go1.27.1 0 0` |
 | [`//go:debug asynctimerchan=1`](https://go.dev/play/p/o-pDN23HyaX) | `invalid //go:debug: removed GODEBUG "asynctimerchan" set to old value "1"` |
 
 <details>

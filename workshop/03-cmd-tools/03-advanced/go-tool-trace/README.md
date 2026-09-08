@@ -4,7 +4,7 @@
 
 ![実行環境: 手元の Go](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-%E6%89%8B%E5%85%83%E3%81%AE%20Go-F39C12)
 
-README のコードを保存してから進めます。
+このディレクトリに `go.mod`、`main.go`、`main_test.go` を同梱しています。ローカルではこのディレクトリでコマンドを実行してください。
 
 テストでは、同じ処理を 4 つ並行に実行します。1 回 25ms のはずが、全体は約 100ms かかります。CPU 使用率は低く、CPU profile を開いても「何が待たせたか」は分かりません。
 
@@ -77,12 +77,12 @@ func TestProcessWork(t *testing.T) {
 }
 ```
 
-Go 1.26.4 / macOS で `go test -trace` を実行すると、テストは成功します。ただし、処理が並列化されているとは限りません。
+Go 1.27.0 / macOS で `go test -trace` を実行すると、テストは成功します。所要時間は実行環境によって変わります。ただし、処理が並列化されているとは限りません。
 
 ```console
 $ go test -run '^TestProcessWork$' -trace=work.trace
 PASS
-ok  	example.com/trace-demo	0.469s
+ok  	example.com/trace-demo	0.853s
 ```
 
 ---
@@ -113,7 +113,7 @@ ok  	example.com/trace-demo	0.469s
 1. [Go の診断ツール案内](https://go.dev/doc/diagnostics) を読み、CPU profile は CPU サイクルを実際に消費している時間を、execution tracer はレイテンシー・利用率・goroutine の動きを調べるものだと区別する。
 2. [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof) の「Profiling with pprof」と「Interpreting the data」を読み、周期的に取得したスタックトレースごとの観測回数が profile の基礎になることを確認する。記事は 2013 年の実装解説なので、固定サイズの表などの詳細は現在実装の根拠にせず、設計の説明として読む。
 3. 手元で `go help testflag` を実行し、`-trace trace.out` がテスト終了前に execution trace をファイルへ書くことを確認する。
-4. [trace の公式ドキュメント](https://go.dev/cmd/trace/) を読み、`go test -trace`、`runtime/trace.Start`、`net/http/pprof` が trace ファイルの生成経路であることを確認する。続けて [Go 1.26.4 の `cmd/trace` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/trace/doc.go) でも同じ用途と profile type を裏取りする。
+4. [trace の公式ドキュメント](https://go.dev/cmd/trace/) を読み、`go test -trace`、`runtime/trace.Start`、`net/http/pprof` が trace ファイルの生成経路であることを確認する。続けて [Go 1.27.0 の `cmd/trace` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/trace/doc.go) でも同じ用途と profile type を裏取りする。
 
 **答え**
 
@@ -154,7 +154,7 @@ ok  	example.com/trace-demo	0.469s
     go tool pprof -list='processWork.func1.1' sync.pprof
     ```
 
-3. `go doc runtime/trace` を読み、[Go 1.26.4 の `runtime/trace` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/runtime/trace/annotation.go) で `NewTask` と `WithRegion` の説明・制約を確認する。
+3. `go doc runtime/trace` を読み、[Go 1.27.0 の `runtime/trace` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/trace/annotation.go) で `NewTask` と `WithRegion` の説明・制約を確認する。
 
 **答え**
 
@@ -163,11 +163,11 @@ ok  	example.com/trace-demo	0.469s
 ```console
 $ go tool pprof -top sync.pprof
 Type: delay
-Showing nodes accounting for 466.64ms, 100% of 466.64ms total
+Showing nodes accounting for 464.38ms, 100% of 464.38ms total
       flat  flat%   sum%        cum   cum%
-  205.63ms 44.07% 44.07%   205.63ms 44.07%  runtime.chanrecv1
-  156.72ms 33.58% 77.65%   156.72ms 33.58%  sync.(*Mutex).Lock
-  104.29ms 22.35%   100%   104.29ms 22.35%  sync.(*WaitGroup).Wait
+  204.65ms 44.07% 44.07%   204.65ms 44.07%  runtime.chanrecv1
+  156.27ms 33.65% 77.72%   156.27ms 33.65%  sync.(*Mutex).Lock
+  103.46ms 22.28%   100%   103.46ms 22.28%  sync.(*WaitGroup).Wait
 ```
 
 `-list` で該当箇所まで降りると、待ち時間は鍵を取る行に対応します。
@@ -175,8 +175,8 @@ Showing nodes accounting for 466.64ms, 100% of 466.64ms total
 ```console
 $ go tool pprof -list='processWork.func1.1' sync.pprof
 ROUTINE ======================== example.com/trace-demo.processWork.func1.1
-         .   156.72ms     19:	trace.WithRegion(ctx, "step", func() {
-         .   156.72ms     20:		lock.Lock()
+         .   156.27ms     19:	trace.WithRegion(ctx, "step", func() {
+         .   156.27ms     20:		lock.Lock()
          .          .     21:		defer lock.Unlock()
 ```
 
@@ -230,7 +230,7 @@ execution tracer が Go 1.21〜1.22 でどう変わったかを追ってくだ�
 
 trace には goroutine 名、タスク名、ソース位置などの調査情報が入ります。手元で viewer を開くとき、同じネットワークの誰かに意図せず見せたくありません。どの `-http` 指定を選ぶべきでしょうか。
 
-Go 1.27 で変わった `go tool trace -http=:6060` の扱いを、一次情報で確認してください。全アドレスで明示的に公開したい場合の指定も確認します。この問題のコマンドは Go 1.26.4 で実行しています。そのため、Go 1.27 の listen-address 変更はリリースノートで確認します。
+Go 1.27 で変わった `go tool trace -http=:6060` の扱いを、一次情報で確認してください。全アドレスで明示的に公開したい場合の指定も確認します。この問題のコマンドは Go 1.27.0 で実行しているため、listen-address 変更も手元で再現できます。
 
 <details>
 <summary>ヒント</summary>
@@ -275,7 +275,7 @@ Go 1.27 で変わった `go tool trace -http=:6060` の扱いを、一次情報�
 2. [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof)
 3. [trace の公式ドキュメント](https://go.dev/cmd/trace/)
 4. 手元の `go help testflag`、`go tool trace -h`、`go tool pprof -h`
-5. [Go 1.26.4 の `cmd/trace` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/trace/doc.go)
+5. [Go 1.27.0 の `cmd/trace` ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/trace/doc.go)
 6. [Go 1.21 リリースノート](https://go.dev/doc/go1.21) と [Go 1.22 リリースノート](https://go.dev/doc/go1.22)
 7. [execution tracer overhaul の設計文書](https://go.googlesource.com/proposal/+/refs/heads/master/design/60773-execution-tracer-overhaul.md) と [Issue #63185](https://github.com/golang/go/issues/63185)
 8. [Go 1.27 リリースノート](https://go.dev/doc/go1.27)

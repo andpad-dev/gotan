@@ -88,8 +88,9 @@ Why does `Peek(4)` for `"XY"` return `"XY"` and `EOF` instead of an empty slice?
 
 **Investigation path**
 
-1. Read the error description for [Buffer.Peek](https://pkg.go.dev/bytes#Buffer.Peek).
-2. In the [implementation](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/bytes/buffer.go;l=85), confirm the branch that returns the remaining bytes and `io.EOF`.
+1. Open the `bytes` package from the [Go Documentation](https://go.dev/doc/).
+2. Read the error description for [Buffer.Peek](https://pkg.go.dev/bytes#Buffer.Peek).
+3. In the [implementation](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/bytes/buffer.go;l=85), confirm the branch that returns the remaining bytes and `io.EOF`.
 
 **Answer**
 
@@ -118,8 +119,9 @@ When the first byte of the returned `prefix` is changed to `a`, the entire buffe
 
 **Investigation path**
 
-1. Read the explanation of the returned value's validity period and aliasing in [Buffer.Peek](https://pkg.go.dev/bytes#Buffer.Peek).
-2. Check the slice expression in [buffer.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/bytes/buffer.go;l=85).
+1. Open the `bytes` package from the [Go Documentation](https://go.dev/doc/).
+2. Read the explanation of the returned value's validity period and aliasing in [Buffer.Peek](https://pkg.go.dev/bytes#Buffer.Peek).
+3. Check the slice expression in [buffer.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/bytes/buffer.go;l=85).
 
 **Answer**
 

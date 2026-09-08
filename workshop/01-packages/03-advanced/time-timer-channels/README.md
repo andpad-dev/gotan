@@ -147,12 +147,12 @@ Go 1.23 では、新挙動の有効化にモジュールの `go` 行が関係し
 - **新挙動**: `time.NewTimer(0)` のチャンネルの `cap` / `len` で観察する。
 - **互換設定**: 環境変数の `GODEBUG`、`go.mod` の `godebug`、ソース中の `//go:debug`。どれがどの実行条件に効くかを整理する。
 
-出発点は次のとおりです。なぜ 3 本目だけ、容量を表示する前に失敗するのでしょうか。
+出発点は次のとおりです。Playground の実行環境は更新されるため、ここでは 2026-09-04 に Go 1.27.1 で再実行した結果を記録しています。なぜ 3 本目だけ、容量を表示する前に失敗するのでしょうか。
 
-| 実験 | Go 1.27.0 の結果 |
+| 実験 | Playground (Go 1.27.1) の結果 |
 | --- | --- |
-| [既定値](https://go.dev/play/p/zAkeGmN14Q7) | `go1.27.0 0 0` |
-| [`//go:debug asynctimerchan=0`](https://go.dev/play/p/V8esF3Hmib8) | `go1.27.0 0 0` |
+| [既定値](https://go.dev/play/p/zAkeGmN14Q7) | `go1.27.1 0 0` |
+| [`//go:debug asynctimerchan=0`](https://go.dev/play/p/V8esF3Hmib8) | `go1.27.1 0 0` |
 | [`//go:debug asynctimerchan=1`](https://go.dev/play/p/o-pDN23HyaX) | `invalid //go:debug: removed GODEBUG "asynctimerchan" set to old value "1"` |
 
 <details>
