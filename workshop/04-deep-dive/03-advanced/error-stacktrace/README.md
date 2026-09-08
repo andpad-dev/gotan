@@ -47,6 +47,22 @@ is not found: true
 detailed format: load config: not found
 ```
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [04-deep-dive の調べ方](../../README.md) を開き、仕様・実装・設計背景をたどる順番を確かめます。
+2. [Go Documentation](https://go.dev/doc/) を開き、バージョン別のリリースノートへ進む入口にします。
+3. [Go 1.13 Release Notes](https://go.dev/doc/go1.13) の Error wrapping の項目を読み、そこから設計資料と issue へたどります。
+4. [Errors are values](https://go.dev/blog/errors-are-values) を読み、エラーを値として扱う例を確認します。
+5. [Working with Errors in Go 1.13](https://go.dev/blog/go1.13-errors) で、提案された API の使い方と背景を確認します。
+6. [Error Values — Problem Overview](https://go.googlesource.com/proposal/+/master/design/go2draft-error-values-overview.md) の Problem を読み、エラー生成に求められたコストの性質を確認します。
+7. [Error Values proposal](https://go.googlesource.com/proposal/+/master/design/29934-error-values.md) の Stack Frames と Formatting の項目を読みます。
+8. [Proposal issue #29934](https://go.dev/issues/29934) の終盤にある決定事項を確認し、採用された仕様と見送られた仕様を切り分けます。
+
+</details>
+
+---
+
 ## 設問 1: Go のエラー処理の哲学を調べよう
 
 上のコードでは、`err` に文脈を付けても `errors.Is` で元のエラーを検査できます。
@@ -189,15 +205,3 @@ issue の議論には、スタックトレースを付与した場合のパフ�
 したがって、Go の標準エラーは自動的にスタックトレースを保持・表示しません。必要な場合は、独自のエラー型やライブラリが詳細情報を保持・表示する設計を選べます。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go Documentation](https://go.dev/doc/)
-- [Go 1.13 Release Notes](https://go.dev/doc/go1.13)
-- [Errors are values](https://go.dev/blog/errors-are-values)
-- [Working with Errors in Go 1.13](https://go.dev/blog/go1.13-errors)
-- [Error Values — Problem Overview](https://go.googlesource.com/proposal/+/master/design/go2draft-error-values-overview.md)
-- [Error Values proposal](https://go.googlesource.com/proposal/+/master/design/29934-error-values.md)
-- [Proposal issue #29934](https://go.dev/issues/29934)

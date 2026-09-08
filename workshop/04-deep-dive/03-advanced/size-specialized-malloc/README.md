@@ -30,6 +30,17 @@ Go 1.27.0 での出力:
 {1 2}, size=16 bytes
 ```
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [04-deep-dive の調べ方](../../README.md) を開き、仕様・実装・設計背景をたどる順番を確かめます。
+2. [Go 1.27 リリースノート「Faster Memory Allocation」](https://go.dev/doc/go1.27) を読み、`<80 byte` の要約と `GOEXPERIMENT=nosizespecializedmalloc` の段落を確認します。
+3. `cmd/compile` の CL [size-specialized malloc を直接呼ぶコンパイラ変更](https://go-review.googlesource.com/c/go/+/707856) を読み、コンパイラが何をどんな関数の呼び出しに変えたかを確認します。
+4. ランタイム側の [`runtime/_mkmalloc/constants.go`（80 の理由コメント）](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/_mkmalloc/constants.go;l=25) を開き、`specializedMallocMax` のコメントに書かれた理由を読みます。
+5. コンパイラ側の [`cmd/compile` の `specializedMallocSym`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/compile/internal/ssagen/ssa.go;l=804) で、`80` のリテラルと `size > specializedMallocMax` の条件を見つけます。
+
+</details>
+
 ---
 
 ## 設問 1: そもそも「size-specialized」とは何を専用化している？ なぜコンパイル時にサイズが分かる割り当てにしか効かない？
@@ -172,12 +183,3 @@ Go 1.27 のコンパイラは、**割り当てサイズがコンパイル時に�
 一方、最終的に **実際に使う** カットオフは `specializedMallocMax = 80` に落ち着きました。`512` は「作ろうと思えば作れる上限」、`80` は「作る価値がある上限」——両者の差が、そのまま「専用化できる」と「専用化して得する」の差になっている、というわけです。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go 1.27 リリースノート「Faster Memory Allocation」](https://go.dev/doc/go1.27)
-- CL: [size-specialized malloc を直接呼ぶコンパイラ変更](https://go-review.googlesource.com/c/go/+/707856)
-- ソース: [`runtime/_mkmalloc/constants.go`（80 の理由コメント）](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/_mkmalloc/constants.go;l=25)
-- ソース: [`cmd/compile` の `specializedMallocSym`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/compile/internal/ssagen/ssa.go;l=804)

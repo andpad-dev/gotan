@@ -50,6 +50,18 @@ without last digit: 1.000000000000000 (false)
 
 短い `0.1` で十分な値がある一方、隣の浮動小数点数では末尾の `2` を落とすと元の bit 列へ戻れません。公開 API の契約、Go 1.26 と 1.27 の実装、採用されたアルゴリズムの順にたどります。出力を変えずに実装を替えた理由を説明しましょう。
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [04-deep-dive の調べ方](../../README.md) を開き、仕様・実装・設計背景をたどる順番を確かめます。
+2. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) を開き、`strconv` と浮動小数点変換の記載があるかを確認します。
+3. [`strconv.FormatFloat` の公式ドキュメント](https://go.dev/pkg/strconv/#FormatFloat) で `prec = -1` の説明を読み、「最短」の定義を確かめます。
+4. [変更コミット `71300e8`: internal/strconv: use fast unrounded scaling for floating-point](https://go.dev/change/71300e80113c6ca56105aac524e9c1b0db43910f) で、目的、削除されたコード、ベンチマーク表、変更ファイルを読みます。
+5. [Floating Point Formatting シリーズ](https://research.swtch.com/fp-all) で 2011 年から 2026 年までの 4 本の位置づけを確認し、コミットが参照する 2026 年の記事へ進みます。
+6. [Go 1.27.0 タグの `internal/strconv/uscale.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/internal/strconv/uscale.go) で `unrounded`、`shortFloat`、`uscale` を照合します。
+
+</details>
+
 ---
 
 ## 設問 1: 「最短」は、何を満たす最短なのか？
@@ -220,13 +232,3 @@ func (u unrounded) round() uint64 {
 最初の違和感もここで説明できます。スナップショットが変わらないのは公開契約を維持した内部実装の交換だからです。`0.1` と `1.0000000000000002` の桁数の違いは、設問 1 の「正確に読み戻せる最短」という契約で決まり、その判定を設問 3 の `unrounded` と隣接値の範囲計算が新しい方法で実現しています。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go 1.27 リリースノート](https://go.dev/doc/go1.27)
-- [`strconv.FormatFloat` の公式ドキュメント](https://go.dev/pkg/strconv/#FormatFloat)
-- [変更コミット `71300e8`: internal/strconv: use fast unrounded scaling for floating-point](https://go.dev/change/71300e80113c6ca56105aac524e9c1b0db43910f)
-- [Floating Point Formatting シリーズ](https://research.swtch.com/fp-all)
-- [Go 1.27.0 タグの `internal/strconv/uscale.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/internal/strconv/uscale.go)

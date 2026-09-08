@@ -39,6 +39,17 @@ GOFILE=main.go GOLINE=5 GOPACKAGE=main
 `echo` や `go env` はコード生成ツールではありませんが、普通に実行されています。
 この自由度はどこから来ているのか、`go generate` の実装まで調べてみましょう。
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+2. [Go command の generate 説明](https://go.dev/cmd/go/#hdr-Generate_Go_files_by_processing_source) を開き、手元の `go help generate` と照合しながら、Usage にある "any process" という記述と、`$GOFILE` などの変数一覧を確かめます。
+3. [`go generate` の公式ブログ記事](https://go.dev/blog/generate) で、`go generate` が作られた経緯を確かめます。
+4. [`go generate` のプロポーザル](https://go.googlesource.com/proposal/+/refs/heads/master/design/go-generate.md) の "Introduction"、"Discussion"、"Non-goal" の節で、Goal と Non-goal を確かめます。
+5. [Go 1.27.0 の generate.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/generate/generate.go) で、`(*Generator).exec` がコマンドを起動している箇所と、そこで使われている標準パッケージを確かめます。
+
+</details>
+
 ---
 
 ## 設問 1: `//go:generate` に書けるコマンドの範囲を調べよう
@@ -238,12 +249,3 @@ func (g *Generator) exec(words []string) {
 - **利用者の環境で実行されることを前提にした処理。** ジェネレータが利用者の環境に無い可能性があるため、生成物を必ずコミットしておく必要がある。
 
 </details>
-
----
-
-## 調査の入り口
-
-- https://go.dev/cmd/go/#hdr-Generate_Go_files_by_processing_source
-- https://go.dev/blog/generate
-- https://go.googlesource.com/proposal/+/refs/heads/master/design/go-generate.md
-- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/generate/generate.go

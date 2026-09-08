@@ -37,6 +37,17 @@ stop before firing: true
 reset timer fired
 ```
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方と、`go version` などの実行環境の記録手順を確かめます。
+2. [Go 1.27 Release Notes](https://go.dev/doc/go1.27) の GODEBUG 節と Runtime 節で、`asynctimerchan` が削除されたことを確かめます。
+3. [Go Wiki: Go 1.23 Timer Channel Changes](https://go.dev/wiki/Go123Timer) の「Debugging」で、互換設定を全体で切り替えた後に `bisect` で依存箇所を絞る手順を読みます。
+4. [Hash-Based Bisect Debugging in Compilers and Runtimes](https://research.swtch.com/bisect) で、`git bisect` と `bisect` が何を二分探索するかの違いと、揺らぐ失敗への対処を読みます。
+5. [package time](https://pkg.go.dev/time) で `NewTimer` の `Before Go 1.23` の説明と、`Stop` / `Reset` の保証を読みます。
+
+</details>
+
 ---
 
 ## 設問 1: 容量 0 は古い挙動と何が違う？
@@ -249,13 +260,3 @@ Go 1.27 ではこの設定は恒久的に削除され、`time` のタイマー�
 タイマーチャンネルの `len` や `cap` を見て受信可能性を判定するコードは移行の影響を受けます。値が来ているかを確認したい場合は、非ブロッキングの `select` を使うというリリースノートの案内も確認しましょう。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go 1.27 Release Notes](https://go.dev/doc/go1.27)
-- [Go Wiki: Go 1.23 Timer Channel Changes](https://go.dev/wiki/Go123Timer)
-- [Hash-Based Bisect Debugging in Compilers and Runtimes](https://research.swtch.com/bisect)
-- [01-packages の調べ方](../../README.md)
-- [package time](https://pkg.go.dev/time)

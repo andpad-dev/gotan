@@ -30,6 +30,19 @@ $ GOTOOLCHAIN=go1.27.0 go version -m "$(GOTOOLCHAIN=go1.27.0 go env GOTOOLDIR)/c
 過去のコンパイラ攻撃を現在の Go 実装で追います。
 そのうえで、Go 1.27 のブートストラップと再現可能なビルドが何を検証しているのか調べます。
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [04-deep-dive の調べ方](../../README.md) を開き、仕様・実装・設計背景をたどる順番を確かめます。
+2. [Go Documentation](https://go.dev/doc) から Go コマンドのドキュメントへ進み、`go version` の `-m` の説明を読みます。
+3. [Go compiler](https://go.dev/cmd/compile/) でコンパイラの役割を確認し、ソースを読み込んでコンパイルする処理を調査対象にします。
+4. [Installing Go from source](https://go.dev/doc/install/source#go14) のブートストラップ要件を読み、Go 1.N が必要とする Go 1.M の求め方を確認します。
+5. [Perfectly Reproducible, Verified Go Toolchains](https://go.dev/blog/rebuild) を読み、「perfectly reproducible」の定義とブートストラップ段階を確認します。
+6. [Go Reproducible Build Report](https://go.dev/rebuild) で実行日時、対象バージョン、各配布物の結果を読み、`PASS` までのログを確認します。
+7. [Running the “Reflections on Trusting Trust” Compiler](https://research.swtch.com/nih) の「A Modern Version」で、クリーンなソースへ戻してもコンパイラに変更が残る仕組みを追います。
+
+</details>
+
 ---
 
 ## 設問 1: `go version -m` の表示だけで何を確認できる？
@@ -228,14 +241,3 @@ Go 1.21 以降のツールチェーンは、同じソースから対象 OS・ア
 Russ Cox の [Open Source Supply Chain Security at Google](https://research.swtch.com/acmscored) は、再現可能な Go ツールチェーンと依存関係の対策を含む、講演動画・スライド・参考文献への入口です。ページにもあるとおり、言語などに関する講演中の意見は Google の見解ではなく講演者個人のものです。個々の仕組みを断定するときは、そこからリンクされた Go 公式資料や実装へ戻って確認します。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go Documentation](https://go.dev/doc)
-- [Go compiler](https://go.dev/cmd/compile/)
-- [Installing Go from source](https://go.dev/doc/install/source#go14)
-- [Perfectly Reproducible, Verified Go Toolchains](https://go.dev/blog/rebuild)
-- [Go Reproducible Build Report](https://go.dev/rebuild)
-- [Running the “Reflections on Trusting Trust” Compiler](https://research.swtch.com/nih)

@@ -32,6 +32,15 @@ func main() {
 "left" -> before="left" after="" found=false
 ```
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方を確かめます。
+2. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `strings` パッケージを開きます。
+3. [package strings](https://pkg.go.dev/strings) で `Cut` の 3 つの戻り値の名前と、区切り記号がない場合の一文、「first instance」の説明を確かめます。
+
+</details>
+
 ---
 
 ## 設問 1: 3 つの戻り値は何を伝える？
@@ -103,11 +112,3 @@ func main() {
 接頭辞や接尾辞だけを確かめたい札には、同じ `strings` パッケージの `CutPrefix` と `CutSuffix` もあります。どちらも、見つからないときに元の文字列と `false` を返す設計です。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go Documentation](https://go.dev/doc/)
-- [01-packages の調べ方](../../README.md)
-- [package strings](https://pkg.go.dev/strings)

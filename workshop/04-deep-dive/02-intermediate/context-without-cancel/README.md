@@ -51,6 +51,15 @@ detached Done is nil: true
 limited: context deadline exceeded
 ```
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [04-deep-dive の調べ方](../../README.md)を開き、Go の公式ドキュメントを起点にします。
+2. [Go 1.21 リリースノート: context](https://go.dev/doc/go1.21#context) で追加された API の目的を調べます。
+3. リリースノートから `context` パッケージのドキュメントへ進みます。
+
+</details>
+
 ---
 
 ## 設問 1: 親のキャンセルを切り離しても、何を引き継げるのか？
@@ -137,11 +146,3 @@ limited: context deadline exceeded
 この二つを分けて検証すれば、親のキャンセルを切り離しながら、設問 2 で見つけた `Done` が `nil` という性質による無期限待ちも防げていると説明できます。
 
 </details>
-
----
-
-## 調査の入り口
-
-1. [04-deep-dive の調べ方](../../README.md)を開き、Go の公式ドキュメントを起点にします。
-2. [Go 1.21 リリースノート: context](https://go.dev/doc/go1.21#context) で追加された API の目的を調べます。
-3. リリースノートから `context` パッケージのドキュメントへ進みます。

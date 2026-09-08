@@ -27,6 +27,14 @@ func main() {
 
 この例では、同じ `value` を「Go のリテラルらしい表示」と「型名」の2通りで確認しています。上の `"gopher"` と `string` が、それぞれどの書式から出たかを対応付けながら調べてみましょう。
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [Go Documentation](https://go.dev/doc/) を開き、標準ライブラリの `fmt` パッケージへ進みます。
+2. [package fmt](https://pkg.go.dev/fmt) の Overview で、「Printing」の verb の表から `%v`、`%#v`、`%T` の 3 行を比べ、`[` をページ内検索して「Explicit argument indexes」を読みます。
+
+</details>
+
 ---
 
 ## 設問 1: `%v` と `%T`、そして `#` は、それぞれ何を意味する？
@@ -132,10 +140,3 @@ func main() {
 フラグは引数インデックスより前に書く、と覚えておきましょう。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go Documentation](https://go.dev/doc/)
-- [package fmt](https://pkg.go.dev/fmt)

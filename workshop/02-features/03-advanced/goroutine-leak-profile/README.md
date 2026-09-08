@@ -103,6 +103,22 @@ goroutineleak profile: total 4
 この 1 個の差は何を意味するのでしょうか。  
 ランタイムは「絶対に起きない」と「そうでない」をどう判別しているのでしょうか。
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [02-features の調べ方](../../README.md) を開き、言語仕様・公式ブログ・プロポーザルの逆引き手順を確かめます。
+2. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) を開き、`Goroutine leak profile` 節で leaked goroutine の定義と、到達可能性に基づくため検出できないリークがあるという但し書きを読みます。
+3. [A Tour of Go](https://research.swtch.com/gotour) で、2012 年の講演 Q&A にある「If a goroutine is stuck reading from a channel ...」という質問を探し、blocked goroutine を回収しない当時の理由を読みます。
+4. [Go 1.26 リリースノート](https://go.dev/doc/go1.26) の `Experimental goroutine leak profile` 節で、同じ機能の experiment 版とリークするサンプルコードを確かめ、proposal issue #74609 へのリンクをたどります。
+5. [`runtime/pprof` パッケージドキュメント](https://pkg.go.dev/runtime/pprof) の `type Profile` で、予約プロファイル名の一覧から `goroutine` と `goroutineleak` の 1 行説明を照合します。
+6. [`net/http/pprof` パッケージドキュメント](https://pkg.go.dev/net/http/pprof) で、`/debug/pprof/goroutineleak` が登録されていることを確かめます。
+
+> ※ 2026-08-31 にローカルの Go 1.27.0 と Go Playground の両方で実行した。  
+> 先頭行は `go version: go1.27.0`、プロファイル件数は 5 と 4 だった。  
+> 共有コード自身が実行版を表示するため、後日試す場合は先頭行も結果と一緒に記録する。
+
+</details>
+
 ---
 
 ## 設問 1: `goroutine` プロファイルと `goroutineleak` プロファイル、二つの定義はどう違うのか？
@@ -334,17 +350,3 @@ Go でメインループを止める慣用イディオムに `select{}`（case �
 「解析中は leak として扱い続ける（そのほうが検出精度が高いので）、最終的なプロファイル出力の直前だけ status を戻す」――Go の慣用イディオムを尊重するためのちょっとした特別扱いが、Go 1.27 のランタイムの中に隠れています。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go 1.27 リリースノート](https://go.dev/doc/go1.27)（`Goroutine leak profile` 節。現在の定義と制約）
-- [A Tour of Go](https://research.swtch.com/gotour)（2012 年の講演 Q&A。blocked goroutine を回収しない当時の理由）
-- [Go 1.26 リリースノート](https://go.dev/doc/go1.26)（`Experimental goroutine leak profile` 節。同じ機能の experiment 版、proposal issue へのリンク、リークするサンプルコード）
-- [`runtime/pprof` パッケージドキュメント](https://pkg.go.dev/runtime/pprof)（予約プロファイル名の一覧）
-- [`net/http/pprof` パッケージドキュメント](https://pkg.go.dev/net/http/pprof)（`/debug/pprof/goroutineleak` の登録）
-
-> ※ 2026-08-31 にローカルの Go 1.27.0 と Go Playground の両方で実行した。  
-> 先頭行は `go version: go1.27.0`、プロファイル件数は 5 と 4 だった。  
-> 共有コード自身が実行版を表示するため、後日試す場合は先頭行も結果と一緒に記録する。

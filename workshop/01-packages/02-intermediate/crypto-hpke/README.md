@@ -52,6 +52,15 @@ received="message"
 different info rejected: true
 ```
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [01-packages の調べ方](../../README.md) を開き、標準パッケージの Overview の読み方を確かめます。
+2. [Go 1.26 Release Notes](https://go.dev/doc/go1.26) で `crypto/hpke` が新しい標準パッケージであることを確かめます。
+3. [package crypto/hpke](https://pkg.go.dev/crypto/hpke) の Overview で KEM・KDF・AEAD の型を確認し、`Seal` / `Open` のシグネチャと `KEM.NewPublicKey` の説明を読みます。
+
+</details>
+
 ---
 
 ## 設問 1: 3 つの部品は何を選んでいる？
@@ -164,11 +173,3 @@ HPKE の暗号スイートは KEM（鍵カプセル化方式）、KDF（鍵導�
 一通だけ送るなら `Seal` / `Open` が使えます。複数メッセージを送る `Sender` / `Recipient` では、成功した `Seal` と `Open` の呼び出し順を両側でそろえる必要があります。用途に応じて API を選びましょう。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go 1.26 Release Notes](https://go.dev/doc/go1.26)
-- [01-packages の調べ方](../../README.md)
-- [package crypto/hpke](https://pkg.go.dev/crypto/hpke)

@@ -15,6 +15,23 @@
 手元で試す例: https://go.dev/play/p/_BqTu8xBI9h
 このディレクトリの [main.go](./main.go) も同じ内容です。`go run` してそのまま調査に使えます。
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+2. [Go コマンドの公式ドキュメント](https://go.dev/cmd/go/) を開き、`go run` の説明と、`go build` の `-work` フラグの説明を探します。
+3. [`pkg.go.dev/cmd/go` の「Compile and run Go program」節](https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program)（`go help run` と同じ内容）で、`go run` の説明に使われている動詞を確かめます。
+4. [Go 1.24 リリースノートの Go command 節](https://go.dev/doc/go1.24#go-command) で、`go run` の実行ファイルが Go 1.24 からビルドキャッシュに保存されるようになったことを確かめます。
+5. [提案 Issue #69290](https://go.dev/issue/69290) で、実行ファイルをキャッシュする目的と、キャッシュ容量とのトレードオフを確かめます。
+6. [Go 1.27.0 の `cmd/go/internal/run/run.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/run/run.go) で、エントリポイント `runRun` が `work.NewBuilder` と `LinkAction` を呼び、最後に `buildRunProgram` で実行ファイルを起動する流れを追います。
+7. [Go 1.27.0 の `cmd/go/internal/work/action.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/action.go) で、`NewBuilder` が一時ディレクトリを作る箇所、`LinkAction` が実行ファイルのパスを決める箇所、`Builder.Close` が後片付けする箇所を確かめます。
+8. [Go 1.27.0 の `cmd/go/internal/work/exec.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/exec.go) で、`Builder.build` と `Builder.link` が実際にコンパイラ・リンカを呼び出している場所を確かめます。
+9. [Go 1.27.0 の `cmd/go/internal/work/buildid.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/buildid.go) で、リンク済み実行ファイルをビルドキャッシュへ保存する条件を確かめます。
+
+</details>
+
+---
+
 ## 設問 1: `go run` は、ソースコードをインタプリタのように解釈しながら実行している？
 
 `go run` は、ソースコードを 1 行ずつ解釈しながら動かしているのでしょうか。
@@ -294,16 +311,3 @@ if !cfg.BuildWork {
 `go help environment` の `GOTMPDIR` の説明でも確認できます。
 
 </details>
-
----
-
-## 調査の入り口
-
-- https://go.dev/cmd/go/
-- https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program
-- https://go.dev/doc/go1.24#go-command
-- https://go.dev/issue/69290
-- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/run/run.go
-- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/action.go
-- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/exec.go
-- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/buildid.go

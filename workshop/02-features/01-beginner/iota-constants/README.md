@@ -21,6 +21,17 @@ const (
 `fmt.Println(Red, Green, Blue)` すると `0 1 2` と出ます。
 `iota` とはどんなもので、なぜ 2 行目以降を省略しても値が変わっていくのでしょうか。調べてみましょう。
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [02-features の調べ方](../../README.md) を開き、言語仕様・公式ブログ・プロポーザルの逆引き手順を確かめます。
+2. [Go 言語仕様](https://go.dev/ref/spec) を開き、ページ内検索で `Iota` を探して `Constant declarations` の中の `Iota` 節を読み、同じセクションで式リストが省略されたときの規則（implicit repetition）を確かめます。
+3. [Effective Go](https://go.dev/doc/effective_go) の Constants 節で、`1 << iota` を使った `ByteSize` の例を確かめます。
+
+</details>
+
+---
+
 ## 設問 1: `iota` とは何？
 
 最初の `Red` にだけ書かれている `iota` の正体を、言語仕様書で調べてみましょう。
@@ -155,10 +166,3 @@ implicit repetition で 2 行目以降にコピーされるのは **式リスト
 [Effective Go の Constants](https://go.dev/doc/effective_go#constants) でも、この `1 << iota` を使った `ByteSize`（KB, MB, GB, ...）の例が紹介されています。
 
 </details>
-
----
-
-## 調査の入り口
-
-- https://go.dev/ref/spec
-- https://go.dev/doc/effective_go

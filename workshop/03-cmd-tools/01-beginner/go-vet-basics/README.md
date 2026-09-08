@@ -42,6 +42,21 @@ main.go:7:21: fmt.Printf format %d has arg name of wrong type string
 
 `go vet` はビルドやテストとは別に、何を見ているのでしょうか。
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+2. [Go Documentation](https://go.dev/doc/) を入口に、`go vet` の公式ドキュメントを探します。
+3. [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) の Overview で、ヒューリスティックを使うという性質と、アナライザ一覧の探し方を確かめます。
+4. [`pkg.go.dev/cmd/go` の「Report likely mistakes in packages」節](https://pkg.go.dev/cmd/go#hdr-Report_likely_mistakes_in_packages) で、`go` コマンド内での `go vet` の位置づけを確かめます。
+5. [`pkg.go.dev/cmd/go` の「Test packages」節](https://pkg.go.dev/cmd/go#hdr-Test_packages) で、`go test` が既定で走らせる `go vet` のサブセットを確かめます。
+6. [`pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf) で、`printf` アナライザが検査する内容と `-printf.funcs` フラグを確かめます。
+7. [Go 1.27 のリリースノート](https://go.dev/doc/go1.27#go-test) で、`go test` が `stdversion` を既定で実行するようになったことを確かめます。
+
+</details>
+
+---
+
 ## 設問 1: `go vet` は何を報告するコマンド？ コンパイルとの違いは？
 
 `go vet` の役割と、コンパイラでは検出できない領域について、一次情報から確認してみましょう。
@@ -129,14 +144,3 @@ main.go:7:21: fmt.Printf format %d has arg name of wrong type string
 つまり Go 1.27 からは、`go.mod` の `go` バージョンや `//go:build` タグで許容されているより **新しすぎる標準ライブラリのシンボル** を使っていないかも、テスト時に自動チェックされるようになります。「`go vet` を CI に足そう」という PR が続くのは、こうした流れが背景にあります。
 
 </details>
-
----
-
-## 調査の入り口
-
-- https://go.dev/doc/
-- https://pkg.go.dev/cmd/vet
-- https://pkg.go.dev/cmd/go#hdr-Report_likely_mistakes_in_packages
-- https://pkg.go.dev/cmd/go#hdr-Test_packages
-- https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf
-- https://go.dev/doc/go1.27#go-test

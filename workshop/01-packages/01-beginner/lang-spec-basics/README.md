@@ -6,6 +6,15 @@
 
 レビュー中に `for` 文と `switch` 文を見かけました。実行結果から Go 言語仕様の該当箇所を探してみましょう。
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [01-packages の調べ方](../../README.md) を開き、言語仕様の節の探し方を確かめます。
+2. [Go Documentation](https://go.dev/doc/) を入口に、Language Specification から Go 言語仕様を開きます。
+3. [Go 言語仕様](https://go.dev/ref/spec) の目次から「For statements」「Switch statements」を選び、下位の「For statements with range clause」「Expression switches」まで進んで規則を確かめます。
+
+</details>
+
 ---
 
 ## 設問 1: for 文
@@ -150,11 +159,3 @@ two
 [Go 言語仕様](https://go.dev/ref/spec) は 1 ページの HTML に目次と各節がまとまっています。親の節には構文定義だけがあり、具体的な規則が下位節に分かれていることがあります。今回の `range` なら `#For_range`、式 switch なら `#Expression_switches` の節リンクまで共有すると、班の全員が同じ根拠を開けます。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go Documentation](https://go.dev/doc/)
-- [01-packages の調べ方](../../README.md)
-- [Go 言語仕様](https://go.dev/ref/spec)

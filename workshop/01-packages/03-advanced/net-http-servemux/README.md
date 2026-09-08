@@ -48,6 +48,15 @@ GET /x/other -> 200 "value=other"
 POST /x/other -> 405
 ```
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方を確かめます。
+2. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) の enhanced routing patterns と、互換性に関する段落を読みます。
+3. [package net/http](https://pkg.go.dev/net/http) で `ServeMux` の Patterns、Precedence、conflict の説明を読みます。
+
+</details>
+
 ---
 
 ## 設問 1: どのルートが勝つ？
@@ -208,11 +217,3 @@ Go 1.22 から、メソッド付きパターンと `{name}` / `{name...}` のワ
 [`GET` パターンは `HEAD` にも一致します](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/pattern.go;l=253-279)が、POST など他のメソッドには一致しません。`GET /` だけを登録した場合、`POST /anything` はそのハンドラーへ届かず、[`Allow: GET, HEAD` を伴う 405](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/server.go;l=2751-2764) になります。すべてのメソッドを同じハンドラーへ届けたい場合は、メソッドを省略した `/` を登録します。`GET` とメソッド省略を混同せず、405 と `Allow` ヘッダーも含めてルート全体をテストしましょう。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go 1.22 Release Notes](https://go.dev/doc/go1.22)
-- [01-packages の調べ方](../../README.md)
-- [package net/http](https://pkg.go.dev/net/http)

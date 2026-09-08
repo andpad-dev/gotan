@@ -31,6 +31,17 @@ string
 
 `fmt.Sprintf` がどんなものか調べてみましょう。
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメント（pkg.go.dev）の開き方を確かめます。
+2. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `fmt` パッケージを開きます。
+3. [package fmt](https://pkg.go.dev/fmt) で `Sprintf` のシグネチャ（戻り値の型）と、Overview の「Printing」にある verb の一覧表、「Width and precision」の指定方法を確かめます。
+
+</details>
+
+---
+
 ## 設問 1: `Sprintf` は何を返す？ `%s` や `%d` は何を意味する？
 
 `fmt.Println` は画面に出力しますが、この `fmt.Sprintf` は何を返しているのでしょうか。
@@ -166,10 +177,3 @@ fmt.Println(fmt.Sprintf("%d%%", 50))       // 50%
 この規則を知っておくと、`Sprintf` を初めて見ても「文字列を返す、フォーマット版」だと名前から推測できます。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go Documentation](https://go.dev/doc/)
-- https://pkg.go.dev/fmt

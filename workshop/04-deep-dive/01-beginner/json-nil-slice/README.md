@@ -37,6 +37,15 @@ nil: {"values":null}
 empty: {"values":[]}
 ```
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [04-deep-dive の調べ方](../../README.md)を開き、Go 言語仕様を起点にします。
+2. [Go 言語仕様: Slice types](https://go.dev/ref/spec#Slice_types) で `nil` と空スライスを調べます。
+3. 仕様ページから標準ライブラリのドキュメントへ進み、`encoding/json` を確認します。
+
+</details>
+
 ---
 
 ## 設問 1: 同じ長さ 0 なのに、なぜ JSON が違うのか？
@@ -94,11 +103,3 @@ empty: {"values":[]}
 `null`、空配列、フィールドなしのどれを契約にするかは API 設計上の選択です。ここでは常に反復できる `[]` を選んでいるため、初期化済みの空スライスを返します。
 
 </details>
-
----
-
-## 調査の入り口
-
-1. [04-deep-dive の調べ方](../../README.md)を開き、Go 言語仕様を起点にします。
-2. [Go 言語仕様: Slice types](https://go.dev/ref/spec#Slice_types) で `nil` と空スライスを調べます。
-3. 仕様ページから標準ライブラリのドキュメントへ進み、`encoding/json` を確認します。

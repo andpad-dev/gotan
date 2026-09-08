@@ -24,6 +24,18 @@ func main() { println("hello world") }
 
 境界線より下の `hello.go` は [Go Playground](https://go.dev/play/p/4Quk7tidxe8) でも実行できます。この 1 枚は、どのようにテストへ変換されるのでしょうか。現在の実装、導入時の設計判断、再利用できる境界まで調べましょう。
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+2. [Go command](https://go.dev/cmd/go/) を開き、Source Files から `cmd/go` のテスト用ファイルへたどります。
+3. [Go 1.27.0 の `run_hello.txt`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/testdata/script/run_hello.txt) で題材の 1 枚の構成を、[`script_test.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/script_test.go;l=39) で `TestScript` が `testdata/script/*.txt` を列挙し、`ExtractFiles` と `scripttest.Run` を呼ぶ流れを確かめます。
+4. [Go Testing By Example](https://research.swtch.com/testing) の Tip 13〜18 で、複数ファイルを束ねる txtar、小さな言語、script という読み方と、公開 module の候補を確かめます。2023 年の記事なので、2018 年の採用理由の証拠にはしません。
+5. [2018 年の script test 導入 commit](https://github.com/golang/go/commit/5890e25b7ccb2d2249b2f8a02ef5dbc36047868b) で、shell script、Go 製 test framework、新方式の 3 段階の比較と、当時報告された実行結果を確かめます。
+6. [`golang.org/x/tools/txtar@v0.47.0`](https://pkg.go.dev/golang.org/x/tools/txtar@v0.47.0) で公開 package が担当する範囲を、[`rsc.io/script@v0.0.2`](https://pkg.go.dev/rsc.io/script@v0.0.2) で script engine の提供範囲とサポート方針を確かめます。
+
+</details>
+
 ---
 
 ## 設問 1: 1 枚のテキストはどう分解され、実行される？
@@ -176,13 +188,3 @@ ok  	cmd/go	1.460s
 `txtar` は一般的な archive 形式を目指していません。Go 1.27.0 の package comment は、手で編集しやすいこと、テキストの file tree を保持できること、Git の履歴や code review で差分を読みやすいことを目標に挙げ、binary data、file mode、symbolic link などを非目標にしています。「本物の filesystem を完全に保存する形式」ではなく、「テストケースを読み書きする形式」だと分かると、1 枚の `.txt` という選択にも納得できます。
 
 </details>
-
----
-
-## 調査の入り口
-
-1. [Go command](https://go.dev/cmd/go/)
-2. [Go 1.27.0 の `run_hello.txt`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/testdata/script/run_hello.txt) と [`script_test.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/script_test.go;l=39)
-3. [Go Testing By Example](https://research.swtch.com/testing)
-4. [2018 年の script test 導入 commit](https://github.com/golang/go/commit/5890e25b7ccb2d2249b2f8a02ef5dbc36047868b)
-5. [`golang.org/x/tools/txtar@v0.47.0`](https://pkg.go.dev/golang.org/x/tools/txtar@v0.47.0) と [`rsc.io/script@v0.0.2`](https://pkg.go.dev/rsc.io/script@v0.0.2)

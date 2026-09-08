@@ -33,6 +33,15 @@ second
 all unavailable: ""
 ```
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方を確かめます。
+2. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `cmp` パッケージを開きます。
+3. [package cmp](https://pkg.go.dev/cmp) で `Or` の説明を読み、引数をどの順番で見てどの値を返すか、すべてゼロ値のときに何を返すかを確かめます。
+
+</details>
+
 ---
 
 ## 設問 1: なぜ 2 番目の値が選ばれる？
@@ -110,11 +119,3 @@ all unavailable: ""
 `cmp.Or` の型引数は `comparable` です。文字列・数値・ポインタなどのゼロ値を使った優先順位には向きますが、比較できない型を直接渡す用途には使えません。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go Documentation](https://go.dev/doc/)
-- [01-packages の調べ方](../../README.md)
-- [package cmp](https://pkg.go.dev/cmp)

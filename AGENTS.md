@@ -29,13 +29,13 @@ Use this structure:
 1. `# <title>`.
 2. One execution-environment badge, so readers can tell before opening whether they need Go installed.
 3. An introduction framed as a workplace problem. The observation, purpose, and investigation should connect naturally without requiring a fixed sentence. Link every runnable Go example to Go Playground.
-4. `## 設問 N: <heading>` sections, using the question count for the difficulty. Each section contains the problem, an optional `<details><summary>ヒント</summary>` hint, and an `<details><summary>答え</summary>` explanation with **調査ルート** (primary sources and order) and **答え**.
-5. An optional `<details><summary>こぼれ話</summary>` section for interesting but nonessential findings.
-6. `## 調査の入り口` with primary-source starting links.
+4. A `<details><summary>調査の入り口</summary>` block placed **before the first question**, so readers meet it before they start. Write it as a numbered list whose first item links the category README (`../../README.md`); every item names the source and says what to check there. Do not leave a bare link with no explanation.
+5. `## 設問 N: <heading>` sections, using the question count for the difficulty. Each section contains the problem, an optional `<details><summary>ヒント</summary>` hint, and an `<details><summary>答え</summary>` explanation with **調査ルート** (primary sources and order) and **答え**.
+6. An optional `<details><summary>こぼれ話</summary>` section for interesting but nonessential findings.
 
 Formatting:
 
-- Separate question, trivia, and entry-point sections with `---`.
+- Separate the entry-point block, questions, and trivia with `---`.
 - Do not use Markdown headings inside `<details>`; use bold labels instead.
 - Keep common investigation triggers, such as “press `f` to search first,” visible in the category README rather than hiding them in hints.
 

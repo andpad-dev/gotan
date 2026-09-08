@@ -10,6 +10,20 @@ pkg.go.dev のブラウザ UI には、パッケージを「インポート数�
 一方、[2026年6月にベータ公開された](https://opensource.googleblog.com/2026/06/a-new-pkggodev-api-for-go.html) **pkg.go.dev API** は、構造化された JSON データを返します。
 この API はなぜ今の形なのか、設計の背景を調べましょう。
 
+<details>
+<summary>調査の入り口</summary>
+
+1. [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+2. [Go Documentation](https://go.dev/doc/) を入口に、pkg.go.dev API ドキュメントと Go Modules Reference を探します。
+3. [pkg.go.dev API ドキュメント](https://pkg.go.dev/v1/api) で、「Routes」の各エンドポイントのレスポンス型、「Requests」の filter とパッケージパスの曖昧性、「Rate Limiting」と「Pagination」を確かめます。
+4. [pkgsite internal/api](https://pkg.go.dev/golang.org/x/pkgsite/internal/api) で、`SearchResult` などレスポンス型のフィールドを確かめます。
+5. [pkgsite のソースコード](https://cs.opensource.google/go/x/pkgsite) で、`SearchResult` の定義とページネーションの実装を確かめます。
+6. [Go Modules Reference](https://go.dev/ref/mod) で、モジュールパスとパッケージパスの関係と、モジュールの境界を確かめます。
+
+</details>
+
+---
+
 ## 設問 1: 検索結果をソート・フィルタリングしたい
 
 検索 API (`/v1/search`) の結果は、デフォルトではマッチ度順にソートされます。
@@ -309,12 +323,3 @@ imported-by の典型的な用途は:
 - したがって API は「外部への影響範囲」に焦点を当てた設計だと解釈できます。
 
 </details>
-
----
-
-## 調査の入り口
-- [Go Documentation](https://go.dev/doc/)
-- [pkg.go.dev API](https://pkg.go.dev/v1/api)
-- [pkgsite internal/api](https://pkg.go.dev/golang.org/x/pkgsite/internal/api)（レスポンス型の定義）
-- [pkgsite のソースコード](https://cs.opensource.google/go/x/pkgsite)
-- [Go Modules Reference](https://go.dev/ref/mod)
