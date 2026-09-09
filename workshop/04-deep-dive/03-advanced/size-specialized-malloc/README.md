@@ -2,7 +2,7 @@
 
 # Go 1.27 の Faster Memory Allocation は、なんで 80 バイト以下だけなの？
 
-![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
+**実行環境**: ブラウザだけ。Go のインストールは要りません。
 
 Go 1.27 リリースノートの「Faster Memory Allocation」の要点は、次の 2 つです。
 

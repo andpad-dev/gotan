@@ -2,7 +2,7 @@
 
 # Go の for 文と switch 文を仕様書で調べよう
 
-![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
+**実行環境**: ブラウザだけ。Go のインストールは要りません。
 
 レビュー中に `for` 文と `switch` 文を見かけました。実行結果から Go 言語仕様の該当箇所を探してみましょう。
 

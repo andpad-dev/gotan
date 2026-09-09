@@ -2,7 +2,7 @@
 
 # 初級: encoding/json の nil スライスと空スライスを調べよう
 
-![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
+**実行環境**: ブラウザだけ。Go のインストールは要りません。
 
 API が `{"values":null}` を返していました。利用側は常に配列として処理するため、空のときも `{"values":[]}` で返す契約です。
 

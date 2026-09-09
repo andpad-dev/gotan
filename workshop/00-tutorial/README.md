@@ -2,7 +2,7 @@
 
 # チュートリアル: fmt.Printf の書式指定子を調べよう
 
-![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
+**実行環境**: ブラウザだけ。Go のインストールは要りません。
 
 同僚のコードで、`fmt.Printf` の書式指定子を見かけました。どんなものか調べてみましょう。
 
