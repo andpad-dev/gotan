@@ -2,7 +2,7 @@
 
 # pkg.go.dev API(v1)を活用する
 
-![実行環境: 不要](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-%E4%B8%8D%E8%A6%81-9E9E9E)
+**実行環境**: コードは実行しません。
 
 ブラウザと `curl` で調べます。
 

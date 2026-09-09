@@ -27,7 +27,7 @@ Examples: [beginner #2](https://github.com/andpad-dev/gotan/pull/2), [intermedia
 Use this structure:
 
 1. `# <title>`.
-2. One execution-environment badge, so readers can tell before opening whether they need Go installed.
+2. One execution-environment line, so readers can tell before opening whether they need Go installed.
 3. An introduction framed as a workplace problem. The observation, purpose, and investigation should connect naturally without requiring a fixed sentence. Link every runnable Go example to Go Playground.
 4. A `<details><summary>調査の入り口</summary>` block placed **before the first question**, so readers meet it before they start.
 
@@ -50,18 +50,20 @@ Formatting:
 - Do not use Markdown headings inside `<details>`; use bold labels instead.
 - Keep common investigation triggers, such as “press `f` to search first,” visible in the category README rather than hiding them in hints.
 
-Execution-environment badge:
+Execution-environment line:
 
-| Case | Message | Color |
+Write it as plain text on the line under the title — **not** as a shields.io badge. A badge looks pressable, and a badge reading `Go Playground` invites the reader to click it expecting to land on the Playground.
+
+| Case | Scenario README | `SCENARIOS.md` cell |
 | --- | --- | --- |
-| Go Playground alone is enough | `Go Playground` | `00ADD8` |
-| Needs a local Go, version known | `Go <x.y> 以上` (match the `go` line in the scenario's `go.mod`) | `F39C12` |
-| Needs a local Go, no version floor | `手元の Go` | `F39C12` |
-| No code to run | `不要` | `9E9E9E` |
+| Go Playground alone is enough | `**実行環境**: ブラウザだけ。Go のインストールは不要です。` | `ブラウザだけ` |
+| Needs a local Go, version known | `**実行環境**: 手元の Go <x.y> 以上が必要です。` (match the `go` line in the scenario's `go.mod`) | `手元の Go <x.y> 以上` |
+| Needs a local Go, no version floor | `**実行環境**: 手元の Go が必要です。` | `手元の Go` |
+| No code to run | `**実行環境**: コードは実行しません。` | `実行しない` |
 
-Write it as `![実行環境: <message>](https://img.shields.io/badge/実行環境-<message>-<color>)` with the label and message percent-encoded, and keep the alt text identical to the badge. Add anything the badge cannot carry as one line below it.
+Add anything this line cannot carry as one more line below it.
 
-Then add a row to the category table in `workshop/SCENARIOS.md`, pasting the **same badge markdown verbatim**. The two must match character for character, so a mismatch is easy to spot.
+Then add a row to the category table in `workshop/SCENARIOS.md` using the cell text above. Keep the two consistent so a mismatch is easy to spot.
 
 ## Quality and Research
 

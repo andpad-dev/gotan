@@ -2,7 +2,7 @@
 
 # 初級: defer の引数評価と実行順を調べよう
 
-![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
+**実行環境**: ブラウザだけ。Go のインストールは不要です。
 
 状態を `started` から `completed` へ変えるコードで `defer` を使っています。二つの遅延呼び出しが異なる値を出す理由を調べましょう。
 
