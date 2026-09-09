@@ -56,7 +56,7 @@ Write it as plain text on the line under the title — **not** as a shields.io b
 
 | Case | Scenario README | `SCENARIOS.md` cell |
 | --- | --- | --- |
-| Go Playground alone is enough | `**実行環境**: ブラウザだけ。Go のインストールは要りません。` | `ブラウザだけ` |
+| Go Playground alone is enough | `**実行環境**: ブラウザだけ。Go のインストールは不要です。` | `ブラウザだけ` |
 | Needs a local Go, version known | `**実行環境**: 手元の Go <x.y> 以上が必要です。` (match the `go` line in the scenario's `go.mod`) | `手元の Go <x.y> 以上` |
 | Needs a local Go, no version floor | `**実行環境**: 手元の Go が必要です。` | `手元の Go` |
 | No code to run | `**実行環境**: コードは実行しません。` | `実行しない` |
