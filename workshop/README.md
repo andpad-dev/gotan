@@ -14,7 +14,7 @@
 - [Go Playground](https://go.dev/play/): ローカルに Go がなくても、小さな `package main` をブラウザで実行できる
 
 当日のやりとりは、班に割り当てられた **Issue** に集約します。調べたことも、共有したい URL も、そこへコメントしてください。
-[Discord](https://discord.gg/hDWW4NATAd) も用意していますが、当日必須ではありません。ワークショップが終わったあとも残るので、後日の質問はこちらへどうぞ。
+[Discord](https://discord.gg/xBrQdb3ehW) も用意していますが、当日必須ではありません。ワークショップが終わったあとも残るので、後日の質問はこちらへどうぞ。
 
 Go Playground ではコードを貼って **Run** を押すと実行できます。班へコードを渡すときは **Share** を押し、生成された
 `https://go.dev/play/p/...` の URL を Issue に貼ってください。受け取った人は同じソースを開けます。版依存のシナリオでは、
@@ -263,7 +263,7 @@ URL だけでは後から調査を再現できません。次の項目をその�
 
 ### 続きは Discord で
 
-冒頭で開いてもらった [Discord](https://discord.gg/hDWW4NATAd) は、今日で閉じません。解ききれなかったシナリオの相談も、後日の質問も、こちらでどうぞ。
+冒頭で開いてもらった [Discord](https://discord.gg/xBrQdb3ehW) は、今日で閉じません。解ききれなかったシナリオの相談も、後日の質問も、こちらでどうぞ。
 シナリオの不備に後から気づいたときも、[Issue](https://github.com/andpad-dev/gotan/issues/new?template=scenario-issue.md) で教えてください。
 
 今日 Issue に残した調査ログは、そのままブログの下書きになります。
