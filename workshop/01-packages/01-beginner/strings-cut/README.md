@@ -1,14 +1,13 @@
 [シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [01-packages の調べ方](../../README.md)
 
-# strings.Cut で連携設定のキーと値を分けよう
+# strings.Cut で最初の区切り位置を分けよう
 
 ![実行環境: 指定なし](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-%E6%8C%87%E5%AE%9A%E3%81%AA%E3%81%97-9E9E9E)
 
-外部 SaaS との連携設定を扱うコードを読んでいます。
-管理画面から `region=asia-east1` のような `key=value` 形式の項目が届きます。
-区切り記号が欠けた入力を「値が空」と誤認しないよう、まず設定を安全に分けたいところです。コードに `strings.Cut` を見かけました。どんなものか調べてみましょう。
+レビュー中に、文字列を最初の `=` で分けるコードを見かけました。
+区切り記号がない場合と、区切り後が空の場合を区別できるか調べましょう。
 
-次の観測ログを [Go Playground で動かす](https://go.dev/play/p/qzzfmNtViQU) と、区切り記号がある設定とない設定で結果が変わります。
+次の観測ログを [Go Playground で動かす](https://go.dev/play/p/ieMFoFpSNtz) と、区切り記号の有無で結果が変わります。
 
 ```go
 package main
@@ -19,9 +18,9 @@ import (
 )
 
 func main() {
-	for _, setting := range []string{"region=asia-east1", "region"} {
-		key, value, found := strings.Cut(setting, "=")
-		fmt.Printf("%q -> key=%q value=%q found=%t\n", setting, key, value, found)
+	for _, input := range []string{"left=right", "left"} {
+		before, after, found := strings.Cut(input, "=")
+		fmt.Printf("%q -> before=%q after=%q found=%t\n", input, before, after, found)
 	}
 }
 ```
@@ -29,22 +28,34 @@ func main() {
 実行結果:
 
 ```text
-"region=asia-east1" -> key="region" value="asia-east1" found=true
-"region" -> key="region" value="" found=false
+"left=right" -> before="left" after="right" found=true
+"left" -> before="left" after="" found=false
 ```
+
+<details>
+<summary>調査の入り口</summary>
+
+まず [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go Documentation](https://go.dev/doc/) — 標準ライブラリの `strings` パッケージを開く入口
+- [package strings](https://pkg.go.dev/strings) — `Cut` 関数の説明はこのページにある
+
+</details>
 
 ---
 
 ## 設問 1: 3 つの戻り値は何を伝える？
 
-`strings.Cut` の 3 つの戻り値はそれぞれ何でしょうか。`"region"` の場合、`value == ""` だけでは「値が空なのか、`=` がなかったのか」を判定できません。その理由も説明してください。
+`strings.Cut` の 3 つの戻り値はそれぞれ何でしょうか。`"left"` の場合、`after == ""` だけでは「区切り後が空なのか、`=` がなかったのか」を判定できません。その理由も説明してください。
 
 <details>
 <summary>ヒント</summary>
 
 - まず [カテゴリの調べ方](../../README.md) から標準パッケージのドキュメントを開く。
 - `Cut` を検索し、戻り値の名前と「区切り記号がない場合」の一文を読む。
-- `"region="` と `"region"` を比べると、どちらも `value` が空でも `found` が異なることに注目する。
+- `"left="` と `"left"` を比べると、どちらも `after` が空でも `found` が異なることに注目する。
 
 </details>
 
@@ -61,7 +72,7 @@ func main() {
 
 戻り値は順に、最初の区切り記号より前の文字列 `before`、後ろの文字列 `after`、区切り記号を見つけたかを示す `found` です。
 
-`"region"` を `"="` で切ると `before` は元の `"region"`、`after` は `""`、`found` は `false` になります。`after == ""` は `"region="` のように値が本当に空の場合にも起こるため、設定形式を検証するには `found` を確認します。
+`"left"` を `"="` で切ると `before` は元の `"left"`、`after` は `""`、`found` は `false` になります。`after == ""` は `"left="` のように区切り後が空の場合にも起こるため、区切りの有無は `found` で確認します。
 
 </details>
 
@@ -69,7 +80,7 @@ func main() {
 
 ## 設問 2: どこで切れる？
 
-連携先から `callback=https://example.com/a=b` が届きました。`strings.Cut(setting, "=")` はどこで切れるでしょうか。最初の `=` だけを意味のある境界とする今回の形式で、なぜこの性質が役立つか考えてください。
+`strings.Cut("left=middle=right", "=")` はどこで切れるでしょうか。最初の `=` だけで分ける性質を確認してください。
 
 <details>
 <summary>ヒント</summary>
@@ -90,9 +101,9 @@ func main() {
 
 **答え**
 
-結果は `before == "callback"`、`after == "https://example.com/a=b"`、`found == true` です。`Cut` は最初の一致だけで切ります。
+結果は `before == "left"`、`after == "middle=right"`、`found == true` です。`Cut` は最初の一致だけで切ります。
 
-キーと残りの値を一度に分けたい形式なら、値に `=` が含まれていても失われないため便利です。値もさらに構造化されているなら、`after` に対してもう一度 `Cut` する、と段階的に読み取れます。
+最初の部分と残りを一度に分けたい場合、残りに `=` が含まれていても失われません。さらに分けるなら、`after` に対してもう一度 `Cut` できます。
 
 </details>
 
@@ -104,11 +115,3 @@ func main() {
 接頭辞や接尾辞だけを確かめたい札には、同じ `strings` パッケージの `CutPrefix` と `CutSuffix` もあります。どちらも、見つからないときに元の文字列と `false` を返す設計です。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go Documentation](https://go.dev/doc/)
-- [01-packages の調べ方](../../README.md)
-- [package strings](https://pkg.go.dev/strings)

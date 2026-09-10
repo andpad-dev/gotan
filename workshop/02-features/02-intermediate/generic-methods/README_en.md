@@ -2,6 +2,8 @@
 
 # Add a Generic Method Helper to a Named Type
 
+**Execution environment**: Browser only. No Go installation is required.
+
 You want to add a generic method to a named type. Let's investigate how to do that.
 
 Your internal utility package has a custom container type, `Slice[T]`.
@@ -179,7 +181,7 @@ Now that you understand the behavior from primary sources, complete the `Slice[T
 <details>
 <summary>Hint</summary>
 
-- Run `go version` locally, confirm Go 1.27 or later, then run `go run .`.
+- To run locally, save the completed program as `main.go` in an empty working directory. Run `go mod init example.com/generic-methods`, set the `go` line in `go.mod` to `1.27`, and then run `go run .`.
 - Check the Go version shown by the Playground as well.
 - Set `go 1.27` in `go.mod`. With a Go 1.27 toolchain and `go 1.26` in the module, the compiler instead reports `generic method requires go1.27 or later` because the module selects the older language version.
 - At the call site, you can write `s.Map(func(n int) string { ... })` (type argument `F` is inferred from the function literal).
@@ -192,7 +194,7 @@ Now that you understand the behavior from primary sources, complete the `Slice[T
 **Investigation route**
 
 1. Recall the EBNF from Question 1 and put `[F any]` immediately after the method name.
-2. Confirm `go version` and `go 1.27` in `go.mod`, then run `go run .` locally or use the Playground and check the output.
+2. Use the Playground, or create `main.go` and a `go.mod` with `go 1.27` in an empty working directory before running `go run .` locally and checking the output.
 3. Type inference works as described in [Type inference in the specification](https://go.dev/ref/spec#Type_inference). `F` is inferred from the function argument.
 
 **Answer**
@@ -289,4 +291,4 @@ The [math/rand/v2 section](https://go.dev/doc/go1.27#minor_library_changes) of t
 - Language specification: [Method declarations](https://go.dev/ref/spec#Method_declarations) / [Type parameter declarations](https://go.dev/ref/spec#Type_parameter_declarations)
 - Proposal: [#77273 spec: generic methods for Go](https://go.dev/issue/77273)
 - Earlier discussion: [#49085 proposal: spec: allow type parameters in methods](https://go.dev/issue/49085) / [No parameterized methods section of the Type Parameters Proposal](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#No-parameterized-methods)
-- Execution environment: check `go version` and `go 1.27` in `go.mod`, then use local `go run .` or the Go Playground.
+- Execution environment: use the Go Playground, or follow the steps above to create `main.go` and a `go 1.27` module in a separate working directory before running `go run .`.

@@ -32,6 +32,22 @@ invalid operation: v1 == v2 (struct containing [0]func() cannot be compared)
 
 なんでこうなってるの？背景を調べて、その仕組みを言語仕様から説明しなさい。
 
+<details>
+<summary>調査の入り口</summary>
+
+まず [04-deep-dive の調べ方](../../README.md) を開き、仕様・実装・設計背景をたどる順番を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go Documentation](https://go.dev/doc/) — 標準ライブラリの `log/slog` パッケージを開く入口
+- [The Go Programming Language Specification](https://go.dev/ref/spec) — Go 言語仕様。`==` の規則もここで定義されている
+- [go1.27.0 の src/log/slog/value.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/log/slog/value.go;l=21) — `slog.Value` の型定義
+- [`==` を禁止した CL 479516](https://go-review.googlesource.com/c/go/+/479516) と [Issue #56345](https://github.com/golang/go/issues/56345) — `==` を禁止した変更と、その背景の issue
+
+</details>
+
+---
+
 ## 設問 1: 比較を禁止している仕掛けを特定しよう
 
 slog.Value の型定義を読み、`==` を禁止している仕掛けを見つけましょう。
@@ -294,12 +310,3 @@ Value.Equal slice panicked: true
 末尾のゼロサイズフィールドへのポインタが構造体の外を指してしまうのを防ぐためです。背景は [Issue #9401](https://github.com/golang/go/issues/9401) と [Go 1.27.0 のコンパイラ実装](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/compile/internal/types/size.go;l=516) から追えます。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go Documentation](https://go.dev/doc/)
-- https://go.dev/ref/spec
-- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/log/slog/value.go;l=21
-- [`==` を禁止した CL 479516](https://go-review.googlesource.com/c/go/+/479516) と [Issue #56345](https://github.com/golang/go/issues/56345)

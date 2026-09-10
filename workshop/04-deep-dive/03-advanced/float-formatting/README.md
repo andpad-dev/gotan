@@ -4,7 +4,7 @@
 
 ![実行環境: Go 1.27](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%201.27-F39C12)
 
-計測値をテキストへ保存する処理で、`strconv.FormatFloat` の `prec = -1` を使っています。Go 1.27 への更新後も、スナップショットテストはすべて通りました。しかしレビューで「浮動小数点数の変換実装が大きく入れ替わっている」と指摘されました。
+`strconv.FormatFloat` の `prec = -1` を使うコードがあります。Go 1.27 への更新後も、スナップショットテストはすべて通りました。しかし変換実装は大きく入れ替わっています。
 
 まず、次のコードで公開 API から観測できる性質を確認します。
 
@@ -49,6 +49,21 @@ without last digit: 1.000000000000000 (false)
 ```
 
 短い `0.1` で十分な値がある一方、隣の浮動小数点数では末尾の `2` を落とすと元の bit 列へ戻れません。公開 API の契約、Go 1.26 と 1.27 の実装、採用されたアルゴリズムの順にたどります。出力を変えずに実装を替えた理由を説明しましょう。
+
+<details>
+<summary>調査の入り口</summary>
+
+まず [04-deep-dive の調べ方](../../README.md) を開き、仕様・実装・設計背景をたどる順番を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 1.27 リリースノート](https://go.dev/doc/go1.27) — Go 1.27 の変更点をまとめたリリースノート
+- [`strconv.FormatFloat` の公式ドキュメント](https://go.dev/pkg/strconv/#FormatFloat) — `prec = -1` の説明と「最短」の定義
+- [変更コミット `71300e8`: internal/strconv: use fast unrounded scaling for floating-point](https://go.dev/change/71300e80113c6ca56105aac524e9c1b0db43910f) — Go 1.27 で浮動小数点変換の実装を入れ替えた変更コミット
+- [Floating Point Formatting シリーズ](https://research.swtch.com/fp-all) — Russ Cox による浮動小数点の文字列変換に関する記事シリーズ
+- [Go 1.27.0 タグの `internal/strconv/uscale.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/internal/strconv/uscale.go) — Go 1.27.0 で追加された変換の共通部品の実装
+
+</details>
 
 ---
 
@@ -186,7 +201,7 @@ func (u unrounded) round() uint64 {
 
 ## 設問 4: 出力が同じなのに、なぜ Go 1.27 で置き換えたのか？
 
-ここまでで、公開契約は維持され、複数の変換経路が一つの考え方へまとめられたことが分かりました。採用コミットとコードレビューの計測を読み、チームへ変更理由と注意点を説明してください。
+ここまでで、公開契約は維持され、複数の変換経路が一つの考え方へまとめられたことが分かりました。採用コミットとコードレビューの計測を読み、変更理由と注意点を説明してください。
 
 <details>
 <summary>ヒント</summary>
@@ -213,20 +228,10 @@ func (u unrounded) round() uint64 {
 
 コミットメッセージは、浮動小数点数の parsing と printing を記事の方式へ変更し、「almost 900 lines」を削除したと説明しています。設問 2 で見たように、従来は最短幅、固定幅、読み込みで別々の高速アルゴリズムと補助ファイルを持っていました。Go 1.27 では、丸め前の情報を保つ scaling を双方向の共通基盤にしたことで、それらをまとめています。
 
-性能面では、コミットは printing を大きく高速化し、parsing は単純になって速度は概ね同程度だと要約しています。掲載された計測では、たとえば `AppendFloat/64Fixed12` が 6 種類のホスト設定すべてで約 23% から 29% 改善しています。ただし、別のケースには変化なしや悪化もあります。したがって「すべての入力・環境で必ず速い」とは結論できず、業務コードでは自分の入力分布と対象環境でも測る必要があります。
+性能面では、コミットは printing を大きく高速化し、parsing は単純になって速度は概ね同程度だと要約しています。掲載された計測では、たとえば `AppendFloat/64Fixed12` が 6 種類のホスト設定すべてで約 23% から 29% 改善しています。ただし、別のケースには変化なしや悪化もあります。したがって「すべての入力・環境で必ず速い」とは結論できず、実際の入力分布と対象環境でも測る必要があります。
 
 記事は 2026 年 1 月の時点で「この Go コードの何らかの形が Go 1.27 に入ると予想する」と述べていました。これは当時の予測であり、それだけでは採用の証拠になりません。`71300e8` の採用コミット、CL 743860、Go 1.27.0 タグのソースを照合して初めて、実際に Go 1.27 へ入ったと確定できます。
 
 最初の違和感もここで説明できます。スナップショットが変わらないのは公開契約を維持した内部実装の交換だからです。`0.1` と `1.0000000000000002` の桁数の違いは、設問 1 の「正確に読み戻せる最短」という契約で決まり、その判定を設問 3 の `unrounded` と隣接値の範囲計算が新しい方法で実現しています。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go 1.27 リリースノート](https://go.dev/doc/go1.27)
-- [`strconv.FormatFloat` の公式ドキュメント](https://go.dev/pkg/strconv/#FormatFloat)
-- [変更コミット `71300e8`: internal/strconv: use fast unrounded scaling for floating-point](https://go.dev/change/71300e80113c6ca56105aac524e9c1b0db43910f)
-- [Floating Point Formatting シリーズ](https://research.swtch.com/fp-all)
-- [Go 1.27.0 タグの `internal/strconv/uscale.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/internal/strconv/uscale.go)

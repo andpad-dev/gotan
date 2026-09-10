@@ -15,7 +15,7 @@
 package main
 
 //go:generate echo "hello from go generate"
-//go:generate date "+%Y-%m-%d"
+//go:generate go env GOOS GOARCH
 //go:generate sh -c "echo GOFILE=$GOFILE GOLINE=$GOLINE GOPACKAGE=$GOPACKAGE"
 //go:generate -command say echo
 //go:generate say "-command による別名も使える"
@@ -23,20 +23,35 @@ package main
 func main() {}
 ```
 
-手元で `go generate main.go` を実行した結果です（`go1.26.4` / macOS）。
+（[Go Playground で動かす](https://go.dev/play/p/BKfpoH3IiGu)。Playground では `go generate` 自体は実行されません）
 
-日付の行は実行日によって変わるため、`YYYY-MM-DD（実行日）` と表記します。
+手元で `go generate main.go` を実行した結果です（`go1.27.0` / macOS arm64）。`GOOS` と `GOARCH` は実行環境によって変わります。
 
 ```
 $ go generate main.go
 hello from go generate
-YYYY-MM-DD（実行日）
+darwin
+arm64
 GOFILE=main.go GOLINE=5 GOPACKAGE=main
 -command による別名も使える
 ```
 
-`echo` や `date` はコード生成ツールではありませんが、普通に実行されています。
+`echo` や `go env` はコード生成ツールではありませんが、普通に実行されています。
 この自由度はどこから来ているのか、`go generate` の実装まで調べてみましょう。
+
+<details>
+<summary>調査の入り口</summary>
+
+まず [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go command の generate 説明](https://go.dev/cmd/go/#hdr-Generate_Go_files_by_processing_source) — `go generate` サブコマンドのドキュメント。手元の `go help generate` でも読める
+- [`go generate` の公式ブログ記事](https://go.dev/blog/generate) — `go generate` を導入したときの Go 公式ブログの記事
+- [`go generate` のプロポーザル](https://go.googlesource.com/proposal/+/refs/heads/master/design/go-generate.md) — `go generate` の設計文書
+- [Go 1.27.0 の generate.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/generate/generate.go) — `go generate` サブコマンドの実装
+
+</details>
 
 ---
 
@@ -45,7 +60,9 @@ GOFILE=main.go GOLINE=5 GOPACKAGE=main
 上のサンプルを手元で実行し、出力を確認してみましょう。
 
 さらに、コード生成以外のコマンドも `//go:generate` に書いて試してみてください。
-例: `pwd`、`whoami`、`git log -1`、`env` など。手元の環境を壊さない範囲で試してください。
+例: `go version`、`go env GOOS GOARCH`、`echo sample` など。実行対象と表示項目が明確なコマンドだけを使います。
+
+`env` のように環境変数を一括表示するコマンドや、認証情報・トークンを表示するコマンドは使いません。Issue やチャットへ共有する前にも、出力に秘密情報がないことを確認してください。
 
 - `go generate` に `-n` フラグ、`-x` フラグを付けると、何が表示されるでしょうか。通常実行との違いは何でしょうか。
 - コマンドに渡せる `$GOFILE` や `$GOLINE` のような変数は、どこに一覧がありますか。
@@ -53,7 +70,7 @@ GOFILE=main.go GOLINE=5 GOPACKAGE=main
 <details>
 <summary>ヒント</summary>
 
-- 一次情報はまず `go help generate` （手元で実行）。オンライン版は https://pkg.go.dev/cmd/go#hdr-Generate_Go_files_by_processing_source 。
+- 一次情報はまず [Go command の generate 説明](https://go.dev/cmd/go/#hdr-Generate_Go_files_by_processing_source) と `go help generate` （手元で実行）。
 - `-n` は "no run"、`-x` は "execute" を意識したフラグ名になっている、他のサブコマンド（`go build -n` など）と共通の命名規則。
 
 </details>
@@ -63,7 +80,7 @@ GOFILE=main.go GOLINE=5 GOPACKAGE=main
 
 **調査ルート**
 
-1. `go help generate` を実行し、Usage と variables の説明を読む。
+1. [Go command の generate 説明](https://go.dev/cmd/go/#hdr-Generate_Go_files_by_processing_source) を開き、手元の `go help generate` と照合しながら Usage と variables を読む。
 2. 手元でサンプルコードと `-n` / `-x` フラグを実際に実行して出力を比較する。
 
 **答え**
@@ -80,8 +97,9 @@ GOFILE=main.go GOLINE=5 GOPACKAGE=main
 $ go generate -x main.go
 echo hello from go generate
 hello from go generate
-date +%Y-%m-%d
-YYYY-MM-DD（実行日）
+go env GOOS GOARCH
+darwin
+arm64
 sh -c echo GOFILE=main.go GOLINE=5 GOPACKAGE=main
 GOFILE=main.go GOLINE=5 GOPACKAGE=main
 echo -command による別名も使える
@@ -89,7 +107,7 @@ echo -command による別名も使える
 
 $ go generate -n main.go
 echo hello from go generate
-date +%Y-%m-%d
+go env GOOS GOARCH
 sh -c echo GOFILE=main.go GOLINE=5 GOPACKAGE=main
 echo -command による別名も使える
 ```
@@ -110,7 +128,7 @@ echo -command による別名も使える
 <summary>ヒント</summary>
 
 - `go` コマンド本体のソースは `cmd/go` にある。サブコマンドごとに `cmd/go/internal/<サブコマンド名>` というパッケージに分かれている。
-- https://cs.opensource.google/go/go/+/refs/tags/go1.26.5:src/cmd/go/internal/generate/generate.go を開いて読んでみよう。
+- [Go 1.27.0 の generate.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/generate/generate.go) を開いて読んでみよう。
 - 子プロセスを起動する標準パッケージは 1 つしかない。
 
 </details>
@@ -120,12 +138,12 @@ echo -command による別名も使える
 
 **調査ルート**
 
-1. https://cs.opensource.google/go/go/+/refs/tags/go1.26.5:src/cmd/go/internal/generate/generate.go を開く。
-2. ファイル内を `exec` などで検索し、コマンド実行部分を見つける。
+1. [Go command](https://go.dev/cmd/go/) の Source Files から `cmd/go` の実装へ進む。
+2. [Go 1.27.0 の generate.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/generate/generate.go) を開き、ファイル内を `exec` などで検索してコマンド実行部分を見つける。
 
 **答え**
 
-`generate.go` の末尾にある `(*Generator).exec` メソッド（[generate.go#L487-L512](https://cs.opensource.google/go/go/+/refs/tags/go1.26.5:src/cmd/go/internal/generate/generate.go;l=487-512)）が実行の中心です。
+`generate.go` の末尾にある `(*Generator).exec` メソッド（[generate.go#L487-L512](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/generate/generate.go;l=487-512)）が実行の中心です。
 
 ```go
 func (g *Generator) exec(words []string) {
@@ -234,12 +252,3 @@ func (g *Generator) exec(words []string) {
 - **利用者の環境で実行されることを前提にした処理。** ジェネレータが利用者の環境に無い可能性があるため、生成物を必ずコミットしておく必要がある。
 
 </details>
-
----
-
-## 調査の入り口
-
-- https://pkg.go.dev/cmd/go#hdr-Generate_Go_files_by_processing_source
-- https://go.dev/blog/generate
-- https://go.googlesource.com/proposal/+/refs/heads/master/design/go-generate.md
-- https://cs.opensource.google/go/go/+/refs/tags/go1.26.5:src/cmd/go/internal/generate/generate.go

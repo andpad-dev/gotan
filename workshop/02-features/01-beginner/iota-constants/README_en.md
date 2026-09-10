@@ -2,7 +2,9 @@
 
 # Read constant declarations using iota
 
-You came across the following constant declaration in a senior colleague’s code.
+**Execution environment**: Browser only. No Go installation is required.
+
+You came across the following constant declaration.
 
 ```go
 type Color int

@@ -1,10 +1,12 @@
 [Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 01-packages](../../README.md)
 
-# Peek Ahead at the Header of an Incoming Message
+# Inspect the Beginning of bytes.Buffer Without Reading It
 
-In backend message reception, the first 4 bytes of a message from an external system indicate its type, followed by the body. The receiving handler wants to inspect the type and then pass the message to the appropriate processing logic, but must not consume the body yet. Let's investigate how to use `bytes.Buffer.Peek` to inspect the beginning of a received message.
+**Execution environment**: Browser only. No Go installation is required.
 
-When you [run the following observation code in the Go Playground](https://go.dev/play/p/FyP4yK-B61w), you can observe three properties: peeking ahead, insufficient data, and sharing of the returned slice.
+During review, you find code that inspects the first four bytes of a `bytes.Buffer` without consuming them. Investigate the relationship between the value returned by `Peek` and the buffer.
+
+When you [run the following observation code in the Go Playground](https://go.dev/play/p/OdJEVvlBSbf), you can observe three properties: peeking ahead, insufficient data, and sharing of the returned slice.
 
 ```go
 package main
@@ -15,14 +17,14 @@ import (
 )
 
 func main() {
-	packet := bytes.NewBufferString("HDR:payload")
-	header, err := packet.Peek(4)
-	fmt.Printf("header=%q err=%v remaining=%q\n", header, err, packet.String())
+	buffer := bytes.NewBufferString("ABCDrest")
+	prefix, err := buffer.Peek(4)
+	fmt.Printf("prefix=%q err=%v remaining=%q\n", prefix, err, buffer.String())
 
-	header[0] = 'h'
-	fmt.Printf("after mutation remaining=%q\n", packet.String())
+	prefix[0] = 'a'
+	fmt.Printf("after mutation remaining=%q\n", buffer.String())
 
-	short := bytes.NewBufferString("OK")
+	short := bytes.NewBufferString("XY")
 	got, err := short.Peek(4)
 	fmt.Printf("short=%q err=%v\n", got, err)
 }
@@ -31,23 +33,29 @@ func main() {
 Output:
 
 ```text
-header="HDR:" err=<nil> remaining="HDR:payload"
-after mutation remaining="hDR:payload"
-short="OK" err=EOF
+prefix="ABCD" err=<nil> remaining="ABCDrest"
+after mutation remaining="aBCDrest"
+short="XY" err=EOF
 ```
 
 ---
 
-## Question 1: How can you inspect the type without reading it?
+<details><summary>Investigation entry points</summary>
 
-In the first output, `header` is `"HDR:"`, but `remaining` is also `"HDR:payload"`. What does `Peek(4)` do, and how would using `Next(4)` for the same purpose differ?
+Start with the [01-packages research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
+
+## Question 1: How can you inspect the beginning without reading it?
+
+In the first output, `prefix` is `"ABCD"`, but `remaining` is still `"ABCDrest"`. What does `Peek(4)` do, and how would using `Next(4)` differ?
 
 <details>
 <summary>Hint</summary>
 
 - Use [How to investigate a category](../../README.md) as your starting point and open the list of `bytes.Buffer` methods.
 - Compare whether `Peek` and `Next` advance the buffer in their descriptions.
-- Think of `Peek` as placing a bookmark in a book and looking at the page, while `Next` turns the page and advances the reading position. Trying both from the same position with `packet := bytes.NewBufferString("HDR:payload")` makes the difference easy to see.
+- Try both from the same position with `buffer := bytes.NewBufferString("ABCDrest")`.
 
 </details>
 
@@ -62,9 +70,9 @@ In the first output, `header` is `"HDR:"`, but `remaining` is also `"HDR:payload
 
 **Answer**
 
-`Peek(4)` returns the next 4 bytes but does not advance the buffer's reading position. As a result, even after passing the type to the handler, processing that reads the complete packet, including the body, can receive the same contents.
+`Peek(4)` returns the next 4 bytes but does not advance the buffer's reading position. A later read therefore receives the same contents.
 
-`Next(4)` returns 4 bytes and advances the buffer as though they had been read. It can be used when you want to classify and consume the type at the same time, but `Peek` is appropriate for the current use case of looking first and then passing the message onward.
+`Next(4)` returns 4 bytes and advances the buffer as though they had been read. `Peek` is appropriate when the beginning must remain unread.
 
 </details>
 
@@ -72,14 +80,14 @@ In the first output, `header` is `"HDR:"`, but `remaining` is also `"HDR:payload
 
 ## Question 2: What happens when there are fewer than 4 bytes?
 
-Why does `Peek(4)` for `"OK"` return `"OK"` and `EOF` instead of an empty slice? In processing that detects an incomplete reception, how should the return values be handled?
+Why does `Peek(4)` for `"XY"` return `"XY"` and `EOF` instead of an empty slice? How should the return values be handled?
 
 <details>
 <summary>Hint</summary>
 
 - Look for the explanation of “fewer than n bytes” in `Peek`.
 - Notice that this API returns partial data and an error at the same time.
-- `"OK"` does not necessarily mean that the header is corrupt; it may mean that only 2 bytes have arrived in the current buffer. Organize the reasons for handling the partial data and `io.EOF` separately.
+- The buffer currently contains only 2 bytes. Consider why the partial data and `io.EOF` are returned separately.
 
 </details>
 
@@ -88,22 +96,23 @@ Why does `Peek(4)` for `"OK"` return `"OK"` and `EOF` instead of an empty slice?
 
 **Investigation path**
 
-1. Read the error description for [Buffer.Peek](https://pkg.go.dev/bytes#Buffer.Peek).
-2. In the [implementation](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/bytes/buffer.go;l=85), confirm the branch that returns the remaining bytes and `io.EOF`.
+1. Open the `bytes` package from the [Go Documentation](https://go.dev/doc/).
+2. Read the error description for [Buffer.Peek](https://pkg.go.dev/bytes#Buffer.Peek).
+3. In the [implementation](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/bytes/buffer.go;l=85), confirm the branch that returns the remaining bytes and `io.EOF`.
 
 **Answer**
 
-When fewer bytes are available than the requested 4, `Peek` returns the bytes currently available and, at the same time, `io.EOF`. Rather than discarding the information by returning nothing, it represents the state as “reception has progressed this far, but there are not enough bytes for a header.”
+When fewer bytes are available than the requested 4, `Peek` returns the bytes currently available and, at the same time, `io.EOF`.
 
-The receiving logic should check `err` and, when it is `io.EOF`, receive more data before trying again. It must not process the partial data in `got` as a complete header.
+The caller should check `err`. It must not process the partial data in `got` as a complete result when the required length is unavailable.
 
 </details>
 
 ---
 
-## Question 3: Why does changing `header[0]` also change the body?
+## Question 3: Why does changing `prefix[0]` also change the buffer?
 
-When the first byte of the returned `header` is changed to `h`, the entire buffer also becomes `"hDR:payload"`. When you want to pass the type safely to downstream processing and then read or write the buffer, what should you be careful about, and when should you make a copy?
+When the first byte of the returned `prefix` is changed to `a`, the entire buffer also becomes `"aBCDrest"`. What should you be careful about, and when should you make a copy?
 
 <details>
 <summary>Hint</summary>
@@ -118,16 +127,17 @@ When the first byte of the returned `header` is changed to `h`, the entire buffe
 
 **Investigation path**
 
-1. Read the explanation of the returned value's validity period and aliasing in [Buffer.Peek](https://pkg.go.dev/bytes#Buffer.Peek).
-2. Check the slice expression in [buffer.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/bytes/buffer.go;l=85).
+1. Open the `bytes` package from the [Go Documentation](https://go.dev/doc/).
+2. Read the explanation of the returned value's validity period and aliasing in [Buffer.Peek](https://pkg.go.dev/bytes#Buffer.Peek).
+3. Check the slice expression in [buffer.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/bytes/buffer.go;l=85).
 
 **Answer**
 
 The slice returned by `Peek` shares the buffer's contents. It is no longer valid after calling a read or write method, and changing the returned slice can also change what is read next. Do not destructively modify a value returned for observation.
 
-If downstream processing needs to retain or modify the type, copy it to another slice first. A copy is unnecessary when the slice is only read and used immediately. The key is to distinguish zero-copy peeking for performance from data whose ownership should be separated.
+If the returned value must be retained or modified, copy it to another slice first. A copy is unnecessary when the slice is only read and used immediately.
 
-For example, `safeHeader := bytes.Clone(header)` preserves the original 4 bytes in `safeHeader` even if `header[0]` is changed later. Decide whether a copy is needed based on whether you will pass the value around for a while or only read it in place.
+For example, `copyOfPrefix := bytes.Clone(prefix)` preserves the original 4 bytes even if `prefix[0]` is changed later. Decide whether a copy is needed based on how the value is used.
 
 </details>
 
@@ -142,7 +152,7 @@ For example, `safeHeader := bytes.Clone(header)` preserves the original 4 bytes 
 
 ---
 
-## Investigation starting points
+## Primary sources
 
 - [Go 1.26 Release Notes](https://go.dev/doc/go1.26)
 - [How to investigate 01-packages](../../README.md)

@@ -1,10 +1,10 @@
-[シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [01-packages の調べ方](../../README.md)
+[シナリオ一覧](../SCENARIOS.md) | [ワークショップ進行ガイド](../README.md)
 
-# fmt.Printf の書式指定子を調べよう
+# チュートリアル: fmt.Printf の書式指定子を調べよう
 
 ![実行環境: 指定なし](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-%E6%8C%87%E5%AE%9A%E3%81%AA%E3%81%97-9E9E9E)
 
-同僚のコードで、`fmt.Printf` の書式指定子を見かけました。どんなものか調べてみましょう。
+同僚のコードで、`fmt.Printf` の書式指定子を見かけました。
 
 ```go
 package main
@@ -17,7 +17,7 @@ func main() {
 }
 ```
 
-[Go Playground で動かす](https://go.dev/play/p/RTNSvn_p2Ai) と、Go 1.27.0 では次のように出力されます。
+[Go Playground で動かす](https://go.dev/play/p/RTNSvn_p2Ai) と、Go 1.27 では次のように出力されます。
 
 ```text
 "gopher" string
@@ -26,6 +26,16 @@ func main() {
 何をやっているコードか調べてみましょう。
 
 この例では、同じ `value` を「Go のリテラルらしい表示」と「型名」の2通りで確認しています。上の `"gopher"` と `string` が、それぞれどの書式から出たかを対応付けながら調べてみましょう。
+
+<details>
+<summary>調査の入り口</summary>
+
+次のどちらかから入ります。
+
+- [Go Documentation](https://go.dev/doc/) — Go の公式ドキュメントの入口。標準ライブラリはここからたどれる
+- [package fmt](https://pkg.go.dev/fmt) — 書式指定子の説明は Overview にある
+
+</details>
 
 ---
 
@@ -36,8 +46,8 @@ func main() {
 <details>
 <summary>ヒント</summary>
 
-- Overview 冒頭の「Printing」にある verb の表で、`%v`、`%#v`、`%T` の 3 行を直接比べる。
-- 「Other flags」の `#` は、`%#b` や `%#x` など verb ごとの別の効果を列挙している。そこに `%v` がなければ、verb の表へ戻る。
+- Overview の「Printing」節、「The verbs:」の下にある `General:` の一覧で、`%v`、`%#v`、`%T` の 3 行を直接比べる。
+- 「Other flags」の `#` は、`%#b` や `%#x` など verb ごとの別の効果を列挙している。そこに `%v` がなければ、`General:` の一覧へ戻る。
 
 </details>
 
@@ -56,7 +66,7 @@ func main() {
 
 - `%v`: 値をデフォルトのフォーマットで出力する。
 - `%T`: 値の型を Go の構文で出力する。
-- `#`: 書式フラグの一つで、効果は組み合わせる verb によって異なる。`%v` との組み合わせは verb の表に `%#v` という別形式として載っており、値を Go の構文表現（Go-syntax representation）で出力する。
+- `#`: 書式フラグの一つで、効果は組み合わせる verb によって異なる。`%v` との組み合わせは `General:` の一覧に `%#v` という別形式として載っており、値を Go の構文表現（Go-syntax representation）で出力する。
 
 つまり `%#v` と `%T` を並べたこのコードは、「値の中身と型を、どちらも Go の構文で確認する」デバッグの定番イディオムです。
 
@@ -80,7 +90,7 @@ fmt.Printf("%#[1]v %[1]T\n", value)
 <details>
 <summary>ヒント</summary>
 
-- ドキュメントの Overview で `[` を検索してみよう
+- ドキュメントの Overview で `[1]` をページ内検索（Ctrl+F / Cmd+F）してみよう
 - 例えば `fmt.Printf("%[1]s / %[1]s\n", "gopher")` は、1つの引数を何回使うでしょうか。
 
 </details>
@@ -91,7 +101,7 @@ fmt.Printf("%#[1]v %[1]T\n", value)
 **調査ルート**
 
 1. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `fmt` パッケージを開く。
-2. [fmt の Overview](https://pkg.go.dev/fmt) で `[` を検索する。
+2. [fmt の Overview](https://pkg.go.dev/fmt) で `[1]` をページ内検索する。
 3. [Explicit argument indexes](https://pkg.go.dev/fmt#hdr-Explicit_argument_indexes) にたどり着き、`[n]` がどの引数を選ぶかを読む。
 
 **答え**
@@ -132,11 +142,3 @@ func main() {
 フラグは引数インデックスより前に書く、と覚えておきましょう。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go Documentation](https://go.dev/doc/)
-- [01-packages の調べ方](../../README.md)
-- [package fmt](https://pkg.go.dev/fmt)

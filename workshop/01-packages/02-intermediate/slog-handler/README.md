@@ -8,6 +8,20 @@
 そのためには slog のログハンドラーを自作する必要があります。
 一次情報のみを辿って、実装や単体テストに必要な情報を集めましょう。
 
+<details>
+<summary>調査の入り口</summary>
+
+まず [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go Documentation](https://go.dev/doc/) — 標準ライブラリの `log/slog` を開く入口
+- [package log/slog](https://pkg.go.dev/log/slog) — `Handler` インタフェースの定義はこのページにある
+- [slog handler guide](https://go.dev/s/slog-handler-guide) — ハンドラーを自作する人向けの公式ガイド
+- [package testing/slogtest](https://pkg.go.dev/testing/slogtest) — 自作ハンドラーの検査に使う標準パッケージ
+
+</details>
+
 ---
 
 ## 設問 1: slog.Handler インタフェースについて調べよう
@@ -16,7 +30,7 @@ slog.Handler インタフェースにはメソッドがいくつあり、それ�
 どのメソッドがハンドラーの中心になるか考えてみましょう。
 また、標準でこのインタフェースを実装している型も探してみましょう。
 
-例えば `logger.Info("login", "user", "alice")` を呼ぶとします。
+例えば `logger.Info("event", "key", "value")` を呼ぶとします。
 ログを受け取って出力する役割と、出力前に共通属性を付ける役割は同じでしょうか。
 ログがハンドラーへ届く流れを想像してから、4つのメソッドを分類してみましょう。
 
@@ -101,7 +115,7 @@ func main() {
 		defer func() {
 			fmt.Println("embedded handler panicked:", recover() != nil)
 		}()
-		slog.New(badHandler{}).Info("login")
+		slog.New(badHandler{}).Info("event")
 	}()
 
 	attr := slog.Any("password", password("secret"))
@@ -198,13 +212,3 @@ with Resolve: REDACTED
 どちらも仕様準拠の共通ケースを提供するため、自分で同じ検査項目を一から列挙する必要はありません。ただし、自作ハンドラー固有の YAML 形式やエラー処理は、別のテストで補います。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go Documentation](https://go.dev/doc/)
-- [01-packages の調べ方](../../README.md)
-- https://pkg.go.dev/log/slog
-- [slog handler guide](https://go.dev/s/slog-handler-guide)
-- [package testing/slogtest](https://pkg.go.dev/testing/slogtest)

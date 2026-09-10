@@ -2,7 +2,7 @@
 
 # Track Old Notifications from `time.Timer` `Stop` / `Reset`
 
-An old incident report says that a retry job for a payment integration received a notification for the previous deadline immediately after stopping and resetting a timer. Current observations show that the channel capacity is 0. Why is it like this? Let's investigate the background.
+In older Go versions, a timer could deliver a value for a previous deadline after it was stopped and reset. Current observations show that the channel capacity is 0. Why is it like this? Let's investigate the background.
 
 When you [run the following code in the Go Playground](https://go.dev/play/p/F4r40BDO4dv), you can confirm the current timer-channel capacity and the reset after stopping.
 
@@ -37,7 +37,13 @@ reset timer fired
 
 ---
 
-## Question 1: How does capacity 0 differ from the incident report?
+<details><summary>Investigation entry points</summary>
+
+Start with the [01-packages research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
+
+## Question 1: How does capacity 0 differ from the old behavior?
 
 Before Go 1.23, timer channels had a buffer capacity of 1. With the current synchronous channel of capacity 0, what guarantee is provided about an old retry notification after `Stop` or `Reset` returns?
 
@@ -62,7 +68,7 @@ Before Go 1.23, timer channels had a buffer capacity of 1. With the current sync
 
 With the new behavior since Go 1.23, a timer channel is a synchronous channel with capacity 0. It guarantees that after `Stop` or `Reset` returns, a stale time value prepared before that call will not be sent or received.
 
-The old channel with capacity 1 could retain an old notification, which made stopping and resetting more complicated. This is what the retry-job incident report refers to.
+The old channel with capacity 1 could retain an old notification, which made stopping and resetting more complicated.
 
 </details>
 
@@ -142,12 +148,12 @@ In Go 1.23, the module's `go` line was involved in enabling the new behavior. Ho
 
 In this question, first observe the “new behavior” through the `cap` / `len` of the channel from `time.NewTimer(0)`. For “compatibility settings,” distinguish the environment variable `GODEBUG`, the `godebug` directive in `go.mod`, and `//go:debug` in source code, and organize which execution conditions each one affects.
 
-The following Go 1.27.0 Playground observations are your starting point. Investigate why the third program fails before it can print the capacity.
+The Playground toolchain changes over time, so the following table records a fresh run with Go 1.27.1 on 2026-09-04. Investigate why the third program fails before it can print the capacity.
 
-| Experiment | Result with Go 1.27.0 |
+| Experiment | Playground result (Go 1.27.1) |
 | --- | --- |
-| [Default](https://go.dev/play/p/zAkeGmN14Q7) | `go1.27.0 0 0` |
-| [`//go:debug asynctimerchan=0`](https://go.dev/play/p/V8esF3Hmib8) | `go1.27.0 0 0` |
+| [Default](https://go.dev/play/p/zAkeGmN14Q7) | `go1.27.1 0 0` |
+| [`//go:debug asynctimerchan=0`](https://go.dev/play/p/V8esF3Hmib8) | `go1.27.1 0 0` |
 | [`//go:debug asynctimerchan=1`](https://go.dev/play/p/o-pDN23HyaX) | `invalid //go:debug: removed GODEBUG "asynctimerchan" set to old value "1"` |
 
 <details>
@@ -177,7 +183,7 @@ In Go 1.23, the new timer behavior was enabled when the main program's module ha
 
 In Go 1.27, this setting was permanently removed and `time` timer channels are fixed as synchronous and unbuffered. A main module with a `go` line below 1.23 no longer restores the old behavior. `asynctimerchan=0` is accepted as the final value without changing the behavior, while the old values `1` and `2` are rejected.
 
-The failure stage depends on where the value is specified. A `godebug` directive in `go.mod` and a `//go:debug` source directive are rejected by the `go` command before the build; the environment variable `GODEBUG=asynctimerchan=1` produces a fatal error at startup. None of them provides compatibility behavior with capacity 1. Therefore, instead of relying on a compatibility setting to hide incidents, fix old drain logic and dependencies on `len` / `cap` so that the code works correctly under the current semantics.
+The failure stage depends on where the value is specified. A `godebug` directive in `go.mod` and a `//go:debug` source directive are rejected by the `go` command before the build; the environment variable `GODEBUG=asynctimerchan=1` produces a fatal error at startup. None of them provides compatibility behavior with capacity 1. Fix old drain logic and dependencies on `len` / `cap` so that the code works correctly under the current semantics.
 
 | Location | Reproduction | Result with Go 1.27.0 |
 | --- | --- | --- |
@@ -191,7 +197,7 @@ The failure stage depends on where the value is specified. A `godebug` directive
 
 ## Question 4: How do you locate the code affected by a long-debated change?
 
-The problem of receiving an old notification is not merely about API appearance; it concerns the invariants required to use `Stop` / `Reset` correctly. Read the proposal issue and implementation comments, then explain to the team in one minute what difficulty the Go team was trying to reduce.
+The problem of receiving an old notification concerns the invariants required to use `Stop` / `Reset` correctly. Read the proposal issue and implementation comments, then explain what difficulty Go was trying to reduce.
 
 For example, consider what happens if another goroutine receives from `timer.C` while the sequence “stop the timer -> empty the old notification -> set the deadline again” is in progress. Compare what users previously had to remember to avoid confusing an old notification with a new one against the guarantees of the current API.
 
@@ -242,7 +248,7 @@ Code that checks the `len` or `cap` of a timer channel to determine whether it c
 
 ---
 
-## Investigation starting points
+## Primary sources
 
 - [Go 1.27 Release Notes](https://go.dev/doc/go1.27)
 - [Go Wiki: Go 1.23 Timer Channel Changes](https://go.dev/wiki/Go123Timer)

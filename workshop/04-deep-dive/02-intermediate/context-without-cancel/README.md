@@ -1,14 +1,12 @@
 [シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [04-deep-dive の調べ方](../../README.md)
 
-# 中級: context.WithoutCancel で監査ログを期限付きで残そう
+# 中級: context.WithoutCancel に独自の期限を付けよう
 
 ![実行環境: Go 1.21 以上](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%201.21%20%E4%BB%A5%E4%B8%8A-F39C12)
 
-HTTP API では、応答を返したあとにも監査ログを保存します。クライアントが接続を閉じると `r.Context()` が取り消され、監査ログも途中で止まってしまいました。一方で、ログにはリクエスト ID を残し、失敗した書き込みが無期限に続かないようにする必要があります。
+親コンテキストの値は引き継ぎつつ、親のキャンセルは切り離したいコードがあります。ただし、派生した処理が無期限に続かないよう、独自の期限も必要です。どう組み合わせるか調べましょう。
 
-「HTTP リクエスト終了後も監査ログの書き込みを一定時間だけ続ける」ことをやりたいです。どういうふうにやればいいか調べよう。
-
-[Go Playground で実行](https://go.dev/play/p/KMPAVezHNXF) してください。観測するのは、親を取り消した後のエラー、リクエスト ID、期限と `Done`、独自タイムアウトです。
+[Go Playground で実行](https://go.dev/play/p/r-de7RWWAPE) してください。観測するのは、親を取り消した後のエラー、値、期限と `Done`、独自タイムアウトです。
 
 ```go
 package main
@@ -19,11 +17,11 @@ import (
 	"time"
 )
 
-type requestIDKey struct{}
+type markerKey struct{}
 
 func main() {
 	parent, cancel := context.WithCancel(
-		context.WithValue(context.Background(), requestIDKey{}, "req-42"),
+		context.WithValue(context.Background(), markerKey{}, "kept"),
 	)
 	detached := context.WithoutCancel(parent)
 	cancel()
@@ -31,14 +29,14 @@ func main() {
 	_, hasDeadline := detached.Deadline()
 	fmt.Println("parent:", parent.Err())
 	fmt.Println("detached:", detached.Err())
-	fmt.Println("request ID:", detached.Value(requestIDKey{}))
+	fmt.Println("value:", detached.Value(markerKey{}))
 	fmt.Println("detached has deadline:", hasDeadline)
 	fmt.Println("detached Done is nil:", detached.Done() == nil)
 
-	auditCtx, stop := context.WithTimeout(detached, 10*time.Millisecond)
+	limited, stop := context.WithTimeout(detached, 10*time.Millisecond)
 	defer stop()
-	<-auditCtx.Done()
-	fmt.Println("audit:", auditCtx.Err())
+	<-limited.Done()
+	fmt.Println("limited:", limited.Err())
 }
 ```
 
@@ -47,11 +45,23 @@ Go 1.27.0 での実行結果です。
 ```text
 parent: context canceled
 detached: <nil>
-request ID: req-42
+value: kept
 detached has deadline: false
 detached Done is nil: true
-audit: context deadline exceeded
+limited: context deadline exceeded
 ```
+
+<details>
+<summary>調査の入り口</summary>
+
+まず [04-deep-dive の調べ方](../../README.md)を開き、Go の公式ドキュメントを起点にします。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 1.21 リリースノート: context](https://go.dev/doc/go1.21#context) — 追加された API の目的
+- リリースノートから `context` パッケージのドキュメントへ進む
+
+</details>
 
 ---
 
@@ -83,9 +93,9 @@ audit: context deadline exceeded
 
 ---
 
-## 設問 2: 監査ログの処理を無期限にしないには？
+## 設問 2: 派生した処理を無期限にしないには？
 
-親のキャンセルを切り離すだけでは、停止しない書き込みを待ち続けるおそれがあります。監査ログの書き込みには、どのように独自の期限を付けるべきでしょうか。また、`Done` が `nil` であることは、`select` で待つ処理にどんな影響を与えますか。
+親のキャンセルを切り離すだけでは、処理を待ち続けるおそれがあります。どのように独自の期限を付けるべきでしょうか。また、`Done` が `nil` であることは、`select` で待つ処理にどんな影響を与えますか。
 
 <details>
 <summary>ヒント</summary>
@@ -106,7 +116,7 @@ audit: context deadline exceeded
 
 **答え**
 
-監査ログ用には、親を `WithoutCancel` で切り離したあと、その結果から `WithTimeout` で短い独自の期限を作ります。そして処理が終わったら、返された `CancelFunc` を必ず呼びます。`WithoutCancel` 単体の `Done` は `nil` なので、そこだけを待つ `select` のケースは選ばれず、キャンセルを待つ仕組みにはなりません。独自のタイムアウトを重ねることで、クライアント切断には左右されず、外部のログ保存先が止まっても一定時間で処理を打ち切れます。
+親を `WithoutCancel` で切り離したあと、その結果から `WithTimeout` で短い独自の期限を作ります。そして処理が終わったら、返された `CancelFunc` を必ず呼びます。`WithoutCancel` 単体の `Done` は `nil` なので、そこだけを待つ `select` のケースは選ばれず、キャンセルを待つ仕組みにはなりません。独自のタイムアウトを重ねることで、一定時間で処理を打ち切れます。
 
 </details>
 
@@ -114,12 +124,12 @@ audit: context deadline exceeded
 
 ## 設問 3: この分離ができたことをどう検証するか？
 
-ハンドラーのテストでは、クライアント切断を親コンテキストのキャンセルとして再現できます。確かめたい要件は「リクエスト ID は残すが、クライアントのキャンセルには従わず、独自の期限には従う」です。監査ログ処理では、どの二つの観測を確認すればよいでしょうか。
+確かめたい要件は「値は残すが、親のキャンセルには従わず、独自の期限には従う」です。どの二つの観測を確認すればよいでしょうか。
 
 <details>
 <summary>ヒント</summary>
 
-実行例の三行を、テストで観測する状態へ言い換えます。そのうえで、設問 2 の独自期限を短い値にし、ログ保存先を制御できるテストダブルで確認する順序を考えてください。
+実行例の三行を、テストで観測する状態へ言い換えます。そのうえで、設問 2 の独自期限を短い値にして確認する順序を考えてください。
 
 </details>
 
@@ -130,20 +140,12 @@ audit: context deadline exceeded
 
 1. [Go 1.21 リリースノートの context](https://go.dev/doc/go1.21#context) から、親のキャンセルを伝播しないという目的を確認する。
 2. [context の `WithoutCancel`](https://pkg.go.dev/context#WithoutCancel) と [context の `WithTimeout`](https://pkg.go.dev/context#WithTimeout) を順に読み、値の伝播と独自の期限を照合する。
-3. [実行例](https://go.dev/play/p/KMPAVezHNXF) を基準に、親のキャンセル後も値を読めることと、独自の期限では `context deadline exceeded` になることを再現する。
+3. [実行例](https://go.dev/play/p/r-de7RWWAPE) を基準に、親のキャンセル後も値を読めることと、独自の期限では `context deadline exceeded` になることを再現する。
 
 **答え**
 
-一つ目は、親を取り消した後も監査ログの処理がリクエスト ID を取得でき、ただちに `context canceled` にならないことです。これは冒頭の `detached: <nil>` と `request ID: req-42` を再現する観測です。二つ目は、ログ保存先が応答しない場合でも、監査ログ用に作った独自の期限で処理が終わり、`context deadline exceeded` になることです。
+一つ目は、親を取り消した後も派生したコンテキストから値を取得でき、ただちに `context canceled` にならないことです。これは `detached: <nil>` と `value: kept` を再現する観測です。二つ目は、独自の期限で処理が終わり、`context deadline exceeded` になることです。
 
-この二つを分けて検証すれば、単にバックグラウンド化しただけではなく、冒頭の「クライアント切断で記録が止まる」問題を解消しながら、設問 2 で見つけた `Done` が `nil` という性質による無期限待ちも防げていると説明できます。
+この二つを分けて検証すれば、親のキャンセルを切り離しながら、設問 2 で見つけた `Done` が `nil` という性質による無期限待ちも防げていると説明できます。
 
 </details>
-
----
-
-## 調査の入り口
-
-1. [04-deep-dive の調べ方](../../README.md)を開き、Go の公式ドキュメントを起点にします。
-2. [Go 1.21 リリースノート: context](https://go.dev/doc/go1.21#context) で追加された API の目的を調べます。
-3. リリースノートから `context` パッケージのドキュメントへ進みます。

@@ -2,13 +2,13 @@
 
 # Investigate What `go generate` Can Do and What It Should Do
 
-Our team wants to automate code generation with `go generate`. While investigating, we found that `//go:generate` is more flexible than a fixed format limited to code-generation commands. The sample in [`main.go`](./main.go) demonstrates this.
+We want to automate code generation with `go generate`. `//go:generate` is more flexible than a fixed format limited to code-generation commands. The sample in [`main.go`](./main.go) demonstrates this.
 
 ```go
 package main
 
 //go:generate echo "hello from go generate"
-//go:generate date "+%Y-%m-%d"
+//go:generate go env GOOS GOARCH
 //go:generate sh -c "echo GOFILE=$GOFILE GOLINE=$GOLINE GOPACKAGE=$GOPACKAGE"
 //go:generate -command say echo
 //go:generate say "An alias defined with -command also works"
@@ -16,30 +16,37 @@ package main
 func main() {}
 ```
 
-([Run it in the Go Playground](https://go.dev/play/p/8Afw0ygPRUL))
+([Run it in the Go Playground](https://go.dev/play/p/o36nNAzX45u). The Playground does not run `go generate` itself.)
 
-With Go 1.26.4 on macOS, `go generate main.go` produced the following. The date depends on the day of execution.
+With Go 1.27.0 on macOS arm64, `go generate main.go` produced the following. `GOOS` and `GOARCH` vary by environment.
 
 ```console
 $ go generate main.go
 hello from go generate
-YYYY-MM-DD (execution date)
+darwin
+arm64
 GOFILE=main.go GOLINE=5 GOPACKAGE=main
 An alias defined with -command also works
 ```
 
-`echo` and `date` are not code-generation tools, but they run normally. How far does this flexibility go, and where does it come from? Let us investigate the implementation of `go generate`.
+`echo` and `go env` are not code-generation tools, but they run normally. How far does this flexibility go, and where does it come from? Let us investigate the implementation of `go generate`.
 
 ---
 
+<details><summary>Investigation entry points</summary>
+
+Start with the [03-cmd-tools research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
+
 ## Question 1: What commands can `//go:generate` contain?
 
-Run the sample and try more unusual commands, such as `pwd`, `whoami`, `git log -1`, or `env`, without damaging your environment. What do `go generate -n main.go` and `go generate -x main.go` display, and where are variables such as `$GOFILE` and `$GOLINE` listed?
+Run the sample and try explicit, non-destructive commands such as `go version`, `go env GOOS GOARCH`, or `echo sample`. Do not use commands such as `env` that dump all environment variables, and do not display credentials or tokens. Before sharing output in an issue or chat, confirm that it contains no secrets. What do `go generate -n main.go` and `go generate -x main.go` display, and where are variables such as `$GOFILE` and `$GOLINE` listed?
 
 <details>
 <summary>Hint</summary>
 
-- Begin with `go help generate`; the online version is [Generate Go files by processing source](https://pkg.go.dev/cmd/go#hdr-Generate_Go_files_by_processing_source).
+- Begin with the [Go command documentation for generate](https://go.dev/cmd/go/#hdr-Generate_Go_files_by_processing_source), then compare it with `go help generate` locally.
 - Remember that `-n` means “no run” and `-x` means “execute,” a naming convention shared with commands such as `go build -n`.
 
 </details>
@@ -49,7 +56,7 @@ Run the sample and try more unusual commands, such as `pwd`, `whoami`, `git log 
 
 **Investigation route**
 
-1. Read the Usage and variables sections of `go help generate`.
+1. Open the [Go command documentation for generate](https://go.dev/cmd/go/#hdr-Generate_Go_files_by_processing_source), then read the Usage and variables sections alongside `go help generate`.
 2. Run the sample with and without `-n` and `-x`, then compare the output.
 
 **Answer**
@@ -68,7 +75,7 @@ Find the source location that launches the child process and identify the standa
 <summary>Hint</summary>
 
 - The `go` command source is under `cmd/go`, split into `cmd/go/internal/<subcommand>` packages.
-- Read [generate.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.5:src/cmd/go/internal/generate/generate.go).
+- Read [Go 1.27.0 generate.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/generate/generate.go).
 - There is one standard package designed to launch child processes.
 
 </details>
@@ -78,12 +85,12 @@ Find the source location that launches the child process and identify the standa
 
 **Investigation route**
 
-1. Open [generate.go](https://cs.opensource.google/go/go/+/refs/tags/go1.26.5:src/cmd/go/internal/generate/generate.go).
-2. Search for `exec` and inspect the command-execution path.
+1. Follow Source Files from the [Go command documentation](https://go.dev/cmd/go/) to the `cmd/go` implementation.
+2. Open [Go 1.27.0 generate.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/generate/generate.go), search for `exec`, and inspect the command-execution path.
 
 **Answer**
 
-The `(*Generator).exec` method at [generate.go#L487-L512](https://cs.opensource.google/go/go/+/refs/tags/go1.26.5:src/cmd/go/internal/generate/generate.go;l=487-512) is the center of execution:
+The `(*Generator).exec` method at [generate.go#L487-L512](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/generate/generate.go;l=487-512) is the center of execution:
 
 ```go
 func (g *Generator) exec(words []string) {
@@ -153,9 +160,9 @@ The proposal's goals are that package authors, rather than clients, run it; gene
 
 ---
 
-## Research starting points
+## Primary sources
 
-- [Generate Go files by processing source](https://pkg.go.dev/cmd/go#hdr-Generate_Go_files_by_processing_source)
+- [Generate Go files by processing source](https://go.dev/cmd/go/#hdr-Generate_Go_files_by_processing_source)
 - [Go generate blog post](https://go.dev/blog/generate)
 - [go generate proposal](https://go.googlesource.com/proposal/+/refs/heads/master/design/go-generate.md)
-- [Go 1.26.5 generate.go source](https://cs.opensource.google/go/go/+/refs/tags/go1.26.5:src/cmd/go/internal/generate/generate.go)
+- [Go 1.27.0 generate.go source](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/generate/generate.go)

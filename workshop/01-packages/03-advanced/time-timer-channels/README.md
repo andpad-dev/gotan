@@ -4,7 +4,7 @@
 
 ![実行環境: Go 1.27 以上](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%201.27%20%E4%BB%A5%E4%B8%8A-F39C12)
 
-タイマーを停止して設定し直した直後に、以前の期限の通知を受け取った。再試行ジョブにそんな障害報告が残っています。いま同じコードを動かすと、チャンネル容量は **0** です。なんでこうなってるの？背景を調べよう。
+古い Go では、タイマーを停止して設定し直した後も、以前の期限の値を受け取ることがありました。いま同じコードを動かすと、チャンネル容量は **0** です。なんでこうなってるの？背景を調べよう。
 
 次のコードを [Go Playground で動かす](https://go.dev/play/p/F4r40BDO4dv) と、容量と停止後の再設定を確認できます。
 
@@ -37,9 +37,23 @@ stop before firing: true
 reset timer fired
 ```
 
+<details>
+<summary>調査の入り口</summary>
+
+まず [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方と、`go version` などの実行環境の記録手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 1.27 Release Notes](https://go.dev/doc/go1.27) — 実行環境に指定している Go 1.27 のリリースノート
+- [Go Wiki: Go 1.23 Timer Channel Changes](https://go.dev/wiki/Go123Timer) — Go 1.23 のタイマー変更を解説する公式 Wiki
+- [Hash-Based Bisect Debugging in Compilers and Runtimes](https://research.swtch.com/bisect) — Russ Cox がタイマー障害の調査を題材に書いた記事
+- [package time](https://pkg.go.dev/time) — `Timer` の説明はこのページにある
+
+</details>
+
 ---
 
-## 設問 1: 容量 0 は障害報告と何が違う？
+## 設問 1: 容量 0 は古い挙動と何が違う？
 
 Go 1.23 より前のタイマーチャンネルは容量 1 のバッファ付きでした。現行は容量 0 の同期チャンネルです。`Stop` や `Reset` が返った後、古い通知についてどの保証が得られるでしょうか。
 
@@ -64,7 +78,7 @@ Go 1.23 より前のタイマーチャンネルは容量 1 のバッファ付き
 
 Go 1.23 以降の新しい挙動では、タイマーチャンネルは容量 0 の同期チャンネルです。`Stop` または `Reset` が返った後に、その呼び出しより前に準備された古い時刻値を送受信しないことが保証されます。
 
-以前の容量 1 のチャンネルには古い通知が残り得たため、停止・再設定後にそれを受け取る複雑さがありました。再試行ジョブの障害報告はこの違いを指しています。
+以前の容量 1 のチャンネルには古い通知が残り得たため、停止・再設定後にそれを受け取る複雑さがありました。
 
 </details>
 
@@ -147,12 +161,12 @@ Go 1.23 では、新挙動の有効化にモジュールの `go` 行が関係し
 - **新挙動**: `time.NewTimer(0)` のチャンネルの `cap` / `len` で観察する。
 - **互換設定**: 環境変数の `GODEBUG`、`go.mod` の `godebug`、ソース中の `//go:debug`。どれがどの実行条件に効くかを整理する。
 
-出発点は次のとおりです。なぜ 3 本目だけ、容量を表示する前に失敗するのでしょうか。
+出発点は次のとおりです。Playground の実行環境は更新されるため、ここでは 2026-09-04 に Go 1.27.1 で再実行した結果を記録しています。なぜ 3 本目だけ、容量を表示する前に失敗するのでしょうか。
 
-| 実験 | Go 1.27.0 の結果 |
+| 実験 | Playground (Go 1.27.1) の結果 |
 | --- | --- |
-| [既定値](https://go.dev/play/p/zAkeGmN14Q7) | `go1.27.0 0 0` |
-| [`//go:debug asynctimerchan=0`](https://go.dev/play/p/V8esF3Hmib8) | `go1.27.0 0 0` |
+| [既定値](https://go.dev/play/p/zAkeGmN14Q7) | `go1.27.1 0 0` |
+| [`//go:debug asynctimerchan=0`](https://go.dev/play/p/V8esF3Hmib8) | `go1.27.1 0 0` |
 | [`//go:debug asynctimerchan=1`](https://go.dev/play/p/o-pDN23HyaX) | `invalid //go:debug: removed GODEBUG "asynctimerchan" set to old value "1"` |
 
 <details>
@@ -196,7 +210,7 @@ Go 1.27 ではこの設定は恒久的に削除され、`time` のタイマー�
 
 ## 設問 4: 長く議論された変更の影響箇所をどう突き止める？
 
-古い通知を受信する問題は、`Stop` / `Reset` の**不変条件**に関わります。提案 Issue と実装コメントを読んでください。Go チームが減らそうとした困難を、1 分でチームへ説明します。
+古い通知を受信する問題は、`Stop` / `Reset` の**不変条件**に関わります。提案 Issue と実装コメントを読み、Go が減らそうとした困難を説明してください。
 
 「タイマーを止める → 古い通知を空にする → 期限を設定し直す」を考えます。この途中で別の goroutine が `timer.C` を受信すると何が起きるでしょうか。取り違えを防ぐために利用側が覚えておく必要があったことを、現在の API 保証と比べてください。
 
@@ -237,7 +251,7 @@ Go 1.27 ではこの設定は恒久的に削除され、`time` のタイマー�
 
 移行時の大きなテストで失敗した場合、`GODEBUG=asynctimerchan=0` と `=1` をプロセス全体で切り替えれば、タイマー意味論の変更が失敗に関係するかを確認できます。しかし、それだけでは問題のある呼び出し箇所までは特定できません。`git bisect` がリポジトリのコミット履歴を探索するのに対し、`golang.org/x/tools/cmd/bisect` は同じテストを繰り返し、`GODEBUG` のハッシュパターンを使って新旧挙動を適用する呼び出しスタックの集合を絞ります。
 
-この探索は試行結果が一貫していることを前提にします。対象コマンド側の `go test -count=N` は揺らぐ失敗を観測しやすくする一方、`bisect -count=N` は bisect の各試行を複数回実行し、結果の不一致を検出します。後者は単に失敗率を上げる指定ではありません。Go 1.27 では設問 3 のとおり `asynctimerchan` 自体が削除されたため、この切り分けは Go 1.23〜1.26 の移行期間に使う診断手段です。最終的には、冒頭の障害報告にある旧来のドレインやタイミング依存を、現在の API 保証に合わせて修正します。
+この探索は試行結果が一貫していることを前提にします。対象コマンド側の `go test -count=N` は揺らぐ失敗を観測しやすくする一方、`bisect -count=N` は bisect の各試行を複数回実行し、結果の不一致を検出します。後者は単に失敗率を上げる指定ではありません。Go 1.27 では設問 3 のとおり `asynctimerchan` 自体が削除されたため、この切り分けは Go 1.23〜1.26 の移行期間に使う診断手段です。最終的には、旧来のドレインやタイミング依存を、現在の API 保証に合わせて修正します。
 
 </details>
 
@@ -249,13 +263,3 @@ Go 1.27 ではこの設定は恒久的に削除され、`time` のタイマー�
 タイマーチャンネルの `len` や `cap` を見て受信可能性を判定するコードは移行の影響を受けます。値が来ているかを確認したい場合は、非ブロッキングの `select` を使うというリリースノートの案内も確認しましょう。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go 1.27 Release Notes](https://go.dev/doc/go1.27)
-- [Go Wiki: Go 1.23 Timer Channel Changes](https://go.dev/wiki/Go123Timer)
-- [Hash-Based Bisect Debugging in Compilers and Runtimes](https://research.swtch.com/bisect)
-- [01-packages の調べ方](../../README.md)
-- [package time](https://pkg.go.dev/time)

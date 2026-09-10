@@ -2,11 +2,13 @@
 
 # Investigate nil and empty slices in encoding/json
 
-While reviewing the response from a project-details API with the frontend team, you found that projects without assignees returned only `{"assignees":null}`. The frontend always wants to process an array, so the contract requires `{"assignees":[]}` when the list is empty.
+**Execution environment**: Browser only. No Go installation is required.
+
+An API returns `{"values":null}`. Its consumer always processes an array, so the contract requires `{"values":[]}` when the slice is empty.
 
 You came across the following `json.Marshal` call in a review. Let’s investigate what it does.
 
-First, observe how two values that appear empty produce different output by [running the example in the Go Playground](https://go.dev/play/p/M_lGwwe4dMX).
+First, observe how two values that appear empty produce different output by [running the example in the Go Playground](https://go.dev/play/p/jz0RLXHZtWU).
 
 ```go
 package main
@@ -16,13 +18,13 @@ import (
 	"fmt"
 )
 
-type assigneeResponse struct {
-	Assignees []string `json:"assignees"`
+type response struct {
+	Values []string `json:"values"`
 }
 
 func main() {
-	nilJSON, _ := json.Marshal(assigneeResponse{})
-	emptyJSON, _ := json.Marshal(assigneeResponse{Assignees: []string{}})
+	nilJSON, _ := json.Marshal(response{})
+	emptyJSON, _ := json.Marshal(response{Values: []string{}})
 	fmt.Println("nil:", string(nilJSON))
 	fmt.Println("empty:", string(emptyJSON))
 }
@@ -31,15 +33,15 @@ func main() {
 This is the output with Go 1.26.4.
 
 ```text
-nil: {"assignees":null}
-empty: {"assignees":[]}
+nil: {"values":null}
+empty: {"values":[]}
 ```
 
 ---
 
 ## Question 1: Why is the JSON different when both lengths are 0?
 
-Both `assigneeResponse{}` and `assigneeResponse{Assignees: []string{}}` have a `len` of 0. Explain why one becomes `null` and the other `[]`, using the nature of slice values and the rules of `json.Marshal`.
+Both `response{}` and `response{Values: []string{}}` have a `len` of 0. Explain why one becomes `null` and the other `[]`, using the nature of slice values and the rules of `json.Marshal`.
 
 <details>
 <summary>Hint</summary>
@@ -59,7 +61,7 @@ Use the slice type specification to investigate how a merely declared value diff
 
 **Answer**
 
-The zero value of `[]string` is a nil slice. In contrast, `[]string{}` is an initialized empty slice even though its length is 0. `encoding/json` encodes a nil slice as JSON `null` and an initialized slice as a JSON array. Therefore, the first value becomes `{"assignees":null}` and the second becomes `{"assignees":[]}`.
+The zero value of `[]string` is a nil slice. In contrast, `[]string{}` is an initialized empty slice even though its length is 0. `encoding/json` encodes a nil slice as JSON `null` and an initialized slice as a JSON array. Therefore, the first value becomes `{"values":null}` and the second becomes `{"values":[]}`.
 
 </details>
 
@@ -67,7 +69,7 @@ The zero value of `[]string` is a nil slice. In contrast, `[]string{}` is an ini
 
 ## Question 2: How do you return an empty array according to the API contract?
 
-This API’s contract keeps the `assignees` field and represents no assignees as `[]`. How should you construct the response instead of adding `omitempty`? Why does `omitempty` not fit this contract?
+This API’s contract keeps the `values` field and represents no elements as `[]`. How should you construct the response instead of adding `omitempty`? Why does `omitempty` not fit this contract?
 
 <details>
 <summary>Hint</summary>
@@ -87,7 +89,7 @@ Check the field-tag documentation for `Marshal` and see how a slice of length 0 
 
 **Answer**
 
-Explicitly initialize the slice when constructing the response, for example with `Assignees: []string{}`. JSON will then contain `[]`, and the field will remain present. `omitempty` omits a slice of length 0 together with the field, so it cannot express this API’s required meaning: there are no assignees, but the list field exists.
+Explicitly initialize the slice when constructing the response, for example with `Values: []string{}`. JSON will then contain `[]`, and the field will remain present. `omitempty` omits a slice of length 0 together with the field, so it does not fit this contract.
 
 Whether an API contract uses `null`, an empty array, or no field at all is a design choice. This frontend contract chooses `[]`, which can always be iterated as an array, so return an initialized empty slice.
 

@@ -1,8 +1,8 @@
 [Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 03-cmd-tools](../../README.md)
 
-# Track Down the 600 ms Batch: `go tool pprof`
+# Track Down a 600 ms Calculation: `go tool pprof`
 
-A customer-facing batch issues codes every night. CI shows that the code-issuing test alone takes about 600 ms. Some people suggest reducing the loop count, but the seat codes are already checked against another system. To make it faster without changing output, first identify where the CPU is actually being used.
+A test that repeats the same calculation 100 times takes about 600 ms in CI. Its unit test fixes the output, so first identify where the CPU is actually being used without changing that result.
 
 **`main.go`**
 
@@ -13,7 +13,7 @@ import "fmt"
 
 var result uint64
 
-func seatCode(seed uint64) uint64 {
+func transform(seed uint64) uint64 {
 	for range 4_000_000 {
 		seed = seed*2862933555777941757 + 3037000493
 	}
@@ -21,11 +21,11 @@ func seatCode(seed uint64) uint64 {
 }
 
 func main() {
-	fmt.Println(seatCode(1))
+	fmt.Println(transform(1))
 }
 ```
 
-([Run it in the Go Playground](https://go.dev/play/p/5Qwd1dKuD3I))
+([Run it in the Go Playground](https://go.dev/play/p/8gkIRfzmhi8))
 
 ```console
 $ go run main.go
@@ -39,21 +39,21 @@ package main
 
 import "testing"
 
-func TestSeatCode(t *testing.T) {
-	if got, want := seatCode(1), uint64(15662720274509501185); got != want {
-		t.Fatalf("seatCode(1) = %d, want %d", got, want)
+func TestTransform(t *testing.T) {
+	if got, want := transform(1), uint64(15662720274509501185); got != want {
+		t.Fatalf("transform(1) = %d, want %d", got, want)
 	}
 }
 
-func TestIssueCodes(t *testing.T) {
+func TestManyTransforms(t *testing.T) {
 	for i := uint64(0); i < 100; i++ {
-		result ^= seatCode(i)
+		result ^= transform(i)
 	}
 }
 
-func BenchmarkSeatCode(b *testing.B) {
+func BenchmarkTransform(b *testing.B) {
 	for b.Loop() {
-		result = seatCode(1)
+		result = transform(1)
 	}
 }
 ```
@@ -61,7 +61,7 @@ func BenchmarkSeatCode(b *testing.B) {
 The following was run with Go 1.26.4 on macOS (Apple M1 Max):
 
 ```console
-$ go test -run '^TestIssueCodes$' -cpuprofile=cpu.out
+$ go test -run '^TestManyTransforms$' -cpuprofile=cpu.out
 PASS
 ok   	example.com/pprof-demo	1.190s
 
@@ -71,15 +71,21 @@ Type: cpu
 Duration: 612.42ms, Total samples = 410ms (66.95%)
 Showing nodes accounting for 410ms, 100% of 410ms total
       flat  flat%   sum%        cum   cum%
-     400ms 97.56% 97.56%      410ms   100%  example.com/pprof-demo.seatCode (inline)
+     400ms 97.56% 97.56%      410ms   100%  example.com/pprof-demo.transform (inline)
      10ms  2.44%   100%       10ms  2.44%  runtime.asyncPreempt
-         0     0%   100%      410ms   100%  example.com/pprof-demo.TestIssueCodes
+         0     0%   100%      410ms   100%  example.com/pprof-demo.TestManyTransforms
          0     0%   100%      410ms   100%  testing.tRunner
 ```
 
 Use `cpu.out` as the magnifying glass and `pprof-demo.test` as the map to find where the CPU time went.
 
 ---
+
+<details><summary>Investigation entry points</summary>
+
+Start with the [03-cmd-tools research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
 
 ## Question 1: What was collected, and what was not?
 
@@ -113,14 +119,14 @@ What does `go test -cpuprofile=cpu.out` create, and why does the test binary `pp
 
 ## Question 2: Descend from the function name to the line to change
 
-`seatCode` accounts for more than 97% in `-top`, but a function name alone cannot justify a code change in review. Find the command that reports information by source line and identify the observed center. Then explain why “shorten the loop” cannot be merged immediately.
+`transform` accounts for more than 97% in `-top`, but a function name alone cannot justify a code change in review. Find the command that reports information by source line and identify the observed center. Then explain why “shorten the loop” cannot be merged immediately.
 
 <details>
 <summary>Hint</summary>
 
 - `go tool pprof -h` lists an output format that displays source lines.
 - Use the same binary and `cpu.out`.
-- `TestSeatCode` provides a clue about compatibility.
+- `TestTransform` provides a clue about compatibility.
 
 </details>
 
@@ -131,24 +137,24 @@ What does `go test -cpuprofile=cpu.out` create, and why does the test binary `pp
 
 1. Read the [pprof documentation](https://go.dev/cmd/pprof/) about function and source-line views.
 2. Confirm that `-list` displays source associated with a function.
-3. Run `go tool pprof -list='seatCode' pprof-demo.test cpu.out` and read flat and cumulative time.
-4. Compare the result with `TestSeatCode` and the compatibility constraint.
+3. Run `go tool pprof -list='transform' pprof-demo.test cpu.out` and read flat and cumulative time.
+4. Compare the result with `TestTransform` and the compatibility constraint.
 
 **Answer**
 
 A typical result centers on the loop body:
 
 ```console
-$ go tool pprof -list='seatCode' pprof-demo.test cpu.out
+$ go tool pprof -list='transform' pprof-demo.test cpu.out
 Total: 410ms
-ROUTINE ======================== example.com/pprof-demo.seatCode
+ROUTINE ======================== example.com/pprof-demo.transform
      400ms      410ms (flat, cum)   100% of Total
-         .          .      7:func seatCode(seed uint64) uint64 {
+         .          .      7:func transform(seed uint64) uint64 {
       40ms       50ms      8:\tfor range 4_000_000 {
      360ms      360ms      9:\t\tseed = seed*2862933555777941757 + 3037000493
 ```
 
-`-top` narrows the candidate and `-list` connects it to source. However, merely reducing `4_000_000` changes the result. `TestSeatCode` fixes the output for `seed == 1`, so that change breaks the existing compatibility contract. A profile identifies where to investigate; it does not authorize discarding a specification.
+`-top` narrows the candidate and `-list` connects it to source. However, merely reducing `4_000_000` changes the result. `TestTransform` fixes the output for `seed == 1`, so that change breaks the existing compatibility contract. A profile identifies where to investigate; it does not authorize discarding a specification.
 
 </details>
 
@@ -159,7 +165,7 @@ ROUTINE ======================== example.com/pprof-demo.seatCode
 Use the existing tests and benchmark appropriately. Run the following command and explain what should be recorded and compared:
 
 ```console
-go test -run '^$' -bench '^BenchmarkSeatCode$' -benchmem -count=3
+go test -run '^$' -bench '^BenchmarkTransform$' -benchmem -count=3
 ```
 
 <details>
@@ -189,12 +195,12 @@ goos: darwin
 goarch: arm64
 pkg: example.com/pprof-demo
 cpu: Apple M1 Max
-BenchmarkSeatCode-10     235   5051027 ns/op       0 B/op       0 allocs/op
-BenchmarkSeatCode-10     238   5030072 ns/op       0 B/op       0 allocs/op
-BenchmarkSeatCode-10     237   5023913 ns/op       0 B/op       0 allocs/op
+BenchmarkTransform-10     235   5051027 ns/op       0 B/op       0 allocs/op
+BenchmarkTransform-10     238   5030072 ns/op       0 B/op       0 allocs/op
+BenchmarkTransform-10     237   5023913 ns/op       0 B/op       0 allocs/op
 ```
 
-`TestSeatCode` protects output compatibility. `BenchmarkSeatCode` compares `ns/op`, `B/op`, and `allocs/op`; record all three runs, the Go version, OS, CPU, and command. pprof finds an improvement candidate, the benchmark measures its effect, and the unit test protects behavior.
+`TestTransform` protects output compatibility. `BenchmarkTransform` compares `ns/op`, `B/op`, and `allocs/op`; record all three runs, the Go version, OS, CPU, and command. pprof finds an improvement candidate, the benchmark measures its effect, and the unit test protects behavior.
 
 </details>
 
@@ -209,7 +215,7 @@ BenchmarkSeatCode-10     237   5023913 ns/op       0 B/op       0 allocs/op
 
 ---
 
-## Research starting points
+## Primary sources
 
 1. [Go diagnostics guide](https://go.dev/doc/diagnostics)
 2. [Official pprof documentation](https://go.dev/cmd/pprof/)

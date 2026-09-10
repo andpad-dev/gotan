@@ -2,7 +2,7 @@
 
 # Investigate what `go vet` checks
 
-You noticed that a senior colleague added `go vet ./...` to a CI job in a pull request. Let’s investigate what it does.
+You noticed `go vet ./...` in a CI job. Let’s investigate what it does.
 
 For example, run `go vet` on code like this:
 
@@ -66,33 +66,56 @@ Use primary sources to confirm the role of `go vet` and the areas that the compi
 
 ---
 
-## Question 2: Which checkers does `go vet` have, and where can you read about `printf` in detail?
+## Question 2: Which analyzers does `go vet` have, and where can you read about `printf` in detail?
 
 The `printf` report above came from one of the many analyzers built into `go vet`. Investigate the overall picture and where to find documentation for an individual analyzer.
 
 <details>
-<summary>Hint</summary>
+<summary>Hint 1-a: Starting from the web documentation</summary>
 
-- The Overview of [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) contains a table of registered analyzers.
-- Run `go tool vet help` locally for the same list, and `go tool vet help printf` for the individual analyzer’s details.
-- The `printf` checker itself is in [`golang.org/x/tools`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf), not in the Go repository’s standard library.
+Check the official Go website's documentation, and read through `Command Documentation` in detail — there's a hint there.
 
 </details>
 
+<details>
+<summary>Hint 1-b: Starting from the command line</summary>
+
+Check `go vet`'s help from the command line.
+Read the comments closely — there's a hint there.
+
+Extra hint: `go help vet`, `go tool vet help`, `go doc vet`
+
+</details>
+
+<details>
+<summary>Hint 2</summary>
+
+Digging further into Hint 1 leads you to [`golang.org/x/tools/go/analysis`](https://pkg.go.dev/golang.org/x/tools/go/analysis).
+Digging into this package's directory structure lets you find the list of analyzers and the `printf` details page.
+</details>
 <details>
 <summary>Answer</summary>
 
 **Investigation path**
 
-1. Starting at [Go Documentation](https://go.dev/doc/), find the official documentation for `vet`.
-2. Scroll through the Overview of [`pkg.go.dev/cmd/vet`](https://pkg.go.dev/cmd/vet) and read the Registered analyzers table, which includes `appends`, `printf`, `slog`, `stdversion`, `waitgroup`, and about 30 others.
-3. Run `go tool vet help` to confirm the same list. Add an analyzer name, such as `go tool vet help printf`, to display that analyzer’s documentation and flags.
-4. The implementation documentation for the `printf` analyzer is at [`pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf). It describes checking the consistency of format strings and arguments for functions such as `fmt.Printf` and `fmt.Sprintf`.
+From the web documentation.
+
+1. Open [Go Documentation](https://go.dev/doc/) and go to `References` > `Command Documentation`. Then open the `vet` page.
+2. It guides you to [golang.org/x/tools/go/analysis](https://pkg.go.dev/golang.org/x/tools/go/analysis); open that page.
+3. Reading the `Analyzer` section shows you the analyzer list, the `printf` details, and where the files live.
+
+From the command line.
+
+1. `go tool vet help` gives you the analyzer list.
+2. To see an overview of `printf` on the command line, run `go tool vet help printf`.
+3. Running `go doc vet` guides you to [golang.org/x/tools/go/analysis](https://pkg.go.dev/golang.org/x/tools/go/analysis); open that page.
+4. Reading the `Analyzer` section shows you the analyzer list, the `printf` details, and where the files live.
 
 **Answer**
 
-- `go vet` is not one checker but **a collection of individual analyzers**. The Registered analyzers table in `pkg.go.dev/cmd/vet` and the output of `go tool vet help` are the official catalog.
+- `go vet` is not one checker but **a collection of individual analyzers**. To get the exact list for the version you're running, check `Registered analyzers:` in the output of `go tool vet help`.
 - Each analyzer is an independent module written on the [`golang.org/x/tools/go/analysis`](https://pkg.go.dev/golang.org/x/tools/go/analysis) framework. Its implementation and detailed documentation are usually in a `passes/<analyzer-name>` package.
+- The package documentation for the `printf` analyzer is at [`pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf`](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf). It describes checking the consistency of format strings and arguments for functions such as `fmt.Printf` and `fmt.Sprintf`.
 - The report in this example came from the `printf` analyzer. Its coverage and the `-printf.funcs` flag for specifying additional functions to check are documented in both `go tool vet help printf` and `pkg.go.dev/golang.org/x/tools/go/analysis/passes/printf`.
 
 </details>

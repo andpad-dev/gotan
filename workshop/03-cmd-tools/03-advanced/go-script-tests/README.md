@@ -24,6 +24,21 @@ func main() { println("hello world") }
 
 境界線より下の `hello.go` は [Go Playground](https://go.dev/play/p/4Quk7tidxe8) でも実行できます。この 1 枚は、どのようにテストへ変換されるのでしょうか。現在の実装、導入時の設計判断、再利用できる境界まで調べましょう。
 
+<details>
+<summary>調査の入り口</summary>
+
+まず [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go command](https://go.dev/cmd/go/) — `go` コマンドのドキュメント。ここから `cmd/go` のソースへたどれる
+- [Go 1.27.0 の `run_hello.txt`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/testdata/script/run_hello.txt) と [`script_test.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/script_test.go;l=39) — 題材のテキストそのものと、それを実行するテストコード
+- [Go Testing By Example](https://research.swtch.com/testing) — 2023 年に公開されたテストの書き方に関する記事
+- [2018 年の script test 導入 commit](https://github.com/golang/go/commit/5890e25b7ccb2d2249b2f8a02ef5dbc36047868b) — この仕組みを `cmd/go` に追加した変更
+- [`golang.org/x/tools/txtar@v0.47.0`](https://pkg.go.dev/golang.org/x/tools/txtar@v0.47.0) と [`rsc.io/script@v0.0.2`](https://pkg.go.dev/rsc.io/script@v0.0.2) — Go 本体の外で公開されている関連 module のドキュメント
+
+</details>
+
 ---
 
 ## 設問 1: 1 枚のテキストはどう分解され、実行される？
@@ -176,13 +191,3 @@ ok  	cmd/go	1.460s
 `txtar` は一般的な archive 形式を目指していません。Go 1.27.0 の package comment は、手で編集しやすいこと、テキストの file tree を保持できること、Git の履歴や code review で差分を読みやすいことを目標に挙げ、binary data、file mode、symbolic link などを非目標にしています。「本物の filesystem を完全に保存する形式」ではなく、「テストケースを読み書きする形式」だと分かると、1 枚の `.txt` という選択にも納得できます。
 
 </details>
-
----
-
-## 調査の入り口
-
-1. [Go command](https://go.dev/cmd/go/)
-2. [Go 1.27.0 の `run_hello.txt`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/testdata/script/run_hello.txt) と [`script_test.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/script_test.go;l=39)
-3. [Go Testing By Example](https://research.swtch.com/testing)
-4. [2018 年の script test 導入 commit](https://github.com/golang/go/commit/5890e25b7ccb2d2249b2f8a02ef5dbc36047868b)
-5. [`golang.org/x/tools/txtar@v0.47.0`](https://pkg.go.dev/golang.org/x/tools/txtar@v0.47.0) と [`rsc.io/script@v0.0.2`](https://pkg.go.dev/rsc.io/script@v0.0.2)

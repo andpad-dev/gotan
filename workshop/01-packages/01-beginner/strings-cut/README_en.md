@@ -1,10 +1,12 @@
 [Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 01-packages](../../README.md)
 
-# Split integration settings with strings.Cut
+# Split at the first delimiter with strings.Cut
 
-Integration settings for an external SaaS arrive from an administration screen as `key=value` entries such as `region=asia-east1`. The implementer wants to split the settings safely first, so an input missing its delimiter is not mistaken for an input whose value is empty. You came across `strings.Cut` in the code. Let’s investigate what it does.
+**Execution environment**: Browser only. No Go installation is required.
 
-Run the following observation log in the [Go Playground](https://go.dev/play/p/qzzfmNtViQU) to see how the result differs when the delimiter is present or absent.
+During review, you find code that splits a string at the first `=`. Investigate how it distinguishes an absent delimiter from an empty remainder.
+
+Run the following observation log in the [Go Playground](https://go.dev/play/p/ieMFoFpSNtz) to see how the result differs when the delimiter is present or absent.
 
 ```go
 package main
@@ -15,9 +17,9 @@ import (
 )
 
 func main() {
-	for _, setting := range []string{"region=asia-east1", "region"} {
-		key, value, found := strings.Cut(setting, "=")
-		fmt.Printf("%q -> key=%q value=%q found=%t\n", setting, key, value, found)
+	for _, input := range []string{"left=right", "left"} {
+		before, after, found := strings.Cut(input, "=")
+		fmt.Printf("%q -> before=%q after=%q found=%t\n", input, before, after, found)
 	}
 }
 ```
@@ -25,22 +27,22 @@ func main() {
 Output:
 
 ```text
-"region=asia-east1" -> key="region" value="asia-east1" found=true
-"region" -> key="region" value="" found=false
+"left=right" -> before="left" after="right" found=true
+"left" -> before="left" after="" found=false
 ```
 
 ---
 
 ## Question 1: What do the three return values communicate?
 
-What are the three return values of `strings.Cut`? Explain why, for `"region"`, `value == ""` alone cannot tell whether the value is empty or whether `=` was missing entirely.
+What are the three return values of `strings.Cut`? Explain why, for `"left"`, `after == ""` alone cannot tell whether the remainder is empty or whether `=` was missing entirely.
 
 <details>
 <summary>Hint</summary>
 
 - First open the standard package documentation from [How to investigate this category](../../README.md).
 - Search for `Cut` and read the return value names and the sentence about when the delimiter is absent.
-- Compare `"region="` and `"region"`: notice that `value` is empty in both cases, while `found` differs.
+- Compare `"left="` and `"left"`: notice that `after` is empty in both cases, while `found` differs.
 
 </details>
 
@@ -57,7 +59,7 @@ What are the three return values of `strings.Cut`? Explain why, for `"region"`, 
 
 The return values are, in order, the string `before` the first delimiter, the string `after` it, and `found`, which reports whether the delimiter was found.
 
-When `"region"` is cut with `"="`, `before` is the original `"region"`, `after` is `""`, and `found` is `false`. `after == ""` also occurs when the value is genuinely empty, as in `"region="`, so validate the setting format by checking `found`.
+When `"left"` is cut with `"="`, `before` is the original `"left"`, `after` is `""`, and `found` is `false`. `after == ""` also occurs for `"left="`, so check `found` to determine whether the delimiter existed.
 
 </details>
 
@@ -65,7 +67,7 @@ When `"region"` is cut with `"="`, `before` is the original `"region"`, `after` 
 
 ## Question 2: Where does it split?
 
-The integration target sends `callback=https://example.com/a=b`. Where does `strings.Cut(setting, "=")` split? Consider why this behavior is useful for the format in which only the first `=` is a meaningful boundary.
+Where does `strings.Cut("left=middle=right", "=")` split? Confirm the behavior of splitting only at the first `=`.
 
 <details>
 <summary>Hint</summary>
@@ -86,9 +88,9 @@ The integration target sends `callback=https://example.com/a=b`. Where does `str
 
 **Answer**
 
-The result is `before == "callback"`, `after == "https://example.com/a=b"`, and `found == true`. `Cut` splits only at the first match.
+The result is `before == "left"`, `after == "middle=right"`, and `found == true`. `Cut` splits only at the first match.
 
-That is useful when a format needs to separate a key from the rest of its value in one operation: an `=` inside the value is preserved. If the value is structured further, you can read it step by step by applying `Cut` to `after` again.
+The rest is preserved even when it contains another `=`. To split it further, apply `Cut` to `after` again.
 
 </details>
 

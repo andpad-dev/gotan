@@ -4,9 +4,8 @@
 
 ![実行環境: 不要](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-%E4%B8%8D%E8%A6%81-9E9E9E)
 
-Go ツールチェーンのサプライチェーン監査を担当することになりました。
-同僚は「配布されたコンパイラはソースどおりだ」と考えています。
-根拠は、ソースツリーに差分がなく、実行ファイルにも `go1.27.0` と書かれていることです。
+Go ツールチェーンの配布物がソースどおりか調べます。
+「ソースツリーに差分がなく、実行ファイルにも版が書かれていれば十分だ」という仮説を検証します。
 
 まず、コンパイラ実行ファイルに埋め込まれたビルド情報を表示します。
 次は Go 1.27.0 / macOS (arm64) で実行した結果です。
@@ -30,6 +29,22 @@ $ GOTOOLCHAIN=go1.27.0 go version -m "$(GOTOOLCHAIN=go1.27.0 go env GOTOOLDIR)/c
 この表示とクリーンなソースツリーは、どこまで信頼の根拠になるでしょうか。
 過去のコンパイラ攻撃を現在の Go 実装で追います。
 そのうえで、Go 1.27 のブートストラップと再現可能なビルドが何を検証しているのか調べます。
+
+<details>
+<summary>調査の入り口</summary>
+
+まず [04-deep-dive の調べ方](../../README.md) を開き、仕様・実装・設計背景をたどる順番を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go Documentation](https://go.dev/doc) — Go コマンドのドキュメントへ進み、`go version` の `-m` の説明を読む入口
+- [Go compiler](https://go.dev/cmd/compile/) — Go コンパイラ `cmd/compile` の公式ドキュメント
+- [Installing Go from source](https://go.dev/doc/install/source#go14) — ソースから Go をビルドする公式手順。ブートストラップの要件を扱う
+- [Perfectly Reproducible, Verified Go Toolchains](https://go.dev/blog/rebuild) — 再現可能なビルドと検証済みツールチェーンを説明する Go Blog の記事
+- [Go Reproducible Build Report](https://go.dev/rebuild) — 公開された Go ツールチェーンを再ビルドした結果のレポート
+- [Running the “Reflections on Trusting Trust” Compiler](https://research.swtch.com/nih) — Russ Cox がコンパイラ攻撃の現代版を実演した記事
+
+</details>
 
 ---
 
@@ -169,7 +184,7 @@ Go 1.27.0 の `cmd/dist` に書かれた大筋は次のとおりです。
 
 [Go Reproducible Build Report](https://go.dev/rebuild) を見てください。
 公開された Go ツールチェーンを `gorebuild` で再構築した結果が載っています。
-同僚はこのページの `PASS` を見て、こう言っています。
+このページの `PASS` から、次のように結論づけられるでしょうか。
 
 > これで Go のソースも、手元のコンパイラも、絶対に安全だと証明された。
 
@@ -215,7 +230,7 @@ Go 1.21 以降のツールチェーンは、同じソースから対象 OS・ア
 
 さらに `gorebuild` は、検証対象がすべて一致したかどうかではなく、レポートを書き出せたときに終了ステータス 0 を返します。自動化では終了コードだけを見ず、生成された JSON / HTML レポート内の各結果を確認する必要があります。
 
-したがって同僚の説明は、「公開配布物とソースの対応を独立再ビルドで強く検証できる」という部分は正しく、「ソースと手元の任意のコンパイラの絶対的な安全まで証明する」という部分は過剰です。
+したがって、「公開配布物とソースの対応を独立再ビルドで強く検証できる」という部分は正しく、「ソースと手元の任意のコンパイラの絶対的な安全まで証明する」という部分は過剰です。
 
 </details>
 
@@ -229,14 +244,3 @@ Go 1.21 以降のツールチェーンは、同じソースから対象 OS・ア
 Russ Cox の [Open Source Supply Chain Security at Google](https://research.swtch.com/acmscored) は、再現可能な Go ツールチェーンと依存関係の対策を含む、講演動画・スライド・参考文献への入口です。ページにもあるとおり、言語などに関する講演中の意見は Google の見解ではなく講演者個人のものです。個々の仕組みを断定するときは、そこからリンクされた Go 公式資料や実装へ戻って確認します。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go Documentation](https://go.dev/doc)
-- [Go compiler](https://go.dev/cmd/compile/)
-- [Installing Go from source](https://go.dev/doc/install/source#go14)
-- [Perfectly Reproducible, Verified Go Toolchains](https://go.dev/blog/rebuild)
-- [Go Reproducible Build Report](https://go.dev/rebuild)
-- [Running the “Reflections on Trusting Trust” Compiler](https://research.swtch.com/nih)

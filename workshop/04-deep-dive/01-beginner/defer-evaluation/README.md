@@ -4,7 +4,7 @@
 
 ![実行環境: 指定なし](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-%E6%8C%87%E5%AE%9A%E3%81%AA%E3%81%97-9E9E9E)
 
-CSV インポートの処理で、開始・完了の状態を監査ログへ残しています。処理は完了しているのに、後片付けのログだけ `started` と出てしまいました。ログを確実に出すために `defer` を使っています。
+状態を `started` から `completed` へ変えるコードで `defer` を使っています。二つの遅延呼び出しが異なる値を出す理由を調べましょう。
 
 次のコードの `defer` を見かけました。どんなものか調べてみましょう。
 
@@ -32,6 +32,19 @@ Go 1.27.0 での実行結果です。
 closure: completed
 direct: started
 ```
+
+<details>
+<summary>調査の入り口</summary>
+
+まず [04-deep-dive の調べ方](../../README.md)を開き、Go 言語仕様を起点にします。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 言語仕様: Defer statements](https://go.dev/ref/spec#Defer_statements) — `defer` 文の規則を定義する節
+- [Go 言語仕様: Function literals](https://go.dev/ref/spec#Function_literals) — 関数リテラルの規則を定義する節
+- [Go Blog: Defer, Panic, and Recover](https://go.dev/blog/defer-panic-and-recover) — 観測結果の照合先
+
+</details>
 
 ---
 
@@ -64,7 +77,7 @@ Go 言語仕様で `defer` 文を探します。関数呼び出しそのもの�
 
 ## 設問 2: なぜ `closure` は完了後の値で、先に表示されるのか？
 
-無名関数側は `completed` を表示し、しかも `direct` より先に表示されます。無名関数が `status` を読む時点と、複数の `defer` の実行順を調べてください。冒頭の監査ログが古い状態を記録した理由を説明してください。
+無名関数側は `completed` を表示し、しかも `direct` より先に表示されます。無名関数が `status` を読む時点と、複数の `defer` の実行順を調べてください。
 
 <details>
 <summary>ヒント</summary>
@@ -86,15 +99,6 @@ Go 言語仕様では、無名関数を `Function literals` と呼びます。�
 
 関数リテラルは外側の関数と `status` 変数を共有します。無名関数に `status` を引数として渡して固定してはいないため、`closure` の本体は遅延呼び出しが実行される時点の変数を参照します。その時点では代入済みで `completed` です。また、遅延呼び出しは積み重ねた逆順に実行されるため、後から登録した無名関数が先に表示されます。
 
-つまり、冒頭の `direct` ログが古いのは「後片付けで出力したから」ではなく、引数が開始時に評価・保存されていたからです。完了時の状態を残す必要がある監査ログでは、値をいつ固定したいのかを決めて、無名関数か引数かを選びます。
+`direct` が古い値を出すのは、引数が `defer` 文の実行時に評価・保存されていたからです。値をいつ固定したいのかを決めて、無名関数か引数かを選びます。
 
 </details>
-
----
-
-## 調査の入り口
-
-1. [04-deep-dive の調べ方](../../README.md)を開き、Go 言語仕様を起点にします。
-2. [Go 言語仕様: Defer statements](https://go.dev/ref/spec#Defer_statements) で評価時点と実行順を調べます。
-3. [Go 言語仕様: Function literals](https://go.dev/ref/spec#Function_literals) で、無名関数が外側の変数を参照する規則を調べます。
-4. [Go Blog: Defer, Panic, and Recover](https://go.dev/blog/defer-panic-and-recover) で観測結果を照合します。

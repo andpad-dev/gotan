@@ -1,8 +1,10 @@
 [Scenario index (Japanese)](../../../SCENARIOS.md) | [Workshop guide (Japanese)](../../../README.md) | [How to research 03-cmd-tools](../../README.md)
 
-# Track Down the 100 ms Order Process: `go tool trace`
+# Track Down 100 ms of Synchronization Waiting: `go tool trace`
 
-A test for an order-processing service runs four validation operations that each take 25 ms. They should run concurrently, yet completion takes about 100 ms. CPU usage is low, and a CPU profile does not make the cause of the wait clear. The operations are also grouped into one `order-processing` task. Let us investigate why execution tracing is shaped this way and build a procedure for the next incident.
+This directory includes `go.mod`, `main.go`, and `main_test.go`. Run the local commands from this directory.
+
+A test runs the same operation four times, each taking 25 ms. They should run concurrently, yet completion takes about 100 ms. CPU usage is low, and a CPU profile does not make the cause of the wait clear. Let us investigate why execution tracing is shaped this way.
 
 **`main.go`**
 
@@ -17,17 +19,17 @@ import (
 	"time"
 )
 
-func processOrders(ctx context.Context) {
-	var orderLock sync.Mutex
+func processWork(ctx context.Context) {
+	var lock sync.Mutex
 	var wg sync.WaitGroup
 
 	for range 4 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			trace.WithRegion(ctx, "validate-order", func() {
-				orderLock.Lock()
-				defer orderLock.Unlock()
+			trace.WithRegion(ctx, "step", func() {
+				lock.Lock()
+				defer lock.Unlock()
 				time.Sleep(25 * time.Millisecond)
 			})
 		}()
@@ -36,16 +38,16 @@ func processOrders(ctx context.Context) {
 }
 
 func main() {
-	processOrders(context.Background())
-	fmt.Println("orders processed")
+	processWork(context.Background())
+	fmt.Println("work completed")
 }
 ```
 
-([Run it in the Go Playground](https://go.dev/play/p/8Afw0ygPRUL))
+([Run it in the Go Playground](https://go.dev/play/p/Q2woqsOfJ2y))
 
 ```console
 $ go run main.go
-orders processed
+work completed
 ```
 
 **`main_test.go`**
@@ -59,27 +61,33 @@ import (
 	"testing"
 )
 
-func TestProcessOrders(t *testing.T) {
-	ctx, task := trace.NewTask(context.Background(), "order-processing")
+func TestProcessWork(t *testing.T) {
+	ctx, task := trace.NewTask(context.Background(), "work")
 	defer task.End()
 
-	processOrders(ctx)
+	processWork(ctx)
 }
 ```
 
-With Go 1.26.4 on macOS:
+With Go 1.27.0 on macOS (elapsed time varies by environment):
 
 ```console
-$ go test -run '^TestProcessOrders$' -trace=order.trace
+$ go test -run '^TestProcessWork$' -trace=work.trace
 PASS
-ok   	example.com/trace-demo	0.469s
+ok   	example.com/trace-demo	0.853s
 ```
 
 ---
 
+<details><summary>Investigation entry points</summary>
+
+Start with the [03-cmd-tools research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
+
 ## Question 1: Why collect a trace when the CPU appears idle?
 
-Four operations are started with `go`, but the test takes about 100 ms. Explain from primary sources why a CPU profile alone is insufficient and what `go test -trace=order.trace` can observe.
+Four operations are started with `go`, but the test takes about 100 ms. Explain from primary sources why a CPU profile alone is insufficient and what `go test -trace=work.trace` can observe.
 
 First establish the current contract in the [Go diagnostics guide](https://go.dev/doc/diagnostics), then read Russ Cox's account of pprof's sampling design, [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof). Treat its 2013 implementation details as history, not as the current runtime specification, and explain what limitation follows from counting periodically sampled stacks when the latency is spent waiting.
 
@@ -101,11 +109,11 @@ First establish the current contract in the [Go diagnostics guide](https://go.de
 1. Use the [diagnostics guide](https://go.dev/doc/diagnostics) to distinguish time actively consuming CPU cycles from execution-trace observations of latency and goroutine behavior.
 2. Read “Profiling with pprof” and “Interpreting the data” in [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof). Use its explanation of periodically sampled stacks as design history, but do not treat details such as the fixed-size tables in the 2013 implementation as evidence of today's implementation.
 3. Use `go help testflag` to confirm that `-trace trace.out` writes an execution trace before the test exits.
-4. Read the [trace documentation](https://go.dev/cmd/trace/) and the [Go 1.26.4 `cmd/trace` source](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/trace/doc.go).
+4. Read the [trace documentation](https://go.dev/cmd/trace/) and the [Go 1.27.0 `cmd/trace` source](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/trace/doc.go).
 
 **Answer**
 
-A CPU profile is good at finding expensive CPU paths. The current diagnostics guide explicitly distinguishes active CPU consumption from sleeping or I/O waiting, and the research.swtch.com article explains the underlying sampling model: a CPU profile counts stacks observed periodically while code is executing. A goroutine blocked on a lock is not consuming CPU during that wait, so its waiting duration may not be prominent in a CPU profile. An execution trace instead records runtime events over time, including goroutine creation, blocking and unblocking, scheduling, syscalls, GC, and heap size. `go test -trace=order.trace` records those events while the reproducible test runs, allowing us to see when the four goroutines ran, stopped, and became serialized instead of assuming the lock was the cause from the duration alone.
+A CPU profile is good at finding expensive CPU paths. The current diagnostics guide explicitly distinguishes active CPU consumption from sleeping or I/O waiting, and the research.swtch.com article explains the underlying sampling model: a CPU profile counts stacks observed periodically while code is executing. A goroutine blocked on a lock is not consuming CPU during that wait, so its waiting duration may not be prominent in a CPU profile. An execution trace instead records runtime events over time, including goroutine creation, blocking and unblocking, scheduling, syscalls, GC, and heap size. `go test -trace=work.trace` records those events while the reproducible test runs, allowing us to see when the four goroutines ran, stopped, and became serialized instead of assuming the lock was the cause from the duration alone.
 
 </details>
 
@@ -113,7 +121,7 @@ A CPU profile is good at finding expensive CPU paths. The current diagnostics gu
 
 ## Question 2: Turn a trace into evidence of waiting
 
-Before opening `order.trace` in a browser, extract synchronization waiting in pprof format. Which commands should you run? Identify the line where the wait occurs and explain how `trace.NewTask` and `trace.WithRegion` add useful labels.
+Before opening `work.trace` in a browser, extract synchronization waiting in pprof format. Which commands should you run? Identify the line where the wait occurs and explain how `trace.NewTask` and `trace.WithRegion` add useful labels.
 
 <details>
 <summary>Hint</summary>
@@ -133,12 +141,12 @@ Before opening `order.trace` in a browser, extract synchronization waiting in pp
 2. Run:
 
     ```console
-    go tool trace -pprof=sync order.trace > sync.pprof
+    go tool trace -pprof=sync work.trace > sync.pprof
     go tool pprof -top sync.pprof
-    go tool pprof -list='processOrders.func1.1' sync.pprof
+    go tool pprof -list='processWork.func1.1' sync.pprof
     ```
 
-3. Read `go doc runtime/trace` and the [Go 1.26.4 runtime/trace source](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/runtime/trace/annotation.go).
+3. Read `go doc runtime/trace` and the [Go 1.27.0 runtime/trace source](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/trace/annotation.go).
 
 **Answer**
 
@@ -147,24 +155,24 @@ A representative profile is:
 ```console
 $ go tool pprof -top sync.pprof
 Type: delay
-Showing nodes accounting for 466.64ms, 100% of 466.64ms total
+Showing nodes accounting for 464.38ms, 100% of 464.38ms total
       flat  flat%   sum%        cum   cum%
-  205.63ms 44.07% 44.07%   205.63ms 44.07%  runtime.chanrecv1
-  156.72ms 33.58% 77.65%   156.72ms 33.58%  sync.(*Mutex).Lock
-  104.29ms 22.35%   100%   104.29ms 22.35%  sync.(*WaitGroup).Wait
+  204.65ms 44.07% 44.07%   204.65ms 44.07%  runtime.chanrecv1
+  156.27ms 33.65% 77.72%   156.27ms 33.65%  sync.(*Mutex).Lock
+  103.46ms 22.28%   100%   103.46ms 22.28%  sync.(*WaitGroup).Wait
 ```
 
 Then `-list` connects the wait to the lock line:
 
 ```console
-$ go tool pprof -list='processOrders.func1.1' sync.pprof
-ROUTINE ======================== example.com/trace-demo.processOrders.func1.1
-         .   156.72ms     19: trace.WithRegion(ctx, "validate-order", func() {
-         .   156.72ms     20:  orderLock.Lock()
-         .          .     21:  defer orderLock.Unlock()
+$ go tool pprof -list='processWork.func1.1' sync.pprof
+ROUTINE ======================== example.com/trace-demo.processWork.func1.1
+         .   156.27ms     19: trace.WithRegion(ctx, "step", func() {
+         .   156.27ms     20:  lock.Lock()
+         .          .     21:  defer lock.Unlock()
 ```
 
-The mutex wait and the nearly serial sum of four 25 ms operations identify the shared lock as the likely cause. `NewTask` attaches `order-processing` to the context, and `WithRegion` labels each goroutine's `validate-order` interval. These labels let the trace relate runtime waiting to logical work and guide the next design choice: split the lock or move validation outside it.
+The mutex wait and the nearly serial sum of four 25 ms operations identify the shared lock as the likely cause. `NewTask` attaches `work` to the context, and `WithRegion` labels each goroutine's `step` interval. These labels let the trace relate runtime waiting to logical work.
 
 </details>
 
@@ -172,7 +180,7 @@ The mutex wait and the nearly serial sum of four 25 ms operations identify the s
 
 ## Question 3: Why is starting a trace after the slowdown too late?
 
-The operations team proposes starting a trace after detecting a slow request, but the relevant wait has already happened. Trace how the execution tracer changed in Go 1.21 and Go 1.22, and explain how flight recording addresses this. Also explain why a streamable trace does not mean `go tool trace` never loads a large trace into memory.
+Suppose tracing starts only after a slow execution is detected, but the relevant wait has already happened. Trace how the execution tracer changed in Go 1.21 and Go 1.22, and explain how flight recording addresses this. Also explain why a streamable trace does not mean `go tool trace` never loads a large trace into memory.
 
 <details>
 <summary>Hint</summary>
@@ -203,7 +211,7 @@ Starting after detection cannot record the earlier lock contention. Go 1.21 redu
 
 ## Question 4: Decide who can see the trace viewer
 
-A trace can contain goroutine names, task names, and source locations. Which `-http` value should a developer use on a laptop to avoid exposing it unintentionally? Confirm the Go 1.27 change to `go tool trace -http=:6060` and the explicit all-addresses form from primary sources. The command measurements above use Go 1.26.4; verify the listen-address change in the release notes.
+A trace can contain goroutine names, task names, and source locations. Which `-http` value should a developer use on a laptop to avoid exposing it unintentionally? Confirm the Go 1.27 change to `go tool trace -http=:6060` and the explicit all-addresses form from primary sources. The commands above use Go 1.27.0, so you can reproduce the listen-address change locally.
 
 <details>
 <summary>Hint</summary>
@@ -221,11 +229,11 @@ A trace can contain goroutine names, task names, and source locations. Which `-h
 
 1. Read the Trace section of the [Go 1.27 release notes](https://go.dev/doc/go1.27).
 2. Run `go tool trace -h` to confirm `-http=addr`.
-3. Use `go tool trace -http=localhost:0 order.trace` for a local-only viewer on an available port.
+3. Use `go tool trace -http=localhost:0 work.trace` for a local-only viewer on an available port.
 
 **Answer**
 
-In Go 1.27, the port-only form `-http=:6060` is restricted to localhost, matching the safer behavior of `go tool pprof -http`. To listen on all addresses, specify one explicitly, such as `-http=0.0.0.0:6060`. For ordinary laptop investigation, use `-http=localhost:0`; trace labels such as `order-processing` and `validate-order` may reveal operational information, so being able to display a trace is not the same as being permitted to publish it.
+In Go 1.27, the port-only form `-http=:6060` is restricted to localhost, matching the safer behavior of `go tool pprof -http`. To listen on all addresses, specify one explicitly, such as `-http=0.0.0.0:6060`. For ordinary investigation, use `-http=localhost:0`; trace labels may reveal information, so being able to display a trace is not the same as being permitted to publish it.
 
 </details>
 
@@ -240,12 +248,12 @@ In Go 1.27, the port-only form `-http=:6060` is restricted to localhost, matchin
 
 ---
 
-## Research starting points
+## Primary sources
 
 1. [Go diagnostics guide](https://go.dev/doc/diagnostics)
 2. [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof)
 3. [Official trace documentation](https://go.dev/cmd/trace/)
-4. `go help testflag`, `go tool trace -h`, `go tool pprof -h`, and [Go 1.26.4 `cmd/trace` source](https://cs.opensource.google/go/go/+/refs/tags/go1.26.4:src/cmd/trace/doc.go)
+4. `go help testflag`, `go tool trace -h`, `go tool pprof -h`, and [Go 1.27.0 `cmd/trace` source](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/trace/doc.go)
 5. [Go 1.21 release notes](https://go.dev/doc/go1.21) and [Go 1.22 release notes](https://go.dev/doc/go1.22)
 6. [Execution tracer overhaul design](https://go.googlesource.com/proposal/+/refs/heads/master/design/60773-execution-tracer-overhaul.md) and [Issue #63185](https://github.com/golang/go/issues/63185)
 7. [Go 1.27 release notes](https://go.dev/doc/go1.27)

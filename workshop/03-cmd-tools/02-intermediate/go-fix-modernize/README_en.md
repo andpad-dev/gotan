@@ -2,7 +2,7 @@
 
 # Bring Existing Code Up to Date with go fix Modernizers
 
-We want to bring our team's Go code in line with current idioms. We heard that `go fix` was revamped in Go 1.26. Let us investigate how to use it, how it differs from `go vet`, and how it can help migrate our own APIs.
+We want to bring Go code in line with current idioms. `go fix` was revamped in Go 1.26. Let us investigate how to use it, how it differs from `go vet`, and how it can help migrate an API.
 
 For example, here is code written in an unmistakably old style ([Playground](https://go.dev/play/p/6pcJuZQr7_0)):
 
@@ -74,6 +74,12 @@ What exactly is this `go fix`, and how far does it go?
 
 ---
 
+<details><summary>Investigation entry points</summary>
+
+Start with the [03-cmd-tools research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
+
 ## Question 1: Find the role of the new `go fix`
 
 What does the `go fix` revamped in Go 1.26 do, and how does it differ from the old fixers dating back to Go 1.0 and from `go vet`?
@@ -106,7 +112,7 @@ Go 1.26 completely rewrote `go fix`. It now runs a collection of fixers built on
 
 ## Question 2: Inspect, select, and apply modernizers
 
-Before running `go fix ./...` on a team's code, how can you see which modernizers apply, inspect their proposed replacements, and apply only the changes you need?
+Before running `go fix ./...`, how can you see which modernizers apply, inspect their proposed replacements, and apply only the changes you need?
 
 <details>
 <summary>Hint</summary>
@@ -189,7 +195,7 @@ Then `go fix -inline ./...` (or `go fix ./...`) expands the body at call sites, 
 
 ---
 
-## Research starting points
+## Primary sources
 
 - Local commands: `go help fix` / `go tool fix help` / `go tool fix help <analyzer>`
 - Release notes: [Go 1.26 release notes #go-command](https://go.dev/doc/go1.26#go-command)

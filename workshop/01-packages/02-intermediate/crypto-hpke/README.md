@@ -1,14 +1,14 @@
 [シナリオ一覧](../../../SCENARIOS.md) | [ワークショップ進行ガイド](../../../README.md) | [01-packages の調べ方](../../README.md)
 
-# 監査先へ暗号化ファイルを届けよう
+# crypto/hpke で一通のメッセージを暗号化しよう
 
 ![実行環境: Go 1.26 以上](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%201.26%20%E4%BB%A5%E4%B8%8A-F39C12)
 
-外部監査への顧客データ提出では、送信側が監査先の公開鍵だけを知り、監査先だけが内容を開ける形にしたいです。Go 1.26 で追加された `crypto/hpke` を使いたいです。標準ライブラリの例に沿って、一通のメッセージを届けたいです。どういうふうにやればいいか調べよう。
+送信側が受信側の公開鍵で一通のメッセージを暗号化し、受信側が秘密鍵で復号します。Go 1.26 で追加された `crypto/hpke` の API を調べましょう。
 
 これは API の役割を調べる演習です。実運用のプロトコル選定や鍵管理には、必ず組織のセキュリティレビューを加えてください。
 
-同じ `info` なら復号でき、異なる `info` なら拒否されます。次のコードを [Go Playground で動かす](https://go.dev/play/p/FDMWW7yXLFE) と確認できます。
+同じ `info` なら復号でき、異なる `info` なら拒否されます。次のコードを [Go Playground で動かす](https://go.dev/play/p/ONc5q75dM5t) と確認できます。
 
 ```go
 package main
@@ -29,8 +29,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	info := []byte("audit-export/v1")
-	ciphertext, err := hpke.Seal(publicKey, kdf, aead, info, []byte("customer export ready"))
+	info := []byte("example/v1")
+	ciphertext, err := hpke.Seal(publicKey, kdf, aead, info, []byte("message"))
 	if err != nil {
 		panic(err)
 	}
@@ -39,7 +39,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	_, wrongInfoErr := hpke.Open(privateKey, kdf, aead, []byte("audit-export/v2"), ciphertext)
+	_, wrongInfoErr := hpke.Open(privateKey, kdf, aead, []byte("example/v2"), ciphertext)
 	fmt.Printf("received=%q\n", plaintext)
 	fmt.Println("different info rejected:", wrongInfoErr != nil)
 }
@@ -48,9 +48,21 @@ func main() {
 実行結果:
 
 ```text
-received="customer export ready"
+received="message"
 different info rejected: true
 ```
+
+<details>
+<summary>調査の入り口</summary>
+
+まず [01-packages の調べ方](../../README.md) を開き、標準パッケージの Overview の読み方を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 1.26 Release Notes](https://go.dev/doc/go1.26) — `crypto/hpke` が追加されたときのリリースノート
+- [package crypto/hpke](https://pkg.go.dev/crypto/hpke) — サンプルで使っている型と関数の説明はこのページにある
+
+</details>
 
 ---
 
@@ -95,7 +107,7 @@ HPKE の暗号スイートは KEM（鍵カプセル化方式）、KDF（鍵導�
 
 - `Seal` と `Open` の引数を横に並べる。
 - 一回だけ送る API の `Seal` / `Open` のコメントを読む。
-- たとえば公開鍵を誰でも入れられる郵便受け、秘密鍵を受取人だけが持つ鍵、`info` を「監査エクスポート v1」という用途ラベルだと考える。同じラベルを使わないと、同じ暗号文でも開けない理由を確認する。
+- 公開鍵、秘密鍵、`info` のうち、`Seal` と `Open` の両方へ渡す値を確認する。
 
 </details>
 
@@ -112,7 +124,7 @@ HPKE の暗号スイートは KEM（鍵カプセル化方式）、KDF（鍵導�
 
 送信側は受信者の公開鍵で `Seal` し、受信側は対応する秘密鍵で `Open` します。ここでは `privateKey.PublicKey().Bytes()` を送信側が受け取り、`kem.NewPublicKey` で公開鍵として復元しています。
 
-`info` は両者で同じ値を使う文脈情報です。サンプルでは監査データのエクスポート形式の版を表します。復号側に異なる `info` を渡すと、同じ文脈で作られた暗号文ではないため `Open` がエラーを返します。
+`info` は両者で同じ値を使う文脈情報です。復号側に異なる `info` を渡すと、同じ文脈で作られた暗号文ではないため `Open` がエラーを返します。
 
 </details>
 
@@ -164,11 +176,3 @@ HPKE の暗号スイートは KEM（鍵カプセル化方式）、KDF（鍵導�
 一通だけ送るなら `Seal` / `Open` が使えます。複数メッセージを送る `Sender` / `Recipient` では、成功した `Seal` と `Open` の呼び出し順を両側でそろえる必要があります。用途に応じて API を選びましょう。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go 1.26 Release Notes](https://go.dev/doc/go1.26)
-- [01-packages の調べ方](../../README.md)
-- [package crypto/hpke](https://pkg.go.dev/crypto/hpke)

@@ -4,7 +4,19 @@
 
 ![実行環境: 指定なし](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-%E6%8C%87%E5%AE%9A%E3%81%AA%E3%81%97-9E9E9E)
 
-久しぶりに Go のコードを保守することになり、レビュー中に `for` 文と `switch` 文を見かけました。他言語の構文とうろ覚えで混同しないよう、実行結果から Go 言語仕様の該当箇所を探してみましょう。
+レビュー中に `for` 文と `switch` 文を見かけました。実行結果から Go 言語仕様の該当箇所を探してみましょう。
+
+<details>
+<summary>調査の入り口</summary>
+
+まず [01-packages の調べ方](../../README.md) を開き、言語仕様の節の探し方を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go Documentation](https://go.dev/doc/) — Language Specification から Go 言語仕様を開く入口
+- [Go 言語仕様](https://go.dev/ref/spec) — `for` 文と `switch` 文の規則は、この 1 ページにまとまった仕様書の中にある
+
+</details>
 
 ---
 
@@ -150,11 +162,3 @@ two
 [Go 言語仕様](https://go.dev/ref/spec) は 1 ページの HTML に目次と各節がまとまっています。親の節には構文定義だけがあり、具体的な規則が下位節に分かれていることがあります。今回の `range` なら `#For_range`、式 switch なら `#Expression_switches` の節リンクまで共有すると、班の全員が同じ根拠を開けます。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go Documentation](https://go.dev/doc/)
-- [01-packages の調べ方](../../README.md)
-- [Go 言語仕様](https://go.dev/ref/spec)

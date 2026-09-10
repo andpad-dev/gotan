@@ -6,14 +6,32 @@
 
 `go run` を見かけました。どんなものか調べてみましょう。
 
-同僚に「`go run` はスクリプト感覚でサクッと動く」と言われました。
-「Go もインタプリタで動かせるんだ」とも言っています。
+`go run` はスクリプトのようにすぐ実行できます。
+では、Go のコードをインタプリタで動かしているのでしょうか。
 
 でも Go はコンパイル言語のはずです。
 `go run` を実行したとき、**裏では何が起きている**のでしょうか。
 
 手元で試す例: https://go.dev/play/p/_BqTu8xBI9h
 このディレクトリの [main.go](./main.go) も同じ内容です。`go run` してそのまま調査に使えます。
+
+<details>
+<summary>調査の入り口</summary>
+
+まず [03-cmd-tools の調べ方](../../README.md) を開き、`go` コマンドとツールの逆引き手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go コマンドの公式ドキュメント](https://go.dev/cmd/go/) — `go` の各サブコマンドとフラグの説明
+- [`pkg.go.dev/cmd/go` の「Compile and run Go program」節](https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program)（`go help run` と同じ内容） — `go run` サブコマンドの説明
+- [Go 1.24 リリースノートの Go command 節](https://go.dev/doc/go1.24#go-command) — Go 1.24 での `go` コマンドの変更点
+- [提案 Issue #69290](https://go.dev/issue/69290) — 上のリリースノートに載った変更のもとになった提案の議論
+- [Go 1.27.0 の `cmd/go/internal/run/run.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/run/run.go) — `go run` サブコマンドの実装が置かれているファイル
+- [Go 1.27.0 の `cmd/go/internal/work/action.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/action.go)、[`exec.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/exec.go)、[`buildid.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/buildid.go) — `go run` と `go build` が共有するビルド処理（`work` パッケージ）のファイル
+
+</details>
+
+---
 
 ## 設問 1: `go run` は、ソースコードをインタプリタのように解釈しながら実行している？
 
@@ -180,7 +198,7 @@ $ find /var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX -maxdepth 3
 
 ヒント 1 で見つかるパッケージは、`go build` とも共通処理を担当するくらい大きく、ファイルも複数に分かれています。全部を上から読もうとせず、次のように的を絞ってみましょう。
 
-- ページ内検索（`f` キー）で、「ディレクトリを作る／消す」といった処理に典型的に出てくる標準ライブラリの関数名（例: `os.MkdirTemp` や `RemoveAll` のような名前）を探してみましょう。
+- ページ内検索（Ctrl+F / Cmd+F）で、「ディレクトリを作る／消す」といった処理に典型的に出てくる標準ライブラリの関数名（例: `os.MkdirTemp` や `RemoveAll` のような名前）を探してみましょう。
 - 「実行ファイルの実体」を表していそうな変数・フィールド名を探し、それがどこで値を設定され、どこで読み出されているかを追ってみましょう。
 - 「コンパイラ・リンカを実際に呼び出している」処理は、さらに別の関数に分かれています。ビルドの動詞そのもの（コンパイルする・リンクする）を含むような、短い名前の関数を探すと見つけやすいです。
 - 1 つの関数を最後まで読み切ろうとせず、空行で区切られたブロックごとに「これは準備をしているブロックか」「実際に何かを実行しているブロックか」を大づかみするのがコツです（設問 1 のヒントで使った読み方と同じです）。
@@ -294,16 +312,3 @@ if !cfg.BuildWork {
 `go help environment` の `GOTMPDIR` の説明でも確認できます。
 
 </details>
-
----
-
-## 調査の入り口
-
-- https://go.dev/cmd/go/
-- https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program
-- https://go.dev/doc/go1.24#go-command
-- https://go.dev/issue/69290
-- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/run/run.go
-- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/action.go
-- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/exec.go
-- https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/internal/work/buildid.go

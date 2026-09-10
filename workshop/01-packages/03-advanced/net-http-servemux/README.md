@@ -4,9 +4,9 @@
 
 ![実行環境: Go 1.22 以上](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%201.22%20%E4%BB%A5%E4%B8%8A-F39C12)
 
-同じ `ServeMux` に `/reports/latest` と `/reports/{id}` を登録しました。すると**登録順に頼らず**、より具体的なルートが選ばれます。誤ったメソッドには **405** が返ります。なんでこうなってるの？背景を調べよう。
+同じ `ServeMux` に `/x/fixed` と `/x/{value}` を登録しました。すると**登録順に頼らず**、より具体的なルートが選ばれます。誤ったメソッドには **405** が返ります。なんでこうなってるの？背景を調べよう。
 
-次のコードは [Go Playground で動かせます](https://go.dev/play/p/fbR5kWMHL2Z)。リテラル一致、ワイルドカード一致、メソッド不一致の三つを観測できます。
+次のコードは [Go Playground で動かせます](https://go.dev/play/p/DhW53RiIwwY)。リテラル一致、ワイルドカード一致、メソッド不一致の三つを観測できます。
 
 このディレクトリには、上のコードの `main.go` と `go.mod` を同梱しています。`go.mod` は Go 1.22 以降のルーティング規則を有効にします。ローカルでは `go run .` を実行してください。
 
@@ -21,38 +21,50 @@ import (
 
 func main() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /reports/latest", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "latest")
+	mux.HandleFunc("GET /x/fixed", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "fixed")
 	})
-	mux.HandleFunc("GET /reports/{id}", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "report=%s", r.PathValue("id"))
+	mux.HandleFunc("GET /x/{value}", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "value=%s", r.PathValue("value"))
 	})
 
-	for _, path := range []string{"/reports/latest", "/reports/2026-08"} {
+	for _, path := range []string{"/x/fixed", "/x/other"} {
 		recorder := httptest.NewRecorder()
 		mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
 		fmt.Printf("GET %s -> %d %q\n", path, recorder.Code, recorder.Body.String())
 	}
 
 	recorder := httptest.NewRecorder()
-	mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/reports/2026-08", nil))
-	fmt.Printf("POST /reports/2026-08 -> %d\n", recorder.Code)
+	mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/x/other", nil))
+	fmt.Printf("POST /x/other -> %d\n", recorder.Code)
 }
 ```
 
 実行結果:
 
 ```text
-GET /reports/latest -> 200 "latest"
-GET /reports/2026-08 -> 200 "report=2026-08"
-POST /reports/2026-08 -> 405
+GET /x/fixed -> 200 "fixed"
+GET /x/other -> 200 "value=other"
+POST /x/other -> 405
 ```
+
+<details>
+<summary>調査の入り口</summary>
+
+まず [01-packages の調べ方](../../README.md) を開き、標準パッケージのドキュメントの開き方を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 1.22 Release Notes](https://go.dev/doc/go1.22) — `ServeMux` のルーティング規則が変わったときのリリースノート
+- [package net/http](https://pkg.go.dev/net/http) — `ServeMux` 型の説明にルーティング規則が書かれている
+
+</details>
 
 ---
 
 ## 設問 1: どのルートが勝つ？
 
-登録が先でも後でも、`GET /reports/latest` はどちらのハンドラーへ届くでしょうか。また、`POST /reports/2026-08` が 405 になる条件を説明してください。
+登録が先でも後でも、`GET /x/fixed` はどちらのハンドラーへ届くでしょうか。また、`POST /x/other` が 405 になる条件を説明してください。
 
 <details>
 <summary>ヒント</summary>
@@ -74,9 +86,9 @@ POST /reports/2026-08 -> 405
 
 **答え**
 
-`GET /reports/latest` はリテラルな `latest` を要求するため、同じメソッドの `GET /reports/{id}` より一致するリクエスト集合が狭く、より具体的です。したがって登録順によらず `latest` ハンドラーが選ばれます。
+`GET /x/fixed` はリテラルな `fixed` を要求するため、同じメソッドの `GET /x/{value}` より一致するリクエスト集合が狭く、より具体的です。したがって登録順によらず `fixed` ハンドラーが選ばれます。
 
-`POST /reports/2026-08` はどちらの `GET` パターンにも一致しません。一方で同じパスに別メソッドのパターンがあるため、`ServeMux` は 405 Method Not Allowed を返します。
+`POST /x/other` はどちらの `GET` パターンにも一致しません。一方で同じパスに別メソッドのパターンがあるため、`ServeMux` は 405 Method Not Allowed を返します。
 
 </details>
 
@@ -84,9 +96,9 @@ POST /reports/2026-08 -> 405
 
 ## 設問 2: どの条件で登録時に衝突する？
 
-**前提**: このシナリオの `go.mod`（`go 1.22`）のまま、`httpmuxgo121` は設定しません。`GET /reports/{id}` と `/reports/latest` を登録します。両方とも一部の GET リクエストに一致します。どちらのパターンも、相手より「具体的」とは言い切れません。なぜそうなるのか、そして `HandleFunc` がなぜ panic するのかを調べてください。
+**前提**: このシナリオの `go.mod`（`go 1.22`）のまま、`httpmuxgo121` は設定しません。`GET /x/{value}` と `/x/fixed` を登録します。両方とも一部の GET リクエストに一致します。どちらのパターンも、相手より「具体的」とは言い切れません。なぜそうなるのか、そして `HandleFunc` がなぜ panic するのかを調べてください。
 
-まず登録処理を次のコードで確認してください。[Go Playground で実行する](https://go.dev/play/p/iMHQSYKMgpE)と、2 つ目の `HandleFunc` が **panic** します。`registered` は出力されません。
+まず登録処理を次のコードで確認してください。[Go Playground で実行する](https://go.dev/play/p/-wtRzMO5UHB)と、2 つ目の `HandleFunc` が **panic** します。`registered` は出力されません。
 
 ```go
 package main
@@ -98,8 +110,8 @@ import (
 
 func main() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /reports/{id}", func(http.ResponseWriter, *http.Request) {})
-	mux.HandleFunc("/reports/latest", func(http.ResponseWriter, *http.Request) {})
+	mux.HandleFunc("GET /x/{value}", func(http.ResponseWriter, *http.Request) {})
+	mux.HandleFunc("/x/fixed", func(http.ResponseWriter, *http.Request) {})
 	fmt.Println("registered")
 }
 ```
@@ -121,7 +133,7 @@ func main() {
 
 **調査ルート**
 
-1. [Go Playground の共有コード](https://go.dev/play/p/iMHQSYKMgpE) を標準設定で実行し、2つ目の登録時の panic と `registered` が出力されないことを観測する。
+1. [Go Playground の共有コード](https://go.dev/play/p/-wtRzMO5UHB) を標準設定で実行し、2つ目の登録時の panic と `registered` が出力されないことを観測する。
 2. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) の enhanced routing patterns を読み直し、重なるパターンの扱いを確認する。
 3. [http.ServeMux](https://pkg.go.dev/net/http#ServeMux) の Precedence と conflict の説明を読む。
 4. [Go, Backwards Compatibility, and GODEBUG](https://go.dev/doc/godebug) の `httpmuxgo121` を確認する。
@@ -129,7 +141,7 @@ func main() {
 
 **答え**
 
-このシナリオの `go.mod` で `httpmuxgo121` を設定していない場合、`GET /reports/{id}` は GET に限る代わりに任意の ID を受け、`/reports/latest` は任意のメソッドを受ける代わりに `latest` だけを受けます。`GET /reports/latest` は両方に一致しますが、片方はメソッド、もう片方はパスの方向でしか狭くありません。
+このシナリオの `go.mod` で `httpmuxgo121` を設定していない場合、`GET /x/{value}` は GET に限る代わりに任意の値を受け、`/x/fixed` は任意のメソッドを受ける代わりに `fixed` だけを受けます。`GET /x/fixed` は両方に一致しますが、片方はメソッド、もう片方はパスの方向でしか狭くありません。
 
 片方の一致集合がもう片方の厳密な部分集合ではないため、優先順位を決められません。登録時に panic して曖昧さを早く発見させる設計です。両方を使いたいなら、メソッドまたはパスをそろえて一方を明確に狭くします。
 
@@ -172,7 +184,7 @@ Go 1.22 から、メソッド付きパターンと `{name}` / `{name...}` のワ
 
 ## 設問 4: なぜ「最後に登録したものが勝つ」ではない？
 
-提案 Issue と実装をたどってください。複数チームでルートを保守するとき、順序独立の優先順位と登録時の衝突検出にはどんな利点があるでしょうか。
+提案 Issue と実装をたどってください。複数箇所からルートを登録するとき、順序独立の優先順位と登録時の衝突検出にはどんな利点があるでしょうか。
 
 <details>
 <summary>ヒント</summary>
@@ -194,9 +206,9 @@ Go 1.22 から、メソッド付きパターンと `{name}` / `{name...}` のワ
 
 **答え**
 
-登録順で結果が変わると、別チームがルートを追加しただけで既存 API の到達先が変わり得ます。集合としてより具体的なパターンを選べば、設定の並び順ではなくルールから到達先を説明できます。
+登録順で結果が変わると、別の場所でルートを追加しただけで既存の到達先が変わり得ます。集合としてより具体的なパターンを選べば、設定の並び順ではなくルールから到達先を説明できます。
 
-一方で比較できない重なりは、実行時まで隠さず登録時に panic します。実装は具体的なパターンを先に探索しつつ、衝突検出を起動時に行います。管理 API の変更をレビューするときも、「どのリクエスト集合が増減するか」で議論できるようになります。
+一方で比較できない重なりは、実行時まで隠さず登録時に panic します。実装は具体的なパターンを先に探索しつつ、衝突検出を起動時に行います。変更時も「どのリクエスト集合が増減するか」で確認できます。
 
 </details>
 
@@ -208,11 +220,3 @@ Go 1.22 から、メソッド付きパターンと `{name}` / `{name...}` のワ
 [`GET` パターンは `HEAD` にも一致します](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/pattern.go;l=253-279)が、POST など他のメソッドには一致しません。`GET /` だけを登録した場合、`POST /anything` はそのハンドラーへ届かず、[`Allow: GET, HEAD` を伴う 405](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/net/http/server.go;l=2751-2764) になります。すべてのメソッドを同じハンドラーへ届けたい場合は、メソッドを省略した `/` を登録します。`GET` とメソッド省略を混同せず、405 と `Allow` ヘッダーも含めてルート全体をテストしましょう。
 
 </details>
-
----
-
-## 調査の入り口
-
-- [Go 1.22 Release Notes](https://go.dev/doc/go1.22)
-- [01-packages の調べ方](../../README.md)
-- [package net/http](https://pkg.go.dev/net/http)

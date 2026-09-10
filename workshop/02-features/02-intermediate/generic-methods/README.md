@@ -30,6 +30,25 @@ Go 1.27 では「ジェネリックメソッド」が正式に使えるように
 - なぜ Go 1.26 までは書けなかったのか
 - インタフェースメソッドではどうなのか
 
+<details>
+<summary>調査の入り口</summary>
+
+まず [02-features の調べ方](../../README.md) を開き、言語仕様・公式ブログ・プロポーザルの逆引き手順を確かめます。
+
+そのうえで、次のどれかから入ります。
+
+- [Go 1.27 リリースノートの Changes to the language 節](https://go.dev/doc/go1.27#language) — Go 1.27 で言語に入った変更の一覧
+- [Go 言語仕様: Method declarations](https://go.dev/ref/spec#Method_declarations) と [Go 言語仕様: Type parameter declarations](https://go.dev/ref/spec#Type_parameter_declarations) — メソッド宣言と型パラメータの構文を定めた節
+- [proposal #77273 "spec: generic methods for Go"](https://go.dev/issue/77273) — ジェネリックメソッドを導入した提案の本文と議論
+- [#77549 x/tools: plan for generic methods](https://github.com/golang/go/issues/77549) — 言語機能に対するツール側の追随を扱う Issue
+- [Go Code Owners](https://dev.golang.org/owners) — Go のパッケージごとの担当者一覧
+- [#49085 proposal: spec: allow type parameters in methods](https://go.dev/issue/49085) — 先行議論
+- [Type Parameters Proposal の No parameterized methods 節](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#No-parameterized-methods) — 同じく先行議論。ジェネリクス導入時の設計文書
+- 実行環境として、手元の Go のバージョンが 1.27 以降であることを確かめる
+- 動かすときは、Go Playground で実行するか、手元の Go 1.27 以降で実行する。手元での手順は設問 3 のヒントにある
+
+</details>
+
 ---
 
 ## 設問 1: 仕様書のどこが変わったのか調べよう
@@ -178,17 +197,21 @@ Go 1.27.0 で実際にコンパイルすると、compiler が同じことを言�
 
 ## 設問 3: `Slice[T]` に `Map[F any]` を生やして動かそう
 
-冒頭の `Slice[T].Map[F any]` を完成させましょう。
-Go 1.27 以降の手元環境か Playground で動かします。
-呼び出し側で型引数を明示しなくても済むか（型推論が効くか）も確かめてください。
+[Go 1.26 までの書き方](https://go.dev/play/p/MpoXrhxatOW) を用意しました。まず開いて実行し、出力を確認してください。
+`Map` はメソッドではなく、パッケージ全体をスコープにした関数 `MapSlice` として書いてあります。Go 1.26 まではメソッドに型パラメータを置けなかったためです。
+
+これを **`Slice[T]` のメソッド** に書き換えて、同じ出力になるようにしましょう。ゼロから書く必要はありません。書き換えるのは関数の宣言と、呼び出し側の2箇所だけです。
+
+書き換えたあと、呼び出し側で型引数を明示しなくても済むか（型推論が効くか）も確かめてください。
 
 <details>
 <summary>ヒント</summary>
 
-- 手元で `go version` を実行し、Go 1.27 以降であることを確認してから `go run .` を実行する
-- Playground の実行結果に表示される Go バージョンも確認する
-- `go.mod` は `go 1.27` にする。Go 1.27 toolchain でも `go 1.26` のままだと、`generic method requires go1.27 or later` という言語バージョンのエラーになる
+- 書き換えるのは `func MapSlice[T, F any](s Slice[T], f func(T) F) Slice[F]` の宣言と、`main` の中の2つの呼び出しだけ。本体はそのまま使える
+- レシーバをどこに置き、型パラメータをどこに置くかは、設問 1 で見た EBNF のとおり
 - 呼び出し側は `s.Map(func(n int) string { ... })` のように書ける（型引数 `F` は関数リテラルから推論される）
+- Playground の実行結果に表示される Go バージョンも確認する
+- 手元で試す場合は `go.mod` を `go 1.27` にする。Go 1.27 のツールチェーンでも `go 1.26` のままだと `generic method requires go1.27 or later` という言語バージョンのエラーになる
 
 </details>
 
@@ -198,7 +221,7 @@ Go 1.27 以降の手元環境か Playground で動かします。
 **調査ルート**
 
 1. 設問 1 の EBNF を思い出しつつ、メソッド名の直後に `[F any]` を置く。
-2. `go version` と `go.mod` の `go 1.27` を確認し、手元で `go run .` するか Playground で走らせて出力を確認する。
+2. [書き換えた版](https://go.dev/play/p/jkaRcPCnUaN) を走らせ、関数版と同じ出力になることを確かめる。
 3. 型推論の効き方は [仕様書の Type inference](https://go.dev/ref/spec#Type_inference) と同じ。関数引数から `F` が推論される。
 
 **答え**
@@ -299,18 +322,3 @@ Go 1.27 リリースノートの [math/rand/v2 節](https://go.dev/doc/go1.27#mi
 ここで [Alan Donovan のプロフィール](https://github.com/adonovan) を開くと、同じ人物が最近扱っている Issue やリポジトリを別方向から探せます。ただし、プロフィールの活動量は実装の完了や現在の担当を証明しません。機能名と人物名で見つけた候補から、対象版の Issue、関連 CL、レビュー、バージョン付きソースへ戻って結論を確認します。[Go Code Owners](https://dev.golang.org/owners) もパッケージごとの担当候補と Gerrit 履歴を探す入口ですが、同じく直近の変更履歴で再確認してください。
 
 </details>
-
----
-
-## 調査の入り口
-
-- リリースノート: [Go 1.27 Release Notes #language](https://go.dev/doc/go1.27#language)
-- 言語仕様: [Method declarations](https://go.dev/ref/spec#Method_declarations) / [Type parameter declarations](https://go.dev/ref/spec#Type_parameter_declarations)
-- Proposal: [#77273 spec: generic methods for Go](https://go.dev/issue/77273)
-- ツールの追随作業: [#77549 x/tools: plan for generic methods](https://github.com/golang/go/issues/77549)
-- 担当者の探し方: [Go Code Owners](https://dev.golang.org/owners)
-- 先行議論:
-  - [#49085 proposal: spec: allow type parameters in methods](https://go.dev/issue/49085)
-  - [Type Parameters Proposal の No parameterized methods 節](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#No-parameterized-methods)
-- 実行環境: `go version` と `go.mod` の `go 1.27` を確認する
-- 動かし方: 手元で `go run .` するか Go Playground で実行する
