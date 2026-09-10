@@ -2,6 +2,8 @@
 
 # Split at the first delimiter with strings.Cut
 
+**Execution environment**: Browser only. No Go installation is required.
+
 During review, you find code that splits a string at the first `=`. Investigate how it distinguishes an absent delimiter from an empty remainder.
 
 Run the following observation log in the [Go Playground](https://go.dev/play/p/ieMFoFpSNtz) to see how the result differs when the delimiter is present or absent.

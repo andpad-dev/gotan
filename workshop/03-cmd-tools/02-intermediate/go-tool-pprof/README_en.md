@@ -81,6 +81,12 @@ Use `cpu.out` as the magnifying glass and `pprof-demo.test` as the map to find w
 
 ---
 
+<details><summary>Investigation entry points</summary>
+
+Start with the [03-cmd-tools research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
+
 ## Question 1: What was collected, and what was not?
 
 What does `go test -cpuprofile=cpu.out` create, and why does the test binary `pprof-demo.test` remain afterward? This problem uses a CPU profile. Explain why it should not be the first tool for a case suspected to involve network or lock waiting.
@@ -209,7 +215,7 @@ BenchmarkTransform-10     237   5023913 ns/op       0 B/op       0 allocs/op
 
 ---
 
-## Research starting points
+## Primary sources
 
 1. [Go diagnostics guide](https://go.dev/doc/diagnostics)
 2. [Official pprof documentation](https://go.dev/cmd/pprof/)

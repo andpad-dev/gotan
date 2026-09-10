@@ -2,6 +2,8 @@
 
 # Why Does Go 1.27's Faster Memory Allocation Stop at 80 Bytes?
 
+**Execution environment**: Browser only. No Go installation is required.
+
 The Go 1.27 release notes say: “The compiler now generates calls to size-specialized memory allocation routines, reducing the cost of some small (<80 byte) memory allocations by up to 30%.” Why 80 bytes rather than 128 or 256?
 
 The release-note summary says `<80 byte`, but the Go 1.27.0 implementation rejects only `size > 80`; an allocation of exactly 80 bytes is therefore eligible. This scenario uses “80 bytes or less” to match the implementation.
@@ -19,6 +21,17 @@ Output with Go 1.27.0:
 ```text
 {1 2}, size=16 bytes
 ```
+
+<details><summary>Investigation entry points</summary>
+
+Start with the [04-deep-dive research guide](../../README.md), then choose one of these primary sources:
+
+- [Go 1.27 release notes](https://go.dev/doc/go1.27) - the `<80 byte` summary and opt-out
+- [Compiler change CL](https://go-review.googlesource.com/c/go/+/707856) - the compiler-side change
+- [`runtime/_mkmalloc/constants.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/runtime/_mkmalloc/constants.go;l=25) - the generated-function limit
+- [`specializedMallocSym`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/compile/internal/ssagen/ssa.go;l=804) - compiler selection logic
+
+</details>
 
 ---
 
@@ -90,7 +103,7 @@ The first runtime CL, [specialized malloc functions up to 512 bytes](https://go.
 
 ---
 
-## Research starting points
+## Primary sources
 
 - [Go 1.27 release notes](https://go.dev/doc/go1.27)
 - [Compiler CL](https://go-review.googlesource.com/c/go/+/707856)

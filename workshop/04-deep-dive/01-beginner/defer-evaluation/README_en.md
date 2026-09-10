@@ -2,6 +2,8 @@
 
 # Beginner: Investigate defer argument evaluation and execution order
 
+**Execution environment**: Browser only. No Go installation is required.
+
 Code changes a state from `started` to `completed` and uses two deferred calls. Investigate why they print different values.
 
 You came across the following `defer` code. Let’s investigate what it does.

@@ -116,3 +116,126 @@ research!rsc は Go プロジェクトの公式ドキュメントではありま
 | goroutine 間の読み書きが、どの同期によって順序付けられるのか | [The Go Memory Model](https://go.dev/ref/mem) で `synchronized before`、`happens before`、`data race` の定義を確認する | `Memory Models` → `Hardware Memory Models`、`Programming Language Memory Models`、`Updating the Go Memory Model` → [シリーズ目次](https://research.swtch.com/mm) |
 | 言語機能の変更が、どの提案と議論を経て採用・見送りになったのか | [Go proposal process](https://go.dev/s/proposal) から proposal Issue と決定を確認し、採用された変更だけ対象版のリリースノート・仕様・実装へ進む | `Go Proposals` → `Enabling Experiments`、`Representation` → [シリーズ目次](https://research.swtch.com/proposals) |
 | channel を待つ goroutine の扱いが、過去の説明から現在の診断機能までどう変わったのか | [Go 1.27 リリースノート](https://go.dev/doc/go1.27) とリンク先の Issue・実装で現在の機能を固定する | `A Tour of Go` → Q&A の `goroutine`、`channel` → [記事](https://research.swtch.com/gotour) |
+
+
+-------------
+
+
+[Scenario index](../SCENARIOS_en.md) | [Workshop guide](../README.md) | [Team guide](../TEAM_GUIDE_en.md)
+
+# How to Investigate 02-features (Reverse Lookup Guide)
+
+In this category, you will explore Go features and syntactic structures by reading the Go language specification, official documentation, and official blogs and proposals. When you get stuck, start by consulting primary sources using the following steps.
+
+- **I want to learn about language specifications and grammar rules**
+  - Open https://go.dev/ref/spec
+  - Because the official documentation is in English, searching the page with the following keywords (in English), based on what you want to investigate (the task, behavior, or concept), makes it easier to find the relevant specification. Use page search (Ctrl+F / Cmd+F).
+    - **Variables and constants**
+      - Variable declarations, initialization, and the detailed rules for `:=`: `Variable declarations`, `Short variable declarations`
+      - Rules for constants and sequential numbering with `iota`: `Constant declarations`, `Iota`
+    
+    - **Types (data structures)**
+      - Defining named types and type aliases: `Type declarations`, `Alias declarations`
+      - Defining structs and embedding fields: `Struct types`, `Embedded field`
+      - Differences between arrays and slices, and their specifications: `Array types`, `Slice types`
+      - The specification for maps (associative arrays): `Map types`
+      - The specification for interfaces: `Interface types`
+      - The specification for pointer types: `Pointer types`
+      - Generics, type parameters, and constraints: `Type parameters`, `Type constraints`, `Core types`
+
+    - **Functions and methods**
+      - Defining functions, return values, and variadic arguments: `Function declarations`
+      - Defining methods associated with structs and types: `Method declarations`
+      - Anonymous functions and closures: `Function literals`
+
+    - **Control syntax**
+      - Rules for `if` statements: `If statements`
+      - Loops and iteration with `range`: `For statements`, `For statements with range clause`
+      - `switch` statements and branching: `Expression switches`
+      - Branching and checking by an interface's type: `Type assertions`, `Type switches`
+      - Skipping and exiting loops, and jumps using labels: `Break statements`, `Continue statements`, `Labeled statements`
+      - Deferred execution immediately before leaving a function (cleanup processing): `Defer statements`
+
+    - **Concurrency (goroutines and channels)**
+      - Asynchronous processing (starting goroutines): `Go statements`
+      - Defining channels and sending and receiving: `Channel types`, `Send statements`, `Receive operator`
+      - Waiting for multiple channels without blocking: `Select statements`
+
+    - **Memory, error handling, and other topics**
+      - Memory allocation (the difference between `new` and `make`): `Allocation`, `Making slices, maps and channels`
+      - Strict rules for type conversions (casts): `Conversions`
+      - Raising and recovering from panics (`panic`, `recover`): `Handling panics`, `Run-time panics`
+      - Package import rules: `Import declarations`
+      - Lexical rules for source code (comments, automatic semicolon insertion, and so on): `Lexical elements`, `Semicolons`
+
+- **I want to find official documentation from a list**
+  - Open https://go.dev/doc
+  - To investigate the specifications and usage of standard packages: https://pkg.go.dev/std
+  - To learn basic Go syntax and features by running them in a browser: https://go.dev/tour/ (A Tour of Go)
+  - To check how to write idiomatic Go code (idioms and best practices): https://go.dev/doc/effective_go (Effective Go)
+  - To learn more about Go commands (build, test, mod, and so on): https://go.dev/cmd/go/
+  - To learn about modules and dependency management: https://go.dev/doc/modules/managing-dependencies
+  - To learn about the Go memory model (such as memory visibility between goroutines): https://go.dev/ref/mem (The Go Memory Model)
+  - To learn how to connect to and operate on databases through a tutorial: https://go.dev/doc/tutorial/database-access
+  - To learn how to build a Web API (RESTful API) through a tutorial: https://go.dev/doc/tutorial/web-service-gin
+  - To check security information and the vulnerability database: https://go.dev/security/
+
+- **I want to find an official blog post from a list**
+  - Open https://go.dev/blog/all
+  - If you are investigating a topic involving an older language specification, it is faster to search from the list below.
+  - Searching by blog author makes it easier to find what you need.
+    - Rob Pike
+      - The language's internal mechanisms and explanations of specifications (strings, slices, how `append` works, the laws of reflection, constants)
+      - Design philosophy and idioms (Go's declaration syntax, Errors are values)
+      - Tools and ecosystem (`go generate`, `go fmt`)
+      - Cultural background (The Go Gopher (the mascot's background), Go fonts)
+    - Russ Cox
+      - Long-term vision and governance (Toward Go 2, forward and backward compatibility, and toolchain management)
+      - Modules and dependencies (Go Modules, package versioning proposals)
+      - Security and core libraries (secure random numbers, command PATH security)
+      - Anniversary articles (the annual “Happy Birthday, Go!”)
+    - Robert Griesemer
+      - In-depth explanations of the type system (how type inference works, comparable types, the removal of core types)
+      - Extensions to the language specification and syntax (alias names, syntax support for error handling)
+      - Leading proposals for Go 2 and future versions
+    - Ian Lance Taylor
+      - Generics in general (the proposal to introduce generics, when to use them, deconstructing type parameters)
+      - New function features (`range` over function types)
+      - Low-level and compiler-related topics (Gccgo)
+    - Andrew Gerrand
+      - Official announcements of major and minor releases
+      - Practical tutorials (JSON and Go, how to use slices, how to write Web applications)
+      - Tool introductions (The Go Playground, Godoc)
+      - Event reports (Google I/O, GopherCon, and meetup information from around the world)
+    - Security-related: Filippo Valsorda, Julie Qiu
+    - Tools and package-related: Alan Donovan, Damien Neil
+    - New version releases: Go team
+
+- **I want to investigate features in the latest version**
+  - Access the release notes at `go.dev/doc/go1.<version>` (`version` is Go's minor version).
+  - For Go 1.27, see the release notes at https://go.dev/doc/go1.27
+  - If you want to follow the discussions behind the release-note entries, inspect the HTML source code using developer tools.
+    - Related GitHub issue numbers are embedded in forms such as `go.dev/issue/<Issue number>`.
+    - Open https://go.dev/issues/<Issue number> and then open the related issue.
+
+- **I want to learn about actual behavior and implementation details**
+  - Follow links from `pkg.go.dev` to the Go source code search at https://cs.opensource.google/go/go and read the implementation code for the standard library or runtime.
+
+- **I want to try the behavior locally**
+  * Use the Go Playground (https://go.dev/play/). You can switch to the development version (Dev version) or past versions to compare and verify behavior.
+
+## Researching design and history through research.swtch.com
+
+Russ Cox joined the Go team in 2008 and helped build two compilers and the standard library. He later served as a technical lead for the Go project and Google's Go team. His [research!rsc index](https://research.swtch.com/) is a personal site for tracing Go design decisions and implementation history from a core developer's perspective.
+
+It is not official Go project documentation. First verify the current specification and target version on go.dev. Then search the index by article title and follow related titles and terms within the series or article. Keep historical explanations separate from the current specification and implementation.
+
+[Go: A Documentary](https://golang.design/history/) is an index for tracing Go language design through public design documents, Issues, CLs, and talks. Treat it as an index rather than a complete current-status reference, and update conclusions with the target version's release notes, specification, and source.
+
+For recent changes, following the people involved can reveal related work in tools. For example, [Alan Donovan's profile](https://github.com/adonovan) leads to [golang/go#77549](https://github.com/golang/go/issues/77549), which tracks follow-up work in `x/tools`, gopls, and vulncheck after Generic Methods. Do not infer the current direction of Go from a person's activity alone; use [Go Code Owners](https://dev.golang.org/owners) and verify with recent Issues, CLs, reviews, and versioned source.
+
+| Question | Check first on go.dev | Search in the research!rsc index |
+| --- | --- | --- |
+| Which synchronization orders reads and writes between goroutines? | Read the definitions of `synchronized before`, `happens before`, and `data race` in [The Go Memory Model](https://go.dev/ref/mem). | `Memory Models` -> `Hardware Memory Models`, `Programming Language Memory Models`, and `Updating the Go Memory Model` -> [series index](https://research.swtch.com/mm) |
+| Which proposal and discussion led to a language change being accepted or rejected? | Start with the [Go proposal process](https://go.dev/s/proposal), then follow the proposal Issue and decision. For accepted changes, continue to the target release notes, specification, and implementation. | `Go Proposals` -> `Enabling Experiments` and `Representation` -> [series index](https://research.swtch.com/proposals) |
+| How has the treatment of goroutines waiting on channels changed from historical explanations to current diagnostics? | Fix the current behavior using the [Go 1.27 release notes](https://go.dev/doc/go1.27), linked Issues, and implementation. | `A Tour of Go` -> the `goroutine` and `channel` Q&A -> [article](https://research.swtch.com/gotour) |

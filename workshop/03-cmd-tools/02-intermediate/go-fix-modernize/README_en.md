@@ -74,6 +74,12 @@ What exactly is this `go fix`, and how far does it go?
 
 ---
 
+<details><summary>Investigation entry points</summary>
+
+Start with the [03-cmd-tools research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
+
 ## Question 1: Find the role of the new `go fix`
 
 What does the `go fix` revamped in Go 1.26 do, and how does it differ from the old fixers dating back to Go 1.0 and from `go vet`?
@@ -189,7 +195,7 @@ Then `go fix -inline ./...` (or `go fix ./...`) expands the body at call sites, 
 
 ---
 
-## Research starting points
+## Primary sources
 
 - Local commands: `go help fix` / `go tool fix help` / `go tool fix help <analyzer>`
 - Release notes: [Go 1.26 release notes #go-command](https://go.dev/doc/go1.26#go-command)

@@ -2,6 +2,8 @@
 
 # Why Can't `slog.Value` Be Compared with `==`?
 
+**Execution environment**: Browser only. No Go installation is required.
+
 The following complete program does not compile:
 
 ```go
@@ -24,6 +26,12 @@ func main() {
 ```text
 invalid operation: v1 == v2 (struct containing [0]func() cannot be compared)
 ```
+
+<details><summary>Investigation entry points</summary>
+
+Start with the [04-deep-dive research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
 
 ## Question 1: Identify the mechanism that forbids comparison
 
@@ -205,7 +213,7 @@ Putting `_ [0]func()` at the end can add padding (24 bytes at the beginning vers
 
 ---
 
-## Research starting points
+## Primary sources
 
 - [Go Documentation](https://go.dev/doc/)
 - [Go 1.27.0 `slog.Value` source](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/log/slog/value.go;l=21)

@@ -2,6 +2,8 @@
 
 # Encrypt One Message with crypto/hpke
 
+**Execution environment**: Browser only. No Go installation is required.
+
 The sender encrypts one message with the receiver's public key, and the receiver decrypts it with the private key. Investigate the `crypto/hpke` API added in Go 1.26.
 
 This is an exercise in investigating the roles of an API. In real-world use, always add an organizational security review for protocol selection and key management.
@@ -51,6 +53,12 @@ different info rejected: true
 ```
 
 ---
+
+<details><summary>Investigation entry points</summary>
+
+Start with the [01-packages research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
 
 ## Question 1: What do the three components select?
 
@@ -157,7 +165,7 @@ For sending a single message, use `Seal` / `Open`. With `Sender` / `Recipient`, 
 
 ---
 
-## Investigation starting points
+## Primary sources
 
 - [Go 1.26 Release Notes](https://go.dev/doc/go1.26)
 - [How to investigate 01-packages](../../README.md)

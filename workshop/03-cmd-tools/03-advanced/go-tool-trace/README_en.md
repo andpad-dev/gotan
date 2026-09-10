@@ -79,6 +79,12 @@ ok   	example.com/trace-demo	0.853s
 
 ---
 
+<details><summary>Investigation entry points</summary>
+
+Start with the [03-cmd-tools research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
+
 ## Question 1: Why collect a trace when the CPU appears idle?
 
 Four operations are started with `go`, but the test takes about 100 ms. Explain from primary sources why a CPU profile alone is insufficient and what `go test -trace=work.trace` can observe.
@@ -242,7 +248,7 @@ In Go 1.27, the port-only form `-http=:6060` is restricted to localhost, matchin
 
 ---
 
-## Research starting points
+## Primary sources
 
 1. [Go diagnostics guide](https://go.dev/doc/diagnostics)
 2. [How To Build a User-Level CPU Profiler](https://research.swtch.com/pprof)

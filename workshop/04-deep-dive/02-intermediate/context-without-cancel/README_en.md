@@ -2,6 +2,8 @@
 
 # Intermediate: Add an Independent Deadline to context.WithoutCancel
 
+**Execution environment**: Browser only. No Go installation is required.
+
 Code must retain a value from its parent context while ignoring parent cancellation. It also needs an independent deadline so the derived operation cannot continue forever. [Run this in the Go Playground](https://go.dev/play/p/ArrX3G2xO82) and observe the error and value after canceling the parent.
 
 ```go
@@ -34,6 +36,12 @@ value: kept
 ```
 
 ---
+
+<details><summary>Investigation entry points</summary>
+
+Start with the [04-deep-dive research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
 
 ## Question 1: What survives detaching from parent cancellation?
 
@@ -113,7 +121,7 @@ First, after canceling the parent, the derived context must still return the val
 
 ---
 
-## Research starting points
+## Primary sources
 
 1. [How to investigate 04-deep-dive](../../README.md)
 2. [Go 1.21 release notes: context](https://go.dev/doc/go1.21#context)

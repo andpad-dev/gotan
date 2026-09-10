@@ -33,6 +33,12 @@ An alias defined with -command also works
 
 ---
 
+<details><summary>Investigation entry points</summary>
+
+Start with the [03-cmd-tools research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
+
 ## Question 1: What commands can `//go:generate` contain?
 
 Run the sample and try explicit, non-destructive commands such as `go version`, `go env GOOS GOARCH`, or `echo sample`. Do not use commands such as `env` that dump all environment variables, and do not display credentials or tokens. Before sharing output in an issue or chat, confirm that it contains no secrets. What do `go generate -n main.go` and `go generate -x main.go` display, and where are variables such as `$GOFILE` and `$GOLINE` listed?
@@ -154,7 +160,7 @@ The proposal's goals are that package authors, rather than clients, run it; gene
 
 ---
 
-## Research starting points
+## Primary sources
 
 - [Generate Go files by processing source](https://go.dev/cmd/go/#hdr-Generate_Go_files_by_processing_source)
 - [Go generate blog post](https://go.dev/blog/generate)

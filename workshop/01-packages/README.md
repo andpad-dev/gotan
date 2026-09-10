@@ -79,3 +79,80 @@ research!rsc は Go プロジェクトの公式ドキュメントではありま
 ### 依存パッケージ一覧
 - ページ上部の `Imports: n` をクリックすると依存しているパッケージの一覧が表示されます。
 - ページ上部の `Imported by: n` をクリックすると 逆にそのパッケージに依存しているパッケージの一覧が表示されます。
+
+
+---------------------
+
+
+[Scenario index](../SCENARIOS_en.md) | [Workshop guide](../README.md) | [Team guide](../TEAM_GUIDE_en.md)
+
+# How to Research 01-packages
+
+This category focuses on the standard-library documentation at pkg.go.dev and, when necessary, the Go language specification. Return here whenever you are unsure where to start.
+
+Begin with [Go Documentation](https://go.dev/doc). To reach a standard-package API contract, follow the package documentation from there or use the reverse lookup below.
+
+## I Want to Know What a Function, Type, or Method Is
+
+1. Start at [Go Documentation](https://go.dev/doc/) and follow Packages to the package documentation.
+2. For a search across Go packages, open https://pkg.go.dev/.
+3. If you know the package, open `https://pkg.go.dev/<package-name>` (for example, https://pkg.go.dev/fmt).
+   - For standard packages, [the standard-library list](https://pkg.go.dev/std) is useful.
+   - Redirects are also available: `https://pkg.go.dev/slog` leads to `log/slog`.
+4. Press `f` to open the search dialog, then enter the function or type name.
+5. Make a rough prediction from the name and first sentence. You do not need to read everything at once.
+
+## I Want to Know How to Use a Whole Package
+
+Read the **Overview** near the top of the page. It contains formatting rules and conventions that individual functions may not repeat.
+
+## I Want to See Examples
+
+Open the **Examples** section (`#pkg-examples`). Examples can be run with the page's Run button.
+
+## I Want to Know Language Syntax and the Specification
+
+1. Open the [Go language specification](https://go.dev/ref/spec).
+2. Search for the syntax name from the scenario. For example, follow **For statements** to **For statements with range clause** for `range`.
+3. If the parent section only defines the syntax, read the immediately following child section too.
+
+## I Want to Verify Behavior
+
+Run `go run` locally, or paste a small `package main` into the [Go Playground](https://go.dev/play/). Share Playground URLs with the team.
+
+When output differs from the material, record `go version`, `go env GOMOD`, and `go env GODEBUG`. The Go version, the module's `go` line, and `GODEBUG` can change behavior. For version-dependent behavior, use the Playground result stated in the scenario as the reference.
+
+## I Want to Know What Is Not in the Documentation
+
+Click the declaration of a function or type to open its implementation source. For the Go source tree, use https://cs.opensource.google/go/go. See [04-deep-dive](../04-deep-dive/README.md) for ways to investigate it.
+
+## I Want to Cross-Reference Design and Implementation from research.swtch.com
+
+[research!rsc](https://research.swtch.com/) is Russ Cox's personal site and is useful for following Go design decisions and implementation history from a core developer's perspective. It is not official Go documentation. Check current go.dev documentation and the target version first, then use the site's table of contents and browser search to find related articles.
+
+[Go: A Documentary](https://golang.design/history/) is an index into public design documents, issues, CLs, and talks. Treat it as an index rather than a complete current-status reference, and follow its primary sources.
+
+When looking for current ownership, search [Go Code Owners](https://dev.golang.org/owners) by package name. Owners are an investigation lead, not proof of current responsibility; verify conclusions with recent issues, CLs, reviews, and versioned source.
+
+| Question | Start at go.dev | Search in research!rsc |
+| --- | --- | --- |
+| How `fmt` or `strconv` format floating-point numbers | [Go Documentation](https://go.dev/doc) -> [`strconv.FormatFloat`](https://go.dev/pkg/strconv/#FormatFloat), then compare versioned source | `Floating Point Formatting` -> `Floating-Point Printing and Parsing Can Be Simple And Fast` |
+| How to narrow down behavior that changed between Go versions | The target release notes and version-specific documentation such as [Go 1.23 Timer Channel Changes](https://go.dev/wiki/Go123Timer) | `Hash-Based Bisect Debugging`, `runtime`, and `GODEBUG` |
+| How to build small API and boundary-condition tests | [Add a test](https://go.dev/doc/tutorial/add-a-test) -> [`testing`](https://pkg.go.dev/testing) | `Go Testing By Example`, `testdata`, and `test failures` |
+
+## pkg.go.dev Tips
+
+### Keyboard shortcuts
+
+- Press `?` to see the shortcut list.
+- Press `/` to focus the search box.
+- Press `f` to open Jump to. Use browser find (Ctrl+F / Cmd+F) for body text and section headings.
+- Press `y` to turn the current URL into a version-specific permalink.
+
+### OS and architecture
+
+Add `?GOOS=<OS>&GOARCH=<architecture>` to a URL, for example `https://pkg.go.dev/bufio?GOOS=windows&GOARCH=amd64`. You can also change them from **Rendered for**.
+
+### Version list and dependencies
+
+Click **Version** at the top to see available versions. Click `Imports: n` for dependencies and `Imported by: n` for packages that depend on the package.

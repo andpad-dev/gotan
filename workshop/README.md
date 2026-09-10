@@ -273,3 +273,163 @@ URL だけでは後から調査を再現できません。次の項目をその�
 シナリオの設問におかしなところがあれば、[Issue](https://github.com/andpad-dev/gotan/issues) で教えてください。当日その場で気づいた違和感が、次の開催の改善になります。
 
 お疲れさまでした！
+
+
+----------------------
+
+
+# Workshop Progress Guide & Scenario Index
+
+Use this README as the workshop guide on the day. The facilitator shares this page and proceeds from top to bottom. Participants should open it locally and follow along.
+
+Preparation, staff activities, and the tutorial demo script are in [STAFF.md](STAFF_en.md). Teams should also open [How to work as a team](TEAM_GUIDE_en.md).
+
+## Pages to Open First
+
+- [This page](README.md): Workshop flow and scenario index
+- [How to work as a team](TEAM_GUIDE.md): Icebreaker, roles, timing, and issue notes
+- [Go Playground](https://go.dev/play/): Run small Go programs without a local installation
+- [Discord](https://discord.gg/hDWW4NATAd): Workshop communication and team discussion
+
+Open Discord first so teams can share Playground URLs, record blockers, and post their issue URLs. The channel remains available after the workshop for later questions.
+
+In Go Playground, paste the code and press **Run**. Press **Share** to create a `https://go.dev/play/p/...` URL and put it in the team issue. For version-dependent scenarios, record the Go version shown by the sample or Playground.
+
+Some scenarios require a local Go installation. Their `go.mod` files specify the required version. If the installed Go version is older, `go run` may download a toolchain.
+
+Use these terms consistently:
+
+- **Scenario**: All learning material collected in one README.
+- **Question**: A numbered question such as `Question 1`.
+- **Theme**: What the team investigates, either a provided scenario or its own question.
+
+### Using Hints
+
+- **Time-boxed workshop**: Hints may be opened from the beginning. Follow the suggested search terms and pages yourself.
+- **Self-paced study**: Try first with hints closed; open them after five minutes without progress or two unsuccessful approaches.
+
+Answers are also allowed. Do not only read the conclusion: reproduce the investigation path and record the operations and discoveries in the team issue.
+
+## Scenario Index
+
+All scenarios are listed in [SCENARIOS.md](SCENARIOS.md). Choose from it by theme and difficulty.
+
+## Timetable (Planned: 90 minutes)
+
+| Time | Content |
+|:---|:---|
+| 00:00 - 00:05 | Introduction and purpose |
+| 00:05 - 00:25 | Tutorial work |
+| 00:25 - 00:30 | Team formation |
+| 00:30 - 00:35 | Icebreaker (fixed at 3 minutes) and theme selection |
+| 00:35 - 01:20 | Exploration work (45 minutes) |
+| 01:20 - 01:30 | Whole-group sharing and closing |
+
+---
+
+## 00:00 Introduction (5 minutes)
+
+### Purpose of the workshop
+
+This workshop is for investigating Go code written by colleagues or an LLM, checking whether an LLM's answer is correct, understanding why Go has or does not have a feature, preparing a high-quality Proposal for a future Go Conference, and learning how to contribute to Go.
+
+Search results, LLMs, and technical blogs are useful starting points, but their answers do not necessarily match the current specification. To understand the background of a design or proposals that were not adopted, follow the sources behind the summary.
+
+Trace Go's official documentation, release notes, Issues, and source code in order, then compare them with local execution results. The goal is to explain not only the conclusion but also the design Go chose and the conditions around it.
+
+### Today's flow
+
+1. **Tutorial work:** Follow the facilitator's live demo and practice tracing primary documentation.
+2. **Team formation:** Form groups of about four people according to the difficulty you want to try.
+3. **Theme selection:** Choose one theme to investigate deeply and announce it in the team's Issue. You may choose a prepared scenario or bring a question from daily development.
+4. **Exploration work:** Divide into pairs, split the questions, and trace primary sources. Record the investigation in the team's Issue.
+5. **Whole-group sharing:** Several teams present how they investigated and what they discovered.
+
+The investigation process matters more than simply knowing the answer. Hints and answers are available in collapsible sections from the beginning; open them whenever you are stuck. You do not need to finish every question, and you may continue with the repository after the workshop.
+
+### Using LLMs
+
+Do not ask an LLM a question and stop at its answer. The goal today is to learn the path to primary information. LLMs are welcome as support for translating or summarizing English primary sources after opening them, locating likely documents and sections, checking your understanding after reading, and finding a starting point whose evidence you then verify yourself.
+
+In the team's investigation log, record the pages you actually opened and the facts you confirmed, not only what an LLM said.
+
+---
+
+## 00:05 Tutorial work (20 minutes)
+
+Use the [tutorial](00-tutorial/README.md) to practice the investigation method in a live demo. Open the [tutorial README](00-tutorial/README.md) and <https://pkg.go.dev/fmt> locally and follow the facilitator.
+
+1. Run `fmt.Printf("%#[1]v %[1]T\n", value)` in the [Go Playground](https://go.dev/play/p/RTNSvn_p2Ai) and confirm the output. Press **Share** to verify that the same code can be shared by URL.
+2. For Question 1, use page search to determine the meanings of `%v`, `%T`, and `#`.
+3. For Question 2, identify `[1]` in the “Explicit argument indexes” section.
+
+Practice the workshop's investigation pattern: open the official documentation, narrow it with keywords, and run a small experiment. Category reverse-lookup guidance is in each category README, and every scenario includes collapsible hints and answers with an investigation path.
+
+---
+
+## 00:25 Team formation (5 minutes)
+
+The scenarios have three levels:
+
+- **Beginner:** “I saw something. Let us find out what it is.”
+- **Intermediate:** “I want to do something. Let us find out how.”
+- **Advanced:** “Why does it work this way? Let us investigate the background.”
+
+Form groups of about four people at the level you want to try. Advanced participants may solve easier scenarios, while beginners should generally start no higher than intermediate. Once your group is formed, confirm the URL of its dedicated Issue and use it as both the investigation log and presentation notes.
+
+---
+
+## 00:30 Icebreaker and theme selection (5 minutes)
+
+Take **three minutes** for introductions: name, Go experience, and one thing you want to investigate today. Then open [How to work as a team](TEAM_GUIDE.md) and choose one theme. Select a prepared scenario from [SCENARIOS.md](SCENARIOS.md), or bring a question from daily development.
+
+Keep the scope to roughly one question for the 45-minute exploration. Rephrase a brought-in topic as something that can be answered from primary information, such as “Why does this specification behave this way?” or “How is this implemented?” Have one person comment the theme in the team Issue. Decide the pair split during the first three minutes of exploration.
+
+---
+
+## 00:35 Exploration work (45 minutes)
+
+The whole team works on one scenario. During the first three minutes, open its **investigation entry points** and decide where to start; the category README can also be used first. Split the questions between pairs, follow official documentation and source code, and run a Playground or local `go run` experiment when behavior is unclear.
+
+Record discoveries in the team Issue as they happen:
+
+```text
+- Question: <what you tried to verify>
+- Source: <URL and section>
+- Operation/search term: <how you got there>
+- Finding: <what the evidence shows>
+- Next question/blocker: <if any>
+```
+
+If you get stuck, return to the entry points, try another route in the category README, open the hint, or open the answer and retrace its **investigation path** instead of copying its conclusion. Ask staff for help, and report apparent scenario defects through the [scenario issue form](https://github.com/andpad-dev/gotan/issues/new?template=scenario-issue.md) without stopping the investigation.
+
+At **20 minutes remaining**, answers may be opened. At **10 minutes remaining**, begin a presentation summary in the team Issue:
+
+```text
+## Presentation summary
+- Theme investigated:
+- First observation:
+- Investigation path: <starting point -> search term/link -> primary source -> measurement>
+- Findings:
+- Open questions:
+- Most important discovery:
+```
+
+---
+
+## 01:20 Whole-group sharing (10 minutes)
+
+About three teams will present, with examples from the beginner, intermediate, and advanced levels. Each team has about two minutes:
+
+1. What theme did you investigate?
+2. Which primary sources did you follow, and in what order?
+3. What was the most surprising or interesting discovery? Sharing where you got stuck is also valuable.
+
+The method matters more than presenting a polished conclusion. All teams' logs remain in their Issues for later reading.
+
+### Closing
+
+Take away three points: open official documentation, narrow it with keywords, and verify by running code; the repository remains available for unfinished scenarios; and following primary sources can lead to a Go Conference Proposal or contribution to Go itself.
+
+The [Discord](https://discord.gg/hDWW4NATAd) remains open for questions and unfinished scenarios. Report later-discovered scenario problems through the [Issue form](https://github.com/andpad-dev/gotan/issues/new?template=scenario-issue.md). Your investigation log can become a blog draft, because the path you took is uniquely yours. You can also share it on X with `#gocon26`.
+

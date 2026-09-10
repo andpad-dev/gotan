@@ -2,6 +2,8 @@
 
 # Investigate Go `for` and `switch` statements in the specification
 
+**Execution environment**: Browser only. No Go installation is required.
+
 You are maintaining Go code again after a long break and encounter `for` and `switch` statements during review. Instead of relying on half-remembered syntax from another language, start from observed output and find the corresponding rules in the Go language specification.
 
 ---

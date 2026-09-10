@@ -2,6 +2,8 @@
 
 # Why Do Standard Go Errors Not Include Stack Traces?
 
+**Execution environment**: Browser only. No Go installation is required.
+
 Go developers often log an error and still wonder where it occurred. Unlike Java or Python exceptions, standard Go errors do not automatically carry a stack trace. Investigate the design philosophy and history of error wrapping.
 
 First run this example and observe context wrapping, cause inspection, and detailed formatting. The `%+v` output confirms that standard errors do not automatically print a stack trace.
@@ -39,6 +41,12 @@ error: load config: not found
 is not found: true
 detailed format: load config: not found
 ```
+
+<details><summary>Investigation entry points</summary>
+
+Start with the [04-deep-dive research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
 
 ## Question 1: What is Go's error-handling philosophy?
 
@@ -118,7 +126,7 @@ The broader design requirement is that creating an error remain a fixed-cost ope
 
 ---
 
-## Research starting points
+## Primary sources
 
 - [Go Blog](https://go.dev/blog/)
 - [Go 1.13 release notes](https://go.dev/doc/go1.13)

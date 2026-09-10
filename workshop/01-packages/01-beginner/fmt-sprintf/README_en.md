@@ -2,6 +2,8 @@
 
 # Build strings with fmt.Sprintf
 
+**Execution environment**: Browser only. No Go installation is required.
+
 You came across the following code while reviewing how it builds a string by inserting values.
 
 ```go

@@ -6,6 +6,12 @@ The pkg.go.dev browser UI cannot compare and sort package candidates by import c
 
 We considered scraping, but the **pkg.go.dev API**, released in beta in [June 2026](https://opensource.googleblog.com/2026/06/a-new-pkggodev-api-for-go.html), provides structured JSON directly.
 
+<details><summary>Investigation entry points</summary>
+
+Start with the [03-cmd-tools research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
+
 ## Question 1: How do I sort and filter search results?
 
 The search API (`/v1/search`) sorts a `router` search by relevance by default, but has no parameter for import count or update time. Why is sorting unavailable? The API does provide a `filter` parameter, but the filter itself is a distinctive “subset of Go expressions,” rather than SQL or a raw regular expression. Why was it designed this way?
@@ -227,7 +233,7 @@ The documented fact is that same-module packages are excluded. This can be inter
 
 ---
 
-## Research starting points
+## Primary sources
 
 - [Go Documentation](https://go.dev/doc/)
 - [pkg.go.dev API](https://pkg.go.dev/v1/api)

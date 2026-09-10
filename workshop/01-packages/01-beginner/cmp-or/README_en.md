@@ -2,6 +2,8 @@
 
 # Choose the first non-zero value with cmp.Or
 
+**Execution environment**: Browser only. No Go installation is required.
+
 During review, you notice `cmp.Or` in code that selects a value from candidates containing empty strings. Predict which candidate is selected, then run the example.
 
 Run the following code in the [Go Playground](https://go.dev/play/p/WkH9Xink92x) to observe the result when values are selected by priority and when all candidates are zero values.
