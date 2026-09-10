@@ -289,7 +289,7 @@ Preparation, staff activities, and the tutorial demo script are in [STAFF_en.md]
 - [This page](README.md): Workshop flow and scenario index
 - [How to work as a team](TEAM_GUIDE_en.md): Icebreaker, roles, timing, and issue notes
 - [Go Playground](https://go.dev/play/): Run small Go programs without a local installation
-- [Discord](https://discord.gg/hDWW4NATAd): Workshop communication and team discussion
+- [Discord](https://discord.gg/xBrQdb3ehW): Workshop communication and team discussion
 
 Open Discord first so teams can share Playground URLs, record blockers, and post their issue URLs. The channel remains available after the workshop for later questions.
 
@@ -431,5 +431,5 @@ The method matters more than presenting a polished conclusion. All teams' logs r
 
 Take away three points: open official documentation, narrow it with keywords, and verify by running code; the repository remains available for unfinished scenarios; and following primary sources can lead to a Go Conference Proposal or contribution to Go itself.
 
-The [Discord](https://discord.gg/hDWW4NATAd) remains open for questions and unfinished scenarios. Report later-discovered scenario problems through the [Issue form](https://github.com/andpad-dev/gotan/issues/new?template=scenario-issue.md). Your investigation log can become a blog draft, because the path you took is uniquely yours. You can also share it on X with `#gocon26`.
+The [Discord](https://discord.gg/xBrQdb3ehW) remains open for questions and unfinished scenarios. Report later-discovered scenario problems through the [Issue form](https://github.com/andpad-dev/gotan/issues/new?template=scenario-issue.md). Your investigation log can become a blog draft, because the path you took is uniquely yours. You can also share it on X with `#gocon26`.
 
