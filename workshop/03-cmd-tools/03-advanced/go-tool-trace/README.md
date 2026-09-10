@@ -2,7 +2,7 @@
 
 # 注文処理の 100ms を追え: `go tool trace`
 
-![実行環境: 手元の Go](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-%E6%89%8B%E5%85%83%E3%81%AE%20Go-F39C12)
+![実行環境: 指定なし](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-%E6%8C%87%E5%AE%9A%E3%81%AA%E3%81%97-9E9E9E)
 
 README のコードを保存してから進めます。
 

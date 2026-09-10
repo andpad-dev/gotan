@@ -38,13 +38,13 @@ Formatting:
 - Do not use Markdown headings inside `<details>`; use bold labels instead.
 - Keep common investigation triggers, such as “press `f` to search first,” visible in the category README rather than hiding them in hints.
 
-Execution-environment badge:
+Go-version badge:
 
 | Case | Message | Color |
 | --- | --- | --- |
-| Go Playground alone is enough | `Go Playground` | `00ADD8` |
-| Needs a local Go, version known | `Go <x.y> 以上` (match the `go` line in the scenario's `go.mod`) | `F39C12` |
-| Needs a local Go, no version floor | `手元の Go` | `F39C12` |
+| Go version has a minimum requirement | `Go <x.y> 以上` (match the `go` line in the scenario's `go.mod`) | `F39C12` |
+| Go version is fixed to one release | `Go <x.y>` | `F39C12` |
+| Go version is not specified | `指定なし` | `9E9E9E` |
 | No code to run | `不要` | `9E9E9E` |
 
 Write it as `![実行環境: <message>](https://img.shields.io/badge/実行環境-<message>-<color>)` with the label and message percent-encoded, and keep the alt text identical to the badge. Add anything the badge cannot carry as one line below it.

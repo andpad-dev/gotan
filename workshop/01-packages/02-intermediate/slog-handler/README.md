@@ -2,7 +2,7 @@
 
 # slog.Handler インタフェースを実装しよう
 
-![実行環境: Go Playground](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%20Playground-00ADD8)
+![実行環境: Go 1.22 以上](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%201.22%20%E4%BB%A5%E4%B8%8A-F39C12)
 
 ログを YAML 形式で出力したいです。
 そのためには slog のログハンドラーを自作する必要があります。
