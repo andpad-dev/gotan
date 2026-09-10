@@ -1,4 +1,4 @@
-[Workshop facilitation guide](README_en.md) | [How teams work](TEAM_GUIDE_en.md)
+[Workshop facilitation guide](README.md) | [How teams work](TEAM_GUIDE_en.md)
 
 # Scenario List
 

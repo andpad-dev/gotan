@@ -11,7 +11,7 @@ Circumstances specific to each event are collected at the end in [Event-specific
 
 | Role | Guideline | Responsibilities |
 |:---|:---|:---|
-| Facilitator | 1 person | Share [README_en.md](README_en.md), follow the script, and keep time |
+| Facilitator | 1 person | Share [README.md](README.md), follow the script, and keep time |
 | Support staff | 1 per 2-3 teams | Guide team formation and circulate among groups during the exploration workshop |
 
 The minimum staffing is one facilitator plus one support staff member, for a total of two people.
