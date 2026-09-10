@@ -282,12 +282,12 @@ URL だけでは後から調査を再現できません。次の項目をその�
 
 Use this README as the workshop guide on the day. The facilitator shares this page and proceeds from top to bottom. Participants should open it locally and follow along.
 
-Preparation, staff activities, and the tutorial demo script are in [STAFF.md](STAFF_en.md). Teams should also open [How to work as a team](TEAM_GUIDE_en.md).
+Preparation, staff activities, and the tutorial demo script are in [STAFF_en.md](STAFF_en.md). Teams should also open [How to work as a team](TEAM_GUIDE_en.md).
 
 ## Pages to Open First
 
 - [This page](README.md): Workshop flow and scenario index
-- [How to work as a team](TEAM_GUIDE.md): Icebreaker, roles, timing, and issue notes
+- [How to work as a team](TEAM_GUIDE_en.md): Icebreaker, roles, timing, and issue notes
 - [Go Playground](https://go.dev/play/): Run small Go programs without a local installation
 - [Discord](https://discord.gg/hDWW4NATAd): Workshop communication and team discussion
 
@@ -312,7 +312,7 @@ Answers are also allowed. Do not only read the conclusion: reproduce the investi
 
 ## Scenario Index
 
-All scenarios are listed in [SCENARIOS.md](SCENARIOS.md). Choose from it by theme and difficulty.
+All scenarios are listed in [SCENARIOS_en.md](SCENARIOS_en.md). Choose from it by theme and difficulty.
 
 ## Timetable (Planned: 90 minutes)
 

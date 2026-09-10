@@ -202,9 +202,6 @@ Use the [Go Blog index](https://go.dev/blog/all) when searching official posts. 
 
 Open the [Go source](https://cs.opensource.google/go/go), identify the file through pkg.go.dev or the official documentation, and use a tag such as `refs/tags/go1.26.5` matching the README's Go version. Read callers, field comments, and related type definitions, not only the target lines.
 
-## 5. Reproduce behavior locally
-
-Run executable examples from the README's working directory. Record `go version`, exit status, stdout, and stderr, then compare them with the documentation. Run compilation-error examples with the same toolchain. For small browser experiments, use the [Go Playground](https://go.dev/play/) and verify that shared source matches the README.
 
 ## Investigation order
 

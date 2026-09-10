@@ -1,4 +1,4 @@
-[Scenario index](../../../SCENARIOS.md) | [Workshop guide](../../../README.md) | [How to research 04-deep-dive](../../README.md)
+[Scenario index](../../../SCENARIOS_en.md) | [Workshop guide](../../../README.md) | [How to research 04-deep-dive](../../README.md)
 
 # Can You Trust a Go Compiler Built from Clean Source?
 

@@ -1,8 +1,6 @@
-[Scenario index](../../../SCENARIOS.md) | [Workshop guide](../../../README.md) | [How to research 04-deep-dive](../../README.md)
+[Scenario index](../../../SCENARIOS_en.md) | [Workshop guide](../../../README.md) | [How to research 04-deep-dive](../../README.md)
 
 # Why Does Go 1.27 Build the Same Floating-Point String Differently?
-
-**Execution environment**: Browser only. No Go installation is required.
 
 **Execution environment**: Browser only. No Go installation is required.
 

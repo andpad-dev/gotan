@@ -1,4 +1,4 @@
-[Scenario index](../../../SCENARIOS.md) | [Workshop guide](../../../README.md) | [How to research 03-cmd-tools](../../README.md)
+[Scenario index](../../../SCENARIOS_en.md) | [Workshop guide](../../../README.md) | [How to research 03-cmd-tools](../../README.md)
 
 # From One Text File to a Test: cmd/go Script Tests
 

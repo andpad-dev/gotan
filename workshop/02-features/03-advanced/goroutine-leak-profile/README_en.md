@@ -1,4 +1,4 @@
-[Scenario index](../../../SCENARIOS.md) | [Workshop guide](../../../README.md) | [How to research 02-features](../../README.md)
+[Scenario index](../../../SCENARIOS_en.md) | [Workshop guide](../../../README.md) | [How to research 02-features](../../README.md)
 
 # Why Does Go 1.27's `goroutineleak` Profile Report Only Goroutines That Can Never Run Again?
 
