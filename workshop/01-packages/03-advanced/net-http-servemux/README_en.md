@@ -2,11 +2,13 @@
 
 # Decode the Routing Rules of `http.ServeMux`
 
+**Execution environment**: Go 1.22 or later is required locally.
+
 The same `ServeMux` registers `/x/fixed` and `/x/{value}`. The more specific route is selected without relying on registration order, and a wrong method returns 405. Why does this happen? Let's investigate the background.
 
 When you [run the following code in the Go Playground](https://go.dev/play/p/DhW53RiIwwY), you can observe a literal match, a wildcard match, and a method mismatch.
 
-This scenario includes a `go.mod` that enables the routing rules introduced in Go 1.22 and later, plus a `main.go` containing the code above. To try it locally, run `go run .` in this directory. Before running it, also check `go version`, `go env GOMOD`, and `go env GODEBUG`.
+This directory includes a `main.go` and `go.mod` containing the code above. The `go.mod` enables the routing rules introduced in Go 1.22 and later. To try it locally, run `go run .` in this directory.
 
 ```go
 package main
@@ -47,6 +49,12 @@ POST /x/other -> 405
 ```
 
 ---
+
+<details><summary>Investigation entry points</summary>
+
+Start with the [01-packages research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
 
 ## Question 1: Which route wins?
 
@@ -209,7 +217,7 @@ At the same time, overlapping patterns that cannot be compared are not left hidd
 
 ---
 
-## Investigation starting points
+## Primary sources
 
 - [Go 1.22 Release Notes](https://go.dev/doc/go1.22)
 - [How to investigate 01-packages](../../README.md)

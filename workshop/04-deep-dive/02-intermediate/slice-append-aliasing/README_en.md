@@ -2,6 +2,8 @@
 
 # Intermediate: Separate Notification Targets with a Three-Index Slice
 
+**Execution environment**: Browser only. No Go installation is required.
+
 After taking the first two elements of a slice and appending a value, the third element of the original slice is replaced. Investigate how to append without changing the original slice.
 
 [Run this in the Go Playground](https://go.dev/play/p/Jv12vdzjqXX) and compare an ordinary slice expression with a three-index expression.
@@ -34,6 +36,12 @@ isolated=["a" "b" "x"]
 ```
 
 ---
+
+<details><summary>Investigation entry points</summary>
+
+Start with the [04-deep-dive research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
 
 ## Question 1: Why was the third person replaced?
 
@@ -113,7 +121,7 @@ The test should assert that the source remains `a, b, c` and that only the appen
 
 ---
 
-## Research starting points
+## Primary sources
 
 1. [How to investigate 04-deep-dive](../../README.md)
 2. [Go specification: Slice expressions](https://go.dev/ref/spec#Slice_expressions)

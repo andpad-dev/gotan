@@ -2,6 +2,8 @@
 
 # Read constant declarations using iota
 
+**Execution environment**: Browser only. No Go installation is required.
+
 You came across the following constant declaration.
 
 ```go

@@ -37,6 +37,12 @@ reset timer fired
 
 ---
 
+<details><summary>Investigation entry points</summary>
+
+Start with the [01-packages research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
+
 ## Question 1: How does capacity 0 differ from the old behavior?
 
 Before Go 1.23, timer channels had a buffer capacity of 1. With the current synchronous channel of capacity 0, what guarantee is provided about an old retry notification after `Stop` or `Reset` returns?
@@ -242,7 +248,7 @@ Code that checks the `len` or `cap` of a timer channel to determine whether it c
 
 ---
 
-## Investigation starting points
+## Primary sources
 
 - [Go 1.27 Release Notes](https://go.dev/doc/go1.27)
 - [Go Wiki: Go 1.23 Timer Channel Changes](https://go.dev/wiki/Go123Timer)

@@ -2,6 +2,8 @@
 
 # Investigate nil and empty slices in encoding/json
 
+**Execution environment**: Browser only. No Go installation is required.
+
 An API returns `{"values":null}`. Its consumer always processes an array, so the contract requires `{"values":[]}` when the slice is empty.
 
 You came across the following `json.Marshal` call in a review. Let’s investigate what it does.

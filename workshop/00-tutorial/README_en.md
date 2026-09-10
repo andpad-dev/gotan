@@ -1,6 +1,8 @@
-[Scenario index (Japanese)](../SCENARIOS.md) | [Workshop guide (Japanese)](../README.md)
+[Scenario index](../SCENARIOS_en.md) | [Workshop guide](../README.md) | [Team guide](../TEAM_GUIDE_en.md)
 
 # Tutorial: Investigate fmt.Printf verbs
+
+**Execution environment**: Browser only. No Go installation is required.
 
 You came across format verbs in `fmt.Printf` code. Let’s investigate what they do.
 
@@ -34,8 +36,8 @@ Try putting different values, such as a struct, map, or pointer, into `value` an
 <details>
 <summary>Hint</summary>
 
-- In the verb table under “Printing,” compare the `%v`, `%#v`, and `%T` rows directly.
-- “Other flags” lists other verb-specific effects of `#`, such as `%#b` and `%#x`. If `%v` is absent there, return to the verb table.
+- In the “Printing” section, compare the `%v`, `%#v`, and `%T` rows in the `General:` list under “The verbs:”.
+- “Other flags” lists other verb-specific effects of `#`, such as `%#b` and `%#x`. If `%v` is absent there, return to the `General:` list.
 
 </details>
 
@@ -54,7 +56,7 @@ Try putting different values, such as a struct, map, or pointer, into `value` an
 
 - `%v`: prints the value in its default format.
 - `%T`: prints the value’s type in Go syntax.
-- `#`: is a formatting flag whose effect depends on the verb. Its combination with `%v` appears in the verb table as the distinct `%#v` form, which prints a Go-syntax representation of the value.
+- `#`: is a formatting flag whose effect depends on the verb. Its combination with `%v` appears in the `General:` list as the distinct `%#v` form, which prints a Go-syntax representation of the value.
 
 Thus, this code places `%#v` and `%T` side by side to inspect both the value and its type in Go syntax, a common debugging idiom.
 
@@ -77,7 +79,7 @@ Only one argument, `value`, is passed. Why is it printed twice?
 <details>
 <summary>Hint</summary>
 
-- Search for `[` in the package Overview.
+- Use page search (Ctrl+F / Cmd+F) for `[` in the package Overview.
 - For example, how many times does `fmt.Printf("%[1]s / %[1]s\n", "gopher")` use its one argument?
 
 </details>
@@ -88,7 +90,7 @@ Only one argument, `value`, is passed. Why is it printed twice?
 **Investigation path**
 
 1. Starting from [Go Documentation](https://go.dev/doc/), open the standard library’s `fmt` package.
-2. Search for `[` in the [`fmt` Overview](https://pkg.go.dev/fmt).
+2. Use page search for `[` in the [`fmt` Overview](https://pkg.go.dev/fmt).
 3. Reach [“Explicit argument indexes”](https://pkg.go.dev/fmt#hdr-Explicit_argument_indexes) and read how `[n]` selects an argument.
 
 **Answer**

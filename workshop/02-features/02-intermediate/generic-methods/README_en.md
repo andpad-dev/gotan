@@ -2,6 +2,8 @@
 
 # Add a Generic Method Helper to a Named Type
 
+**Execution environment**: Browser only. No Go installation is required.
+
 You want to add a generic method to a named type. Let's investigate how to do that.
 
 Your internal utility package has a custom container type, `Slice[T]`.

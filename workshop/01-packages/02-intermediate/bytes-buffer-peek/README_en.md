@@ -2,6 +2,8 @@
 
 # Inspect the Beginning of bytes.Buffer Without Reading It
 
+**Execution environment**: Browser only. No Go installation is required.
+
 During review, you find code that inspects the first four bytes of a `bytes.Buffer` without consuming them. Investigate the relationship between the value returned by `Peek` and the buffer.
 
 When you [run the following observation code in the Go Playground](https://go.dev/play/p/OdJEVvlBSbf), you can observe three properties: peeking ahead, insufficient data, and sharing of the returned slice.
@@ -37,6 +39,12 @@ short="XY" err=EOF
 ```
 
 ---
+
+<details><summary>Investigation entry points</summary>
+
+Start with the [01-packages research guide](../../README.md), then use the primary sources listed at the end of this scenario.
+
+</details>
 
 ## Question 1: How can you inspect the beginning without reading it?
 
@@ -144,7 +152,7 @@ For example, `copyOfPrefix := bytes.Clone(prefix)` preserves the original 4 byte
 
 ---
 
-## Investigation starting points
+## Primary sources
 
 - [Go 1.26 Release Notes](https://go.dev/doc/go1.26)
 - [How to investigate 01-packages](../../README.md)

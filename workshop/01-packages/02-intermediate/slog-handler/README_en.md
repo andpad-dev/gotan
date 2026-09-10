@@ -2,9 +2,17 @@
 
 # Implement the `slog.Handler` Interface
 
+**Execution environment**: Browser only. No Go installation is required.
+
 Logs need to be output in YAML format.
 To do that, we need to write a custom `slog` log handler.
 Let's follow only primary sources and gather the information needed for the implementation and unit tests.
+
+<details><summary>Investigation entry points</summary>
+
+Start with the [01-packages research guide](../../README.md), then begin with [`log/slog`](https://pkg.go.dev/log/slog) and the [slog handler guide](https://go.dev/s/slog-handler-guide).
+
+</details>
 
 ## Question 1: Investigate the `slog.Handler` interface
 
@@ -60,6 +68,48 @@ Find and read them, then discuss the points as a group.
 - Why is it not enough to embed `slog.Handler` and implement only the methods you need?
 - What kinds of logs will stop being output correctly if you do not call the `Resolve` method of `slog.Value`?
 
+Observe both points with the same input by [running it in the Go Playground](https://go.dev/play/p/wXj_QdVwc19):
+
+- the handler that only embeds an interface panics
+- the password output changes depending on whether `Resolve` is called
+
+```go
+package main
+
+import (
+  "context"
+  "fmt"
+  "log/slog"
+)
+
+type badHandler struct { slog.Handler }
+
+func (badHandler) Handle(context.Context, slog.Record) error { return nil }
+
+type password string
+
+func (password) LogValue() slog.Value { return slog.StringValue("REDACTED") }
+
+func main() {
+  func() {
+    defer func() { fmt.Println("embedded handler panicked:", recover() != nil) }()
+    slog.New(badHandler{}).Info("event")
+  }()
+
+  attr := slog.Any("password", password("secret"))
+  fmt.Printf("without Resolve: %v\n", attr.Value.Any())
+  fmt.Printf("with Resolve: %v\n", attr.Value.Resolve().Any())
+}
+```
+
+Expected output:
+
+```text
+embedded handler panicked: true
+without Resolve: secret
+with Resolve: REDACTED
+```
+
 <details>
 <summary>Hint</summary>
 
@@ -104,9 +154,9 @@ Without calling it, a LogValuer value, such as a type that replaces a password w
 
 ---
 
-## Question 3: Investigate how to test a `slog.Handler`
+## Question 3: Compare the `slog.Handler` test APIs
 
-Let's investigate how to use unit tests to verify that a custom handler follows the rules of `slog.Handler`.
+Let's investigate how `testing/slogtest.TestHandler` and `testing/slogtest.Run` verify that a custom handler follows the rules of `slog.Handler`. What do both functions test, and how do their failure reporting and handler construction differ?
 
 <details>
 <summary>Hint</summary>
@@ -126,14 +176,18 @@ Let's investigate how to use unit tests to verify that a custom handler follows 
 
 **Answer**
 
-Use the standard `testing/slogtest` package.
-Pass `slogtest.TestHandler` a custom handler and a function that converts the output into and returns a slice of maps, and it will verify all at once the rules that a `Handler` must follow, including resolving attributes, handling groups, and ignoring empty attributes.
-The point is that you can comprehensively verify conformance to the `slog.Handler` specification without enumerating test cases yourself.
+Use the standard `testing/slogtest` package. `TestHandler` and `Run` use the same conformance cases, including resolving attributes, handling groups, and ignoring empty attributes.
+
+`TestHandler` receives one handler and a function that converts all output into a `[]map[string]any`. After running every case, it returns a combined `error` using `errors.Join`. It is useful when one handler is reused and the caller wants one aggregate result.
+
+`Run` receives a `*testing.T`, a function that constructs a new handler for each case, and a function that returns one case's result as `map[string]any`. It runs each case as a subtest and reports failures with that subtest's `t.Error`. Use it when individual failing cases should be visible and each case needs a fresh handler.
+
+Both APIs provide the shared conformance cases; YAML-specific formatting and error handling still need separate tests.
 
 </details>
 
 ---
 
-## Investigation starting points
+## Primary sources
 
 - https://pkg.go.dev/log/slog

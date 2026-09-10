@@ -123,3 +123,86 @@ research!rsc は Go プロジェクトの公式ドキュメントではありま
 | 言語・標準ライブラリ・ランタイムの設計案が、どの手続きを経て採用または見送りになったのか | [Go proposal process](https://go.dev/s/proposal) から proposal Issue と決定を確認し、採用された変更だけ対象版のリリースノートと実装へ進む | `Go Proposals` → `Enabling Experiments`、`Representation` → [シリーズ目次](https://research.swtch.com/proposals) |
 | クリーンなコンパイラソースと、手元のコンパイラをどこまで信頼できるのか | [Go compiler](https://go.dev/cmd/compile/) → [Installing Go from source](https://go.dev/doc/install/source#go14) → [Reproducible Go toolchains](https://go.dev/blog/rebuild) の順に、現在のブートストラップと再現可能性を確認する | `Reflections on Trusting Trust` → `bootstrap`、`reproducible` → [実演記事](https://research.swtch.com/nih)。`Open Source Supply Chain Security` → [講演・参考資料の入口](https://research.swtch.com/acmscored) |
 | 依存モジュールへの攻撃に対して、Go の版選択・検証・取得経路がどこを守るのか | [How Go Mitigates Supply Chain Attacks](https://go.dev/blog/supply-chain) → [Go Modules Reference](https://go.dev/ref/mod) の順に、現在の仕組みと限界を確認する | `Open Source Supply Chain Security` → [講演・参考資料の入口](https://research.swtch.com/acmscored)。`Colors Attack` → `dependency`、`latest` → [比較記事](https://research.swtch.com/npm-colors) |
+
+
+
+--------------------------------------
+
+
+
+[Scenario index](../SCENARIOS_en.md) | [Workshop guide](../README.md) | [Team guide](../TEAM_GUIDE_en.md)
+
+# How to Explore 04-deep-dive (Reverse Search Guide)
+
+This category investigates Go language rules, standard-library implementations, and design history by following primary sources. Do not open an individual answer first: begin with the shared entry point, describe the observed phenomenon, and trace each claim to evidence.
+
+## 1. Read the language specification first
+
+For syntax, types, comparability, memory size, and error-handling rules, start with [The Go Programming Language Specification](https://go.dev/ref/spec).
+
+1. Use the table of contents or the `f` key to find the section closest to the concept in the problem.
+2. Map each claim to the specification's definitions, restrictions, and exceptions.
+3. For behavior not determined by the specification, continue to the standard-library documentation and source.
+
+## 2. Read the standard-library contract
+
+Start at [Go Documentation](https://go.dev/doc), then open the relevant package from [pkg.go.dev/std](https://pkg.go.dev/std). Read the Overview, API comments, examples, and related types and methods. Follow declarations to the Go source and compare the explanation with the implementation.
+
+## 3. Trace design history
+
+For “why this design?” questions:
+
+1. Read the release notes for the target version (`go.dev/doc/go1.<version>`).
+2. Follow linked official blogs, proposals, and Issues.
+3. Read the full issue discussion and related links, separating accepted facts, rejected alternatives, and your own interpretation.
+4. Finally compare the result with versioned source and local measurements.
+
+## Find proposals, design documents, and review history
+
+For recent language features, tools, or standard-library APIs, begin with the target version's release notes (`go.dev/doc/go1.<version>`). Follow linked blogs, proposals, Issues, and CLs, read the complete Issue discussion and related links, and then compare the result with versioned source and local measurements.
+
+For proposals, use the [Go proposal process](https://go.dev/s/proposal), [Proposal review meeting minutes](https://go.dev/s/proposal-minutes), the [`Proposal` label in `golang/go` Issues](https://github.com/golang/go/issues?q=is%3Aissue%20label%3AProposal), and the [Go proposal repository](https://github.com/golang/proposal/tree/master/design). A Proposal Issue, a design document, the CL that edits the document, and the implementation CL are different sources; connect them using Issue numbers, filenames, and commit-message references.
+
+When a release note does not link an Issue visibly, inspect its HTML source for `go.dev/issue/` and `CL ` comments. Record whether each item is a proposal, accepted decision, implementation, or later follow-up. Do not treat a closed Issue or merged CL as proof that the change exists in the version being investigated until the target tag confirms it.
+
+For Go source, use [cs.opensource.google/go/go](https://cs.opensource.google/go/go). Find the file from pkg.go.dev, an Issue, or a CL, then switch from `master` to a tag such as `refs/tags/go1.27.0`. Read the documentation comment, full function, callers, related types, tests, and relevant comments. Use blame and file history to connect a changed line to its Issue and CL.
+
+## Trace an Issue to its CL and commit
+
+An Issue describes the observed problem, proposal, scope, and decision. A Gerrit CL is one change unit and contains the patch, review comments, trybot results, and merge status. Check the CL status and target branch, distinguish `MERGED`, `ABANDONED`, and unmerged changes, and inspect the final patch set and tests. Then confirm the merge commit is present in the versioned source tag.
+
+Useful shortcuts are [`go.dev/issue/<number>`](https://go.dev/issue/77273) for a GitHub Issue and [`go.dev/cl/<number>`](https://go.dev/cl/792780) for a Gerrit CL. In notes, separate what the Issue decided, what the CL implemented, what the target tag contains, and what was measured locally.
+
+## Reproduce behavior locally
+
+- Run executable examples from the README's working directory.
+- Record `go version`, exit status, stdout, and stderr, then compare them with the documentation.
+- Run compilation-error examples with the same toolchain and record the actual diagnostic.
+- For browser experiments, use the [Go Playground](https://go.dev/play/), verify that shared source matches the README, and record the displayed Go version.
+
+## Research design history through research.swtch.com
+
+Russ Cox joined the Go team in 2008 and helped build two compilers and the standard library. He later served as a technical lead for the Go project and Google's Go team. His [research!rsc index](https://research.swtch.com/) is useful for tracing design decisions and implementation history from a core developer's perspective, but it is not official Go documentation. Verify current behavior on go.dev and in versioned source first.
+
+[Go: A Documentary](https://golang.design/history/) is an index of public design documents, Issues, CLs, and talks. It is a useful route into history, not a complete current-status reference. Follow its primary sources and mark historical interpretation separately from current facts.
+
+When following current implementation work through people, use [Go Code Owners](https://dev.golang.org/owners), Gerrit history, recent Issues, and reviews. Individual GitHub activity is not enough to infer current project direction.
+
+| Question | Check first on go.dev | Search in the research!rsc index |
+| --- | --- | --- |
+| Why can floating-point output remain stable while its implementation changes? | Check the current [`strconv.FormatFloat`](https://go.dev/pkg/strconv/#FormatFloat) contract and compare tagged Go 1.26.0 and Go 1.27.0 source. | `Floating Point Formatting` -> `Floating-Point Printing and Parsing Can Be Simple And Fast` -> `Shortest-Width Printing` -> [series index](https://research.swtch.com/fp-all) |
+| Which rules order reads and writes between goroutines? | Read [The Go Memory Model](https://go.dev/ref/mem), then compare examples with the race detector and measurements. | `Memory Models` -> hardware, programming-language, and Go memory-model articles -> [series index](https://research.swtch.com/mm) |
+| How are proposals accepted or rejected? | Start with the [Go proposal process](https://go.dev/s/proposal), then follow the proposal Issue, release notes, and implementation. | `Go Proposals` -> `Enabling Experiments`, `Representation` -> [series index](https://research.swtch.com/proposals) |
+| How far can a clean compiler source tree and local compiler be trusted? | Read [Go compiler](https://go.dev/cmd/compile/), [source installation](https://go.dev/doc/install/source#go14), and [reproducible toolchains](https://go.dev/blog/rebuild). | `Reflections on Trusting Trust` -> `bootstrap`, `reproducible` -> [article](https://research.swtch.com/nih) |
+| Which protections address dependency supply-chain attacks? | Read [How Go Mitigates Supply Chain Attacks](https://go.dev/blog/supply-chain) and the [Go Modules Reference](https://go.dev/ref/mod). | `Open Source Supply Chain Security` -> [talk and references](https://research.swtch.com/acmscored); `Colors Attack` -> `dependency`, `latest` -> [article](https://research.swtch.com/npm-colors) |
+
+Use the [Go Blog index](https://go.dev/blog/all) when searching official posts. Do not rely on external articles without returning to Go project primary sources.
+
+## 4. Read versioned implementation source
+
+Open the [Go source](https://cs.opensource.google/go/go), identify the file through pkg.go.dev or the official documentation, and use a tag such as `refs/tags/go1.26.5` matching the README's Go version. Read callers, field comments, and related type definitions, not only the target lines.
+
+
+## Investigation order
+
+Observed phenomenon -> official documentation -> language specification or API contract -> design discussion -> versioned source -> local measurement. If primary sources do not establish a conclusion, say “unknown” or mark the remainder as inference instead of overstating it.
