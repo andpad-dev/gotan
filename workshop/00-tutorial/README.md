@@ -46,8 +46,8 @@ func main() {
 <details>
 <summary>ヒント</summary>
 
-- Overview 冒頭の「Printing」にある verb の表で、`%v`、`%#v`、`%T` の 3 行を直接比べる。
-- 「Other flags」の `#` は、`%#b` や `%#x` など verb ごとの別の効果を列挙している。そこに `%v` がなければ、verb の表へ戻る。
+- Overview の「Printing」節、「The verbs:」の下にある `General:` の一覧で、`%v`、`%#v`、`%T` の 3 行を直接比べる。
+- 「Other flags」の `#` は、`%#b` や `%#x` など verb ごとの別の効果を列挙している。そこに `%v` がなければ、`General:` の一覧へ戻る。
 
 </details>
 
@@ -66,7 +66,7 @@ func main() {
 
 - `%v`: 値をデフォルトのフォーマットで出力する。
 - `%T`: 値の型を Go の構文で出力する。
-- `#`: 書式フラグの一つで、効果は組み合わせる verb によって異なる。`%v` との組み合わせは verb の表に `%#v` という別形式として載っており、値を Go の構文表現（Go-syntax representation）で出力する。
+- `#`: 書式フラグの一つで、効果は組み合わせる verb によって異なる。`%v` との組み合わせは `General:` の一覧に `%#v` という別形式として載っており、値を Go の構文表現（Go-syntax representation）で出力する。
 
 つまり `%#v` と `%T` を並べたこのコードは、「値の中身と型を、どちらも Go の構文で確認する」デバッグの定番イディオムです。
 
