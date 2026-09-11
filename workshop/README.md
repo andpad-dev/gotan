@@ -45,11 +45,11 @@ Go Playground ではコードを貼って **Run** を押すと実行できます
 | 時間 | 内容 |
 |:---|:---|
 | 00:00 - 00:05 | イントロダクション、趣旨説明 |
-| 00:05 - 00:25 | チュートリアルワーク（用意されたシナリオで調べ方の練習） |
-| 00:25 - 00:30 | グループ分け |
-| 00:30 - 00:35 | アイスブレイク（3分固定）とテーマ選択 |
-| 00:35 - 01:20 | 探索ワーク（45分） |
-| 01:20 - 01:30 | 全体での共有、クロージング |
+| 00:05 - 00:20 | チュートリアルワーク（用意されたシナリオで調べ方の練習） |
+| 00:20 - 00:25 | グループ分け |
+| 00:25 - 00:30 | アイスブレイク（3分固定）とテーマ選択 |
+| 00:30 - 01:15 | 探索ワーク（45分） |
+| 01:15 - 01:30 | 全体での共有、クロージング |
 
 ---
 
@@ -71,7 +71,7 @@ Go の公式ドキュメント、リリースノート、Issue、ソースコー
 
 ### 今日の流れ
 
-1. **チュートリアルワーク:** ファシリテーターのライブデモを手元で追いながら、公式ドキュメントをたどる「調べ方のコツ」を体験します。
+1. **チュートリアルワーク:** ファシリテーターの説明を手元で追いながら、公式ドキュメントをたどる「調べ方のコツ」を体験します。
 2. **グループ分け:** 挑戦したい難易度ごとに、4名程度のグループに分かれます。
 3. **テーマ選択:** グループごとに **「今日深く調べたいテーマ」** を決め、班に割り当てられた Issue に宣言します。
    用意されたシナリオから興味のあるものを選んでもよいですし、日々の開発で気になっている自分たちの疑問をテーマにしても構いません。
@@ -101,11 +101,11 @@ Go の公式ドキュメント、リリースノート、Issue、ソースコー
 
 ---
 
-## 00:05 チュートリアルワーク（20分）
+## 00:05 チュートリアルワーク（15分）
 
-[チュートリアル](00-tutorial/README.md) を題材に、調べ方をライブデモで体験します。
+[チュートリアル](00-tutorial/README.md) を題材に、調べ方をスライドで追体験します。
 
-ファシリテーターが画面共有で操作するので、参加者は次の2つを手元で開き、同じ操作を追ってください。
+ファシリテーターがスライドを送りながら手順を説明するので、参加者は次の2つを手元で開き、同じ操作を追ってください。
 
 - [チュートリアルの README](00-tutorial/README.md)
 - <https://pkg.go.dev/fmt>
@@ -131,7 +131,7 @@ Go の公式ドキュメント、リリースノート、Issue、ソースコー
 
 ---
 
-## 00:25 グループ分け（5分）
+## 00:20 グループ分け（5分）
 
 参加者のレベルに合わせ、次の3段階のシナリオを用意しています。
 
@@ -153,7 +153,7 @@ Go の公式ドキュメント、リリースノート、Issue、ソースコー
 
 ---
 
-## 00:30 アイスブレイクとテーマ選択（5分）
+## 00:25 アイスブレイクとテーマ選択（5分）
 
 まず **3分** とって、班内で自己紹介をしましょう（名前・Go歴・今日調べてみたいことを一言ずつ）。
 
@@ -177,7 +177,7 @@ Go の公式ドキュメント、リリースノート、Issue、ソースコー
 
 ---
 
-## 00:35 探索ワーク（45分）
+## 00:30 探索ワーク（45分）
 
 設定したテーマについて、班で調査を進めます。
 
@@ -238,7 +238,7 @@ URL だけでは後から調査を再現できません。次の項目をその�
 
 ---
 
-## 01:20 全体での共有（10分）
+## 01:15 全体での共有（15分）
 
 **3班ほどをピックアップして発表してもらいます。** 初級・中級・上級から拾います。全班は回りません。
 ファシリテーターが班の Issue を画面に映すので、PC を繋ぎ替える必要はありません。
@@ -319,11 +319,11 @@ All scenarios are listed in [SCENARIOS_en.md](SCENARIOS_en.md). Choose from it b
 | Time | Content |
 |:---|:---|
 | 00:00 - 00:05 | Introduction and purpose |
-| 00:05 - 00:25 | Tutorial work |
-| 00:25 - 00:30 | Team formation |
-| 00:30 - 00:35 | Icebreaker (fixed at 3 minutes) and theme selection |
-| 00:35 - 01:20 | Exploration work (45 minutes) |
-| 01:20 - 01:30 | Whole-group sharing and closing |
+| 00:05 - 00:20 | Tutorial work |
+| 00:20 - 00:25 | Team formation |
+| 00:25 - 00:30 | Icebreaker (fixed at 3 minutes) and theme selection |
+| 00:30 - 01:15 | Exploration work (45 minutes) |
+| 01:15 - 01:30 | Whole-group sharing and closing |
 
 ---
 
@@ -355,7 +355,7 @@ In the team's investigation log, record the pages you actually opened and the fa
 
 ---
 
-## 00:05 Tutorial work (20 minutes)
+## 00:05 Tutorial work (15 minutes)
 
 Use the [tutorial](00-tutorial/README.md) to practice the investigation method in a live demo. Open the [tutorial README](00-tutorial/README.md) and <https://pkg.go.dev/fmt> locally and follow the facilitator.
 
@@ -367,7 +367,7 @@ Practice the workshop's investigation pattern: open the official documentation, 
 
 ---
 
-## 00:25 Team formation (5 minutes)
+## 00:20 Team formation (5 minutes)
 
 The scenarios have three levels:
 
@@ -379,7 +379,7 @@ Form groups of about four people at the level you want to try. Advanced particip
 
 ---
 
-## 00:30 Icebreaker and theme selection (5 minutes)
+## 00:25 Icebreaker and theme selection (5 minutes)
 
 Take **three minutes** for introductions: name, Go experience, and one thing you want to investigate today. Then open [How to work as a team](TEAM_GUIDE.md) and choose one theme. Select a prepared scenario from [SCENARIOS.md](SCENARIOS.md), or bring a question from daily development.
 
@@ -387,7 +387,7 @@ Keep the scope to roughly one question for the 45-minute exploration. Rephrase a
 
 ---
 
-## 00:35 Exploration work (45 minutes)
+## 00:30 Exploration work (45 minutes)
 
 The whole team works on one scenario. During the first three minutes, open its **investigation entry points** and decide where to start; the category README can also be used first. Split the questions between pairs, follow official documentation and source code, and run a Playground or local `go run` experiment when behavior is unclear.
 
@@ -417,7 +417,7 @@ At **20 minutes remaining**, answers may be opened. At **10 minutes remaining**,
 
 ---
 
-## 01:20 Whole-group sharing (10 minutes)
+## 01:15 Whole-group sharing (15 minutes)
 
 About three teams will present, with examples from the beginner, intermediate, and advanced levels. Each team has about two minutes:
 
