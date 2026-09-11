@@ -2,7 +2,7 @@
 
 # Go 1.27 の `goroutineleak` プロファイルは、なぜ「絶対に起きない goroutine」だけを教えてくれるのか
 
-**実行環境**: ブラウザだけ。Go のインストールは不要です。
+![実行環境: Go 1.27 以上](https://img.shields.io/badge/%E5%AE%9F%E8%A1%8C%E7%92%B0%E5%A2%83-Go%201.27%20%E4%BB%A5%E4%B8%8A-F39C12)
 
 動かしているプログラムの `/debug/pprof/goroutine` で、goroutine の数がじりじり増えています。
 スタックを開くと、`chan send` で止まったものが積み上がっています。  

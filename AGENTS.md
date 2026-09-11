@@ -50,20 +50,18 @@ Formatting:
 - Do not use Markdown headings inside `<details>`; use bold labels instead.
 - Keep common investigation triggers, such as “press `f` to search first,” visible in the category README rather than hiding them in hints.
 
-Execution-environment line:
+Go-version badge:
 
-Write it as plain text on the line under the title — **not** as a shields.io badge. A badge looks pressable, and a badge reading `Go Playground` invites the reader to click it expecting to land on the Playground.
-
-| Case | Scenario README | `SCENARIOS.md` cell |
+| Case | Message | Color |
 | --- | --- | --- |
-| Go Playground alone is enough | `**実行環境**: ブラウザだけ。Go のインストールは不要です。` | `ブラウザだけ` |
-| Needs a local Go, version known | `**実行環境**: 手元の Go <x.y> 以上が必要です。` (match the `go` line in the scenario's `go.mod`) | `手元の Go <x.y> 以上` |
-| Needs a local Go, no version floor | `**実行環境**: 手元の Go が必要です。` | `手元の Go` |
-| No code to run | `**実行環境**: コードは実行しません。` | `実行しない` |
+| Go version has a minimum requirement | `Go <x.y> 以上` | `F39C12` |
+| Go version is fixed to one release | `Go <x.y>` | `F39C12` |
+| Go version is not specified | `指定なし` | `9E9E9E` |
+| No code to run | `不要` | `9E9E9E` |
 
-Add anything this line cannot carry as one more line below it.
+Write it as `![実行環境: <message>](https://img.shields.io/badge/実行環境-<message>-<color>)` with the label and message percent-encoded, and keep the alt text identical to the badge. Add anything the badge cannot carry as one line below it.
 
-Then add a row to the category table in `workshop/SCENARIOS.md` using the cell text above. Keep the two consistent so a mismatch is easy to spot.
+Then add a row to the category table in `workshop/SCENARIOS.md`, pasting the **same badge markdown verbatim**. The two must match character for character, so a mismatch is easy to spot.
 
 ## Quality and Research
 
