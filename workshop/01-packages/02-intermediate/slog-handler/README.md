@@ -78,13 +78,13 @@ Example の [LevelHandler](https://pkg.go.dev/log/slog#example-Handler-LevelHand
 ハンドラーの自作には注意点がいくつかあり、ドキュメントに書かれています。
 探して読み、どんな注意点かグループで議論しましょう。
 
-- slog.Handler を埋め込んで、必要なメソッドだけ実装するのはなぜダメなのでしょうか？
+- 次の `badHandler{}` は `slog.Handler` として渡せるでしょうか。コンパイルできるかと、ログを出すときにどのメソッドで何が不足するかを分けて調べましょう。
 - slog.Value の Resolve メソッドを呼ばないと、どんなログがうまく出力されなくなるのでしょうか？
 
 次のコードで、2つの注意点を同じ入力から観測してください。
 [Go Playground で実行する](https://go.dev/play/p/wXj_QdVwc19) と、次の 2 点を確認できます。
 
-- 埋め込みだけのハンドラーで panic が起きる
+- 未初期化の `slog.Handler` を埋め込んだハンドラーで panic が起きる
 - `Resolve` の有無でパスワードの表示が変わる
 
 ```go
@@ -139,7 +139,9 @@ with Resolve: REDACTED
 - Example も参考になる: [DiscardHandler](https://pkg.go.dev/log/slog#example-package-DiscardHandler) / [LevelHandler](https://pkg.go.dev/log/slog#example-Handler-LevelHandler)
 - さらに詳しい公式ガイドが [slog handler guide](https://go.dev/s/slog-handler-guide) にある
   - ガイドの IndentHandler の `mu` フィールドが、なぜ `sync.Mutex` ではなく `*sync.Mutex`（ポインタ）なのかにも注目する。
-- ガイド冒頭の「埋め込み」を読んだら、Logger が `Enabled`、`WithAttrs`、`WithGroup`、`Handle` をどのように組み合わせて呼ぶかを、メソッドの委譲とコピーの観点から整理する。結論を先に決めず、4 メソッドそれぞれの契約と照合する。
+- `badHandler` のメソッド集合と、`badHandler{}` の埋め込みフィールドの値を別々に確かめる。
+- `Logger.Info` から最初に呼ばれるHandlerのメソッドを追い、`badHandler.Handle` まで到達するかを予想してから実行する。
+- ガイドの「埋め込み」を読み、`WithAttrs` / `WithGroup` が返すHandlerでも自作の出力処理と状態を保てるか、設問 1 のラッパー例と比べる。
 - `LogValuer` の例として、パスワード型が `LogValue` で `slog.StringValue("REDACTED")` を返すケースを考える。`Resolve` を呼ばずに値をそのまま文字列化すると何が失われるか、実際の出力を想像してから確認する。
 
 </details>
@@ -152,15 +154,21 @@ with Resolve: REDACTED
 1. [Go Playground の共有コード](https://go.dev/play/p/wXj_QdVwc19) を実行し、panic の有無と `Resolve` 前後の出力を観測する。
 2. slog のドキュメントの Overview にある「[Writing a handler](https://pkg.go.dev/log/slog#hdr-Writing_a_handler)」節を読む。
 3. [Go 1.27.0 の `Handler.Handle` の契約](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/log/slog/handler.go;l=41-65) で、属性値の解決など、出力するハンドラーが守る規則を確認する。
-4. そこからリンクされている [slog handler guide](https://go.dev/s/slog-handler-guide)（[golang/example の本文](https://github.com/golang/example/blob/master/slog-handler-guide/README.md)）を開き、埋め込み、`WithAttrs` / `WithGroup`、値の解決に関する節を順に読む。
+4. [Go 1.27.1 の logger.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/log/slog/logger.go) の `Info` → `log` → `Enabled` を追い、`Handle` より先にどの呼び出しが起きるか確認する。
+5. 手順 2 のOverviewからリンクされている [slog handler guide](https://go.dev/s/slog-handler-guide)（[golang/example の本文](https://github.com/golang/example/blob/master/slog-handler-guide/README.md)）を開き、埋め込み、`WithAttrs` / `WithGroup`、値の解決に関する節を順に読む。
 
 **答え**
 
 主な注意点は 3 つです。
 
-**1. 4 つのメソッドをすべて実装する。**
-`slog.Handler` を埋め込んで必要なメソッドだけ実装したくなりますが、Logger と Handler は密結合なのでそれでは動きません。
-ガイドは、インタフェースを埋め込んで一部だけ実装する方法ではなく、4 メソッドをすべて実装するよう説明しています。
+**1. 型の充足と、4 メソッドの契約を満たすことを分ける。**
+`badHandler` は埋め込んだ `slog.Handler` のメソッドが昇格するため、型としては `slog.Handler` を満たします。自分で定義した `Handle` もあり、`slog.New(badHandler{})` はコンパイルできます。この規則は [Go 言語仕様の Struct types](https://go.dev/ref/spec#Struct_types) のメソッド昇格で確認できます。
+
+しかし `badHandler{}` の埋め込みフィールドは nil です。`Info` → `log` → `Logger.Enabled` からそのフィールドの `Enabled` を呼ぼうとして panic します。自作した `Handle` へ到達する前の失敗であり、コンパイル時の型エラーではありません。
+
+公式ガイドが4メソッドすべての実装を求めるのは、出力だけでなく属性やグループの扱いもそろえるためです。委譲先を初期化するだけで十分とは限りません。たとえば `WithAttrs` / `WithGroup` が内側のHandlerをそのまま返すと、その後のログが自作の `Handle` を通らなくなります。
+
+設問 1 の `LevelHandler` は、残る処理を利用可能な内側のHandlerへ委譲し、`WithAttrs` / `WithGroup` の戻り値も再びラップしてレベル制御を保ちます。委譲する場合も、返されたHandlerが自作の振る舞いと状態を保つかを確認します。
 
 **2. `WithAttrs` / `WithGroup` は元を変更せず、新しいハンドラーを返す。**
 ガイドの `IndentHandler` はこの契約を満たすために構造体をコピーします。その `mu` フィールドが `sync.Mutex` ではなく `*sync.Mutex` なのは、コピー後も同じロックを共有するためです。
