@@ -57,6 +57,8 @@ direct: started
 
 Go 言語仕様で `defer` 文を探します。関数呼び出しそのものと、関数値・引数の評価について、別々に書かれている箇所に注目してください。
 
+二つの呼び出しについて「登録した順番／引数を評価する時点／関数本体を実行する順番／本体で読む変数」をメモします。一人が出力を予想し、もう一人が実行結果と仕様を照合すると、値の違いと表示順を分けて確認できます。
+
 </details>
 
 <details>
@@ -84,6 +86,8 @@ Go 言語仕様で `defer` 文を探します。関数呼び出しそのもの�
 
 Go 言語仕様では、無名関数を `Function literals` と呼びます。この節で外側の変数をどう参照するかを調べ、設問 1 の「関数値と引数」の評価規則と分けて考えます。続けて `Defer statements` で、複数の `defer` の順番を確認しましょう。
 
+無名関数に `status` を引数で渡した場合も、完了後の値になるでしょうか。予想してからコードを変えてみましょう。余力があれば、外側の `status` を読む関数を変数 `f` に入れて `defer f()` とする場合も比べます。
+
 </details>
 
 <details>
@@ -99,6 +103,39 @@ Go 言語仕様では、無名関数を `Function literals` と呼びます。�
 
 関数リテラルは外側の関数と `status` 変数を共有します。無名関数に `status` を引数として渡して固定してはいないため、`closure` の本体は遅延呼び出しが実行される時点の変数を参照します。その時点では代入済みで `completed` です。また、遅延呼び出しは積み重ねた逆順に実行されるため、後から登録した無名関数が先に表示されます。
 
-`direct` が古い値を出すのは、引数が `defer` 文の実行時に評価・保存されていたからです。値をいつ固定したいのかを決めて、無名関数か引数かを選びます。
+`direct` が古い値を出すのは、引数が `defer` 文の実行時に評価・保存されていたからです。元コードの表示順は `closure: completed` → `direct: started` です。
+
+**無名関数でも、引数はその場で評価される**
+
+[Go Playground で比較する](https://go.dev/play/p/GpZXhiH-fVk)
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	status := "started"
+	defer func(value string) {
+		fmt.Println("argument:", value)
+	}(status)
+	f := func() {
+		fmt.Println("captured:", status)
+	}
+	defer f()
+	status = "completed"
+}
+```
+
+Go 1.27.1 での実行結果:
+
+```text
+captured: completed
+argument: started
+```
+
+`argument` の呼び出しは無名関数ですが、引数 `status` は登録時の `started` に固定されます。`f` に入れた関数は外側の変数を共有し、本体が動くときに `completed` を読みます。登録は `argument` → `f`、呼び出しはその逆です。
+
+判定するのは名前の有無ではなく、「引数としていつ評価したか」「関数本体でどの変数を読むか」です。二つの例を同じ規則で説明できるか、Function literals と Defer statements に戻って確かめます。
 
 </details>
