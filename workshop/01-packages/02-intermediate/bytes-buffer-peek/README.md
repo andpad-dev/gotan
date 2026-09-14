@@ -61,7 +61,15 @@ short="XY" err=EOF
 
 - [カテゴリの調べ方](../../README.md) を入口に `bytes.Buffer` のメソッド一覧を開く。
 - `Peek` と `Next` の説明にある「buffer を進めるか」を比べる。
-- `buffer := bytes.NewBufferString("ABCDrest")` で、同じ位置から両方を試す。
+- `Peek` 用と `Next` 用にそれぞれ新しい `bytes.NewBufferString("ABCDrest")` を作り、同じ初期状態で試す。
+- 表示ラベルを `Peek(4)` / `Next(4)`、`returned`（戻り値）、`remaining`（呼び出し後の未読データ）に合わせる。APIを変更したらラベルも変える。
+
+実行前の予想と実測を、次の欄で比べましょう。エラーを返さないAPIのエラー欄には「error戻り値なし」と記録します。
+
+| 初期状態 | API・要求数 | 戻り値 | 呼び出し後の未読データ | エラー |
+| --- | --- | --- | --- | --- |
+| `ABCDrest` | `Peek(4)` | | | |
+| `ABCDrest` | `Next(4)` | | | |
 
 </details>
 
@@ -94,6 +102,7 @@ short="XY" err=EOF
 - `Peek` の「fewer than n bytes」の説明を探す。
 - データの一部とエラーが同時に返る API であることに注目する。
 - 今のバッファには 2 バイトしかない。部分データと `io.EOF` を別々に扱う理由を整理する。
+- 設問 1 の比較表に、新しい `"XY"` のバッファで試した `Peek(4)` と `Next(4)` の行を加える。「空だった」とまとめる前に、空なのは戻り値か未読データかを相手に説明し、予想と実測を照合する。
 
 </details>
 
@@ -111,6 +120,43 @@ short="XY" err=EOF
 要求した 4 バイトより少ないとき、`Peek` は現在あるバイト列を返し、同時に `io.EOF` を返します。空にせず、存在する分を返します。
 
 呼び出し側は `err` を確認します。必要な長さに足りない部分データ `got` を、完全な結果として扱ってはいけません。
+
+**戻り値と未読データを分けて確認する**
+
+[Go Playground で比較する](https://go.dev/play/p/Q_UuJQQxGOO)
+
+```go
+package main
+
+import (
+	"bytes"
+	"fmt"
+)
+
+func main() {
+	for _, initial := range []string{"ABCDrest", "XY"} {
+		peek := bytes.NewBufferString(initial)
+		got, err := peek.Peek(4)
+		fmt.Printf("initial=%q Peek(4): returned=%q remaining=%q err=%v\n", initial, got, peek.String(), err)
+		next := bytes.NewBufferString(initial)
+		got = next.Next(4)
+		fmt.Printf("initial=%q Next(4): returned=%q remaining=%q (no error return)\n", initial, got, next.String())
+	}
+}
+```
+
+Go 1.27.1 での実行結果:
+
+```text
+initial="ABCDrest" Peek(4): returned="ABCD" remaining="ABCDrest" err=<nil>
+initial="ABCDrest" Next(4): returned="ABCD" remaining="rest" (no error return)
+initial="XY" Peek(4): returned="XY" remaining="XY" err=EOF
+initial="XY" Next(4): returned="XY" remaining="" (no error return)
+```
+
+短い入力でも `Next(4)` の戻り値は `"XY"` です。空になるのは呼び出し後の未読データで、`String()` に表示される方です。`Next` はエラーを返しません。`Peek` は未読データを消費せず、要求数に足りないことを `EOF` でも伝えます。
+
+[Go 1.27.1 の buffer.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/bytes/buffer.go) で `Peek`、`Next`、`String` を読み、返すスライス・`off` の更新・表示する範囲を出力と対応付けます。
 
 </details>
 
