@@ -17,6 +17,17 @@
 - 単体のコマンド／ツールにはそれぞれ専用の pkg.go.dev ページがある: `https://pkg.go.dev/cmd/<サブコマンド>`（例: [cmd/vet](https://pkg.go.dev/cmd/vet), [cmd/go](https://pkg.go.dev/cmd/go), [cmd/pprof](https://pkg.go.dev/cmd/pprof)）。
 - ページ冒頭の **Overview** に、コマンドが何をするかと主要なフラグ一覧がまとまっている。CLI の `-h` 出力より情報量が多いことも多い。
 
+**検索した名前と、調べたいコマンドは対応している？**
+
+実行したコマンド、ページのパッケージパス、冒頭の説明を照合します。名前が同じでも、コマンドと、その出力を読むライブラリでは役割が違います。
+
+| 調べたいもの | 確認するページと役割 |
+| --- | --- |
+| `go tool cover` | [cmd/cover](https://pkg.go.dev/cmd/cover)：カバレッジを扱うコマンド。[golang.org/x/tools/cover](https://pkg.go.dev/golang.org/x/tools/cover) はプロファイルを解析するライブラリなので、寄り道するなら「出力のどの項目を確かめるか」を決める |
+| `go tool buildid` | [cmd/buildid](https://pkg.go.dev/cmd/buildid)：Goのファイル内のbuild IDを表示・更新するコマンド。Source Filesから [buildid.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/cmd/buildid/buildid.go) へ進み、タグを `go version` の版に合わせる |
+
+ソースを読んだら「この情報で元の出力のどこを説明できたか／残った問いは何か」を一文で共有します。たとえば「プロファイルの各欄の意味は分かった。次は、表示された割合の分母・分子を実測と対応付ける」と戻ると、別の担当が検証を続けられます。
+
 ## 3. 実際に何が実行されているか、フラグで覗く
 
 - `-n` フラグ: 実行はせず、内部で呼ばれるコマンド列だけを表示する（dry-run）。
@@ -80,6 +91,17 @@ In this category, we investigate what the `go` command and its subcommands and t
 
 - Each individual command or tool has its own pkg.go.dev page: `https://pkg.go.dev/cmd/<subcommand>` (examples: [cmd/vet](https://pkg.go.dev/cmd/vet), [cmd/go](https://pkg.go.dev/cmd/go), [cmd/pprof](https://pkg.go.dev/cmd/pprof)).
 - The **Overview** section at the top of the page summarizes what the command does and lists major flags. It often contains more information than the `-h` CLI output.
+
+**Does the search result match the command you are investigating?**
+
+Compare the command you ran, the package path, and the opening description. A command and a library that reads its output may share a name.
+
+| Target | Page and role to check |
+| --- | --- |
+| `go tool cover` | [cmd/cover](https://pkg.go.dev/cmd/cover) is the coverage command. [golang.org/x/tools/cover](https://pkg.go.dev/golang.org/x/tools/cover) parses profiles; before exploring it, identify which output field you want to explain. |
+| `go tool buildid` | [cmd/buildid](https://pkg.go.dev/cmd/buildid) displays or updates build IDs in Go files. Follow Source Files to [buildid.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/cmd/buildid/buildid.go), matching the tag to `go version`. |
+
+After reading source, share which part of the original output it explains and what remains unknown. For example: “We identified the profile fields; next, compare the numerator and denominator of the reported percentage with our measurements.” Another investigator can continue from that question.
 
 ## 3. Inspecting What Actually Runs (Using Flags to Peek Inside)
 
