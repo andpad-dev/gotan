@@ -168,6 +168,52 @@ fmt.Println(fmt.Sprintf("%d%%", 50))       // 50%
 ---
 
 <details>
+<summary>こぼれ話: 書式と値の型が合わないときは？</summary>
+
+任意の確認です。`%d` に文字列 `"hi"` を渡したら、何が起きるか予想してみましょう。実行できるかと、どんな文字列になるかを分けて確かめます。
+
+[Go Playground で比較する](https://go.dev/play/p/RbQLMdO-qeH)
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println(fmt.Sprintf("%d", "hi"))
+}
+```
+
+Go 1.27.1 での実行結果:
+
+```text
+%!d(string=hi)
+```
+
+このコードはコンパイル・実行でき、`Sprintf` が返した文字列に書式不一致を表す `%!d(string=hi)` が含まれます。[fmt の Format errors](https://pkg.go.dev/fmt#hdr-Format_errors) → [Go 1.27.1 の print.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/fmt/print.go) の `Sprintf`、`badVerb` の順で、返す文字列にどう書き込まれるかを確認します。
+
+ローカルで試せる場合は、上のコードを空の作業ディレクトリの `main.go` に保存し、同じファイルで次を比べましょう。
+
+```sh
+go version
+go run main.go
+go vet main.go
+```
+
+Go 1.27.1 での比較です。vetの診断はファイル名・位置の表示を省略しています。
+
+| コマンド | 終了コード | 表示または診断 |
+| --- | --- | --- |
+| `go run main.go` | 0 | `%!d(string=hi)` |
+| `go vet main.go` | 1 | `fmt.Sprintf format %d has arg "hi" of wrong type string` |
+
+[go vet](https://pkg.go.dev/cmd/vet) は実行前に疑わしいコードを調べるツールです。[説明ソース](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/cmd/vet/doc.go) のprintf検査も読み、実行時の書式不一致と静的検査の診断を区別します。実行したコマンド・終了コード・表示を一組で記録すると照合できます。詳しくは [go vet の問題](../../../03-cmd-tools/01-beginner/go-vet-basics/README.md) で調べられます。
+
+</details>
+
+---
+
+<details>
 <summary>こぼれ話: 名前の頭文字は関数の役割を表している</summary>
 
 `fmt` の出力系関数は、頭文字が役割を表しています。
