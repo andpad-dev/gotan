@@ -8,6 +8,9 @@
 
 | 知りたいこと | 最初に開く入口 | 判断・経緯・実装までの追い方 |
 | --- | --- | --- |
+| 目の前のコードの意味・既存の言語規則を知りたい | [Go 言語仕様](https://go.dev/ref/spec) | 目次・本文で概念を探す（例：append、defer）→ 該当節の規則 → 小さな実験。仕様で保証されることと実測を照合する |
+| 標準 API の契約を知りたい | [Go Documentation](https://go.dev/doc/) から対象パッケージへ | APIコメント・Example → タグ付きソース → 同じ条件の実験 |
+| 内部でどう実装されているか知りたい | [Go のソース](https://cs.opensource.google/go/go) | 仕様・APIの契約を確認し、対象版の実装・呼び出し元・テスト → 実測。実装上の選択と仕様の保証を分ける |
 | 新しい言語機能、ツール、標準ライブラリ API や既存関数の変更を知りたい | [Release History](https://go.dev/doc/devel/release) から対象版のリリースノートを開く | 変更の節 → 表示リンクまたは HTML コメントの Issue / CL → Issue の議論と決定 → CL の差分・レビュー → 対象タグの実装 → 実測 |
 | Proposal review meeting で最近どの提案が検討され、どう判断されたか知りたい | [Proposal review meeting minutes](https://go.dev/s/proposal-minutes) の最新コメントを開く | 毎週投稿される minutes に並ぶ Issue 番号と状態 → 興味のある Proposal Issue の全議論 → design document → 関連 CL → 対象タグの実装。minutes は議論の索引として使い、判断理由は各 Issue で確認する |
 | 関心のあるトピックについて、採用前・見送りを含む Proposal を探したい | `golang/go` Issues の [`Proposal` ラベル](https://github.com/golang/go/issues?q=is%3Aissue%20label%3AProposal)を開く | 機能名・パッケージ名で絞る → Issue の Description・全コメント・状態 → meeting minutes → 必要なら design document とそのレビュー CL → 採用なら実装 CL と対象タグ、見送りなら最終判断コメント |
@@ -102,7 +105,9 @@ CL（Change List）は、Go プロジェクトが Gerrit でレビューする�
 
 ## 調査の進め方
 
-観測した現象 → リリースノート → HTML に埋め込まれた Issue / CL → Issue の議論と決定 → CL の差分とレビュー → バージョン付き実装ソース → 実測、の順に進めます。言語の規則や公開 API の契約を扱う場合は、途中で言語仕様・API ドキュメントも確認します。一次資料で結論を固定できない場合は、断定せず「不明」または「ここからは推測」と明記してください。
+観測した現象を言葉にしたら、冒頭の表で調べたい目的を選びます。appendやdeferの既存規則なら言語仕様、公開APIの使い方ならAPIドキュメントから実験へ進みます。実測で分かったことが仕様の保証なのか、対象版の実装で確認したことなのかを分けて共有しましょう。
+
+「いつ・なぜ変わったか」を調べるときは、リリースノート → Issue / CL → 議論と決定 → 差分とレビュー → タグ付き実装 → 実測へ進みます。一次資料で結論を固定できない場合は、断定せず「不明」または「ここからは推測」と明記してください。
 
 ## 設計史・実装を research.swtch.com から逆引きする
 
@@ -135,6 +140,15 @@ research!rsc は Go プロジェクトの公式ドキュメントではありま
 # How to Explore 04-deep-dive (Reverse Search Guide)
 
 This category investigates Go language rules, standard-library implementations, and design history by following primary sources. Do not open an individual answer first: begin with the shared entry point, describe the observed phenomenon, and trace each claim to evidence.
+
+## Choose an entry point for your question
+
+| Question | First source | Next steps |
+| --- | --- | --- |
+| What does existing language syntax mean? | [Go specification](https://go.dev/ref/spec) | Find the relevant rule, such as append or defer, and compare a small experiment with the guarantee. |
+| What does a standard API promise? | [Go Documentation](https://go.dev/doc/) | Package comments and examples → tagged source → an experiment with the same conditions. |
+| How is it implemented internally? | [Go source](https://cs.opensource.google/go/go) | Establish the specification or API contract, then inspect the target version's implementation, callers, tests, and measurements. |
+| When and why did behavior change? | [Release History](https://go.dev/doc/devel/release) | Target release notes → Issue / CL → decisions and review → tagged implementation → measurements. |
 
 ## 1. Read the language specification first
 
@@ -205,4 +219,6 @@ Open the [Go source](https://cs.opensource.google/go/go), identify the file thro
 
 ## Investigation order
 
-Observed phenomenon -> official documentation -> language specification or API contract -> design discussion -> versioned source -> local measurement. If primary sources do not establish a conclusion, say “unknown” or mark the remainder as inference instead of overstating it.
+Describe the observed phenomenon, then choose an entry point from the table. For existing append or defer rules, start with the specification; for public API behavior, start with its contract and compare an experiment. When sharing findings, separate specification guarantees from observations of a particular implementation.
+
+For “when and why did this change?”, follow release notes → Issue / CL → decisions and review → tagged implementation → measurements. If primary sources do not establish a conclusion, say “unknown” or mark the remainder as inference.
