@@ -8,6 +8,8 @@ title: "[Go探無比] グループX 調査ログ"
 
 当日は [ワークショップ進行ガイド](https://github.com/andpad-dev/gotan/blob/main/workshop/README.md) と [チームでの進め方](https://github.com/andpad-dev/gotan/blob/main/workshop/TEAM_GUIDE.md) を開いてください。
 
+探索ワークのあいだ、グループの外とやりとりしたい方のために gotan 用の Discord サーバーを用意しています。[招待リンク](https://discord.gg/xBrQdb3ehW) から参加できます。
+
 ## 使い方
 
 1. テーマが決まったら、一人がテーマをコメントで宣言してください。
@@ -37,4 +39,43 @@ title: "[Go探無比] グループX 調査ログ"
 - 分かったこと:
 - まだ分からないこと:
 - 一番の発見:
+```
+
+---
+
+This Issue is a notebook for your group's investigation log.
+
+During the workshop, open the [workshop guide](https://github.com/andpad-dev/gotan/blob/main/workshop/README.md) and [how to work as a team](https://github.com/andpad-dev/gotan/blob/main/workshop/TEAM_GUIDE_en.md).
+
+A Discord server is available for anyone who wants to talk outside their group during the exploration work. Join from the [invitation link](https://discord.gg/xBrQdb3ehW).
+
+## How to use
+
+1. Once your theme is decided, one person comments to declare it.
+2. The group works on **one** scenario together. **Split the questions between pairs.** With four people, that is two pairs. Finally, pick one person to pull the findings together.
+3. While investigating, whoever finds something comments right away in the format below. Record the URL together with the steps that led you there and what you learned.
+
+```text
+- Question you took:
+- Starting point:
+- Actions and search terms:
+- Where you looked: <URL and section name>
+- What you found:
+- Open questions:
+```
+
+4. Partway through, the pairs bring their findings together into a single comment.
+5. Near the end of the exploration work (after the 10-minutes-left signal), write the wrap-up together, led by the person pulling things together.
+
+If you get stuck, go back to the **調査の入り口 (investigation entry points)** that appears before the questions. There should still be sources you have not opened. Hints may be opened from the start, and answers from the 20-minutes-left signal.
+
+## Wrap-up (copy this and fill it in)
+
+```text
+- Theme you investigated:
+- First observation:
+- Investigation route: <starting point → search terms/links → primary source → running it yourself>
+- What you found:
+- What is still unclear:
+- Best discovery:
 ```
