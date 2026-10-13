@@ -76,6 +76,8 @@ short="XY" err=EOF
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go Documentation](https://go.dev/doc/) から `bytes` パッケージを開く。
@@ -108,6 +110,8 @@ short="XY" err=EOF
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-2)
 
 **調査ルート**
 
@@ -176,6 +180,8 @@ initial="XY" Next(4): returned="XY" remaining="" (no error return)
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-3)
 
 **調査ルート**
 

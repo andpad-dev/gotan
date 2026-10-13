@@ -89,6 +89,8 @@ go run -x main.go 2> repeat.log
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. https://go.dev/cmd/go/ を開き、`go` コマンドの公式ドキュメントから `go run` の説明を探す。
@@ -158,6 +160,8 @@ hello, gotan
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-2)
+
 **調査ルート**
 
 1. https://go.dev/cmd/go/ を開き、`go build` のドキュメントにある `-work` フラグの説明を探す。
@@ -206,7 +210,7 @@ $ find /var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX -maxdepth 3
 4. 実行ファイルを起動する
 5. 一時ディレクトリを片付ける
 
-キャッシュに同じ実行ファイルがあれば、1〜3 を省いて直接起動します。
+キャッシュに同じ実行ファイルがあれば、2・3 の再実行を省いて直接起動します。一時ディレクトリの作成と後片付けはキャッシュ利用時も行います。
 
 では、この流れは `go` コマンド自身のソースコードのどこに書かれているのでしょうか。
 **ディレクトリの作成**・**ビルドの実行**・**ビルドしたファイルの扱い**の 3 つを探します。
@@ -249,6 +253,8 @@ $ find /var/folders/xx/xxxxxxxxxxxxxxxxxxxxxxxx/T/go-buildXXXXXXXXXX -maxdepth 3
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-3)
 
 **調査ルート**
 

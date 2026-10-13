@@ -121,6 +121,8 @@ Go 1.26 で刷新された `go fix` は何をするコマンドでしょうか�
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go 1.26 リリースノート](https://go.dev/doc/go1.26#go-command) の Tools セクションで `go fix` の項目を読む。
@@ -158,6 +160,8 @@ Go 1.26 で刷新された `go fix` は何をするコマンドでしょうか�
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-2)
 
 **調査ルート**
 
@@ -228,6 +232,8 @@ $ go fix -inline -diff ./...
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-3)
 
 **調査ルート**
 

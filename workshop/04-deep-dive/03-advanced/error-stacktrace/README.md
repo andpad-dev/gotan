@@ -83,6 +83,8 @@ detailed format: load config: not found
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go Playground の共有コード](https://go.dev/play/p/m3PMRBAE_rq) を実行し、エラーの表示と `errors.Is` の結果を観測する。
@@ -125,6 +127,8 @@ Go 1.13 で Error Wrapping が標準ライブラリに導入されました。�
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-2)
 
 **調査ルート**
 
@@ -184,6 +188,8 @@ Go 1.13 のエラー拡張の設計段階では、もう一つの案がありま
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-3)
 
 **調査ルート**
 

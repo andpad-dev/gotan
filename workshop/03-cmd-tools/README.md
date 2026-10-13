@@ -45,6 +45,7 @@
 
 - 対象の Go バージョンが分かっている場合、まず `go.dev/doc/go1.<version>` のリリースノートを見る。特に **Tools** セクション（[Go 1.26](https://go.dev/doc/go1.26#tools) / [Go 1.27](https://go.dev/doc/go1.27#tools)）に、`go` コマンドとツール群の変更点がまとまっている。
 - リリースノートに Issue 番号やプロポーザルへのリンクがあれば、必ず該当 Issue を開き、議論と関連リンクまで含めて読む（`github.com/golang/go` の Issue、`go.googlesource.com/proposal`）。要約だけから挙動を推測しない。
+- 本文に関連 Issue が見つからなければ、同じページの HTML ソースで該当節の直前・直後のコメントを確認する。`go.dev/issue/番号` があればその Issue へ進み、番号がなければ未確認のままにする。問題にない名前や番号を、答えを知っている前提で補わない。
 
 ## 6. 挙動を手元で確かめる
 

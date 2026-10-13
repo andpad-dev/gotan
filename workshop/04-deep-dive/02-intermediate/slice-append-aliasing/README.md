@@ -75,6 +75,8 @@ func inspect(label string, s []string) {
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go 言語仕様の Slice expressions](https://go.dev/ref/spec#Slice_expressions) を開き、二つの添字を使うスライス式の長さと容量を確認する。
@@ -103,6 +105,8 @@ func inspect(label string, s []string) {
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-2)
+
 **調査ルート**
 
 1. [Go 言語仕様の Slice expressions](https://go.dev/ref/spec#Slice_expressions) で、三つの添字を使う完全スライス式の容量が最後の添字で決まることを確認する。
@@ -130,6 +134,8 @@ func inspect(label string, s []string) {
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-3)
 
 **調査ルート**
 

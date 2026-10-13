@@ -57,6 +57,8 @@ b
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go Playground の共有コード](https://go.dev/play/p/bJ7XfrbuNHo) を実行し、`values` の要素が順に表示されることを観測する。
@@ -116,6 +118,8 @@ one
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-2)
 
 **調査ルート**
 

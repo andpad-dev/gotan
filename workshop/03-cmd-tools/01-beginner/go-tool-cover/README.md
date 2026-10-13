@@ -118,6 +118,8 @@ total:					(statements)	66.7%
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go のコマンド一覧](https://go.dev/doc/cmd) で `cover` を見つけ、[cover の公式ドキュメント](https://go.dev/cmd/cover/) を開く。ここで、`cover` は `go test -coverprofile=cover.out` が出力する coverage profile を解析するコマンドだと分かる。
@@ -152,6 +154,8 @@ total:					(statements)	66.7%
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-2)
 
 **調査ルート**
 

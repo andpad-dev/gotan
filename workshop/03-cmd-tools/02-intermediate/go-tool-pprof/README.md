@@ -148,6 +148,8 @@ $ mv pprof-demo.test.hidden pprof-demo.test
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go の診断ツール案内](https://go.dev/doc/diagnostics) の Profiling を読み、CPU / block / mutex profile と execution trace の対象を比較する。
@@ -186,6 +188,8 @@ $ mv pprof-demo.test.hidden pprof-demo.test
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-2)
 
 **調査ルート**
 
@@ -238,6 +242,8 @@ go test -run '^$' -bench '^BenchmarkTransform$' -benchmem -count=3
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-3)
 
 **調査ルート**
 

@@ -78,6 +78,8 @@ GOFILE=main.go GOLINE=5 GOPACKAGE=main
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go command の generate 説明](https://go.dev/cmd/go/#hdr-Generate_Go_files_by_processing_source) を開き、手元の `go help generate` と照合しながら Usage と variables を読む。
@@ -136,6 +138,8 @@ echo -command による別名も使える
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-2)
+
 **調査ルート**
 
 1. [Go command](https://go.dev/cmd/go/) の Source Files から `cmd/go` の実装へ進む。
@@ -193,6 +197,8 @@ func (g *Generator) exec(words []string) {
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-3)
 
 **調査ルート**
 

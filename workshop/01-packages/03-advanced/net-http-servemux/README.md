@@ -77,6 +77,8 @@ POST /x/other -> 405
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) の enhanced routing patterns を読む。
@@ -131,6 +133,8 @@ func main() {
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-2)
+
 **調査ルート**
 
 1. [Go Playground の共有コード](https://go.dev/play/p/-wtRzMO5UHB) を標準設定で実行し、2つ目の登録時の panic と `registered` が出力されないことを観測する。
@@ -166,6 +170,8 @@ Go 1.21 では `{id}` を含むパターンは特別なワイルドカードで�
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-3)
+
 **調査ルート**
 
 1. [Go 1.22 Release Notes](https://go.dev/doc/go1.22) の互換性に関する段落を読む。
@@ -196,6 +202,8 @@ Go 1.22 から、メソッド付きパターンと `{name}` / `{name...}` のワ
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-4)
 
 **調査ルート**
 
