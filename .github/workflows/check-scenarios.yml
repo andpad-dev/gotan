@@ -22,6 +22,8 @@ jobs:
           # 難易度ディレクトリ名の検証.
           for d in "${WORKSHOP_DIR}"/[0-9][0-9]-*/*/; do
             [ -d "${d}" ] || continue
+            # チュートリアルは難易度を持つシナリオではない.
+            case "${d}" in "${WORKSHOP_DIR}/00-tutorial/"*) continue ;; esac
             level=$(basename "${d}")
             case "${level}" in
               01-beginner|02-intermediate|03-advanced) ;;
