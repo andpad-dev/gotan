@@ -59,6 +59,8 @@ Go 1.27.0 の `TestScript` で流れを追ってください。範囲は、`run_
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go command](https://go.dev/cmd/go/) を起点に Source Files から `script_test.go` を探し、[Go 1.27.0 の `TestScript`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/script_test.go;l=39) が `testdata/script/*.txt` を列挙するところから読む。
@@ -110,6 +112,8 @@ ok  	cmd/go	1.460s
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-2)
+
 **調査ルート**
 
 1. [Go command](https://go.dev/cmd/go/) から現在の [Go 1.27.0 `script_test.go`](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/cmd/go/script_test.go;l=39) を開き、Source の履歴をたどる。
@@ -157,6 +161,8 @@ ok  	cmd/go	1.460s
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-3)
 
 **調査ルート**
 

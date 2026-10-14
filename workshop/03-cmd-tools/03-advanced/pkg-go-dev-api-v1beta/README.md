@@ -65,6 +65,8 @@ curl -L "https://pkg.go.dev/v1/search?q=xyzzy&filter=hasPrefix%28packagePath%2C%
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go Documentation](https://go.dev/doc/) から [pkg.go.dev API ドキュメント](https://pkg.go.dev/v1/api) の「Routes」セクションを開き、`/v1/search` のレスポンス型を確認する。
@@ -73,7 +75,7 @@ curl -L "https://pkg.go.dev/v1/search?q=xyzzy&filter=hasPrefix%28packagePath%2C%
 
 **答え**
 
-**ソート機能がない理由:**
+**確認できる検索結果の順序と取得範囲:**
 
 API の `/v1/search` レスポンスには、`packagePath`, `modulePath`, `version`, `synopsis` といった基本情報しか含まれておらず、**インポート数や更新日時などのメタデータは返されません**。
 
@@ -88,7 +90,7 @@ type SearchResult struct {
 }
 ```
 
-インポート数や更新日時といった情報がレスポンスに含まれていないため、クライアント側でソートすることができません。
+検索応答だけにはインポート数や更新日時が含まれないため、その応答の情報だけではこれらを基準にソートできません。これは取得できる情報の制約であり、任意のソート機能を提供しない設計上の理由そのものは、引用した文書・型定義からは確認できません。
 また、API ドキュメントで検索結果について定義されている順序は、クエリへの一致度が高い順です。インポート数や更新日時を指定する別のソートパラメータは定義されていません。
 関連度以外でソートしたい場合は、検索結果の各パッケージに対して `/v1/package/{path}` や `/v1/imported-by/{path}` を個別に叩いて情報を集める必要があります。
 
@@ -160,6 +162,8 @@ curl -L "$pkgsite/v1/package/github.com/hashicorp/consul/api" \
 <details> 
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-2)
+
 **調査ルート**
 
 - [Go Documentation](https://go.dev/doc/) から [Go Modules Reference](https://go.dev/ref/mod) を開き、モジュールパスとパッケージパスの関係を確認する。
@@ -225,6 +229,8 @@ curl -L "https://pkg.go.dev/v1/search?q=xyzzy&limit=1" \
 <details> 
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-3)
+
 **調査ルート**
 
 - [Go Documentation](https://go.dev/doc/) から [pkg.go.dev API ドキュメント](https://pkg.go.dev/v1/api) の「Rate Limiting」と「Pagination」セクションを読む。
@@ -242,7 +248,8 @@ pkg.go.dev は公開サービスであり、API ドキュメントには 45 QPS 
 - DoS 攻撃や過負荷によるサービス停止
 - 特定のユーザーが大量のリクエストでリソースを独占すること
 - スクレイピングボット等による過度な利用
-- 45 QPS は、通常の利用には十分な値ですが、大規模なバッチ処理には制約となります。
+
+ただし、上記は制限の利点についての解釈です。数値が 45 QPS である理由や、特定の用途に十分かどうかは API ドキュメントからは判断できません。
 
 ***ページネーションの設計:***
 
@@ -305,6 +312,8 @@ curl -L "https://pkg.go.dev/v1/imported-by/golang.org/x/time/rate" \
 <details> 
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-4)
+
 **調査ルート**
 
 - [Go Documentation](https://go.dev/doc/) から [Go Modules Reference](https://go.dev/ref/mod) を開き、モジュールの境界について確認する。
@@ -315,8 +324,10 @@ curl -L "https://pkg.go.dev/v1/imported-by/golang.org/x/time/rate" \
 
 API ドキュメントが明示している事実は、`imported-by` の結果に同一モジュール内のパッケージを含めないことです。これは、モジュールをまたいだ外部への影響範囲を調べる用途に焦点を当てた設計だと考えられます。
 
-- モジュール内の依存: 同じリポジトリ・チームで管理されており、一緒にリリースされる。内部実装の依存関係。
-- モジュール間の依存: 異なるチーム・プロジェクトが依存している。破壊的変更の影響が広範囲に及ぶ。
+- モジュール内の依存: 同じ module のパッケージ間の参照で、この一覧では除外される。
+- モジュール間の依存: 別の module からの参照で、この一覧の対象になる。
+
+module の境界だけでは、管理するチームやリポジトリが異なるとは判断できません。
 
 imported-by の典型的な用途は:
 

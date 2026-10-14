@@ -65,6 +65,8 @@ empty: {"values":[]}
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go 言語仕様の Slice types](https://go.dev/ref/spec#Slice_types) を開き、`nil` のスライスと初期化済みの空スライスが区別されることを確認する。
@@ -92,6 +94,8 @@ empty: {"values":[]}
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-2)
 
 **調査ルート**
 

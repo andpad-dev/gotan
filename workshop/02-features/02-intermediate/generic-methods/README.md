@@ -71,6 +71,8 @@ Go 1.27 で「method に何が書けるようになったか」を特定しま�
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go 1.27 リリースノート の Changes to the language 節](https://go.dev/doc/go1.27#language) を開き、`generic methods` の段落を読む。
@@ -145,6 +147,8 @@ func main() {
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-2)
+
 **調査ルート**
 
 1. [proposal #77273](https://go.dev/issue/77273) の Background 節を読み、歴史的な禁止理由と "A change of view" の考え方を押さえる。
@@ -217,6 +221,8 @@ Go 1.27.0 で実際にコンパイルすると、compiler が同じことを言�
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-3)
 
 **調査ルート**
 

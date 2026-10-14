@@ -64,6 +64,8 @@ Go 言語仕様で `defer` 文を探します。関数呼び出しそのもの�
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go 言語仕様の Defer statements](https://go.dev/ref/spec#Defer_statements) を開き、`defer` 文で評価されるものと、関数呼び出しが実行される時点を確認する。
@@ -92,6 +94,8 @@ Go 言語仕様では、無名関数を `Function literals` と呼びます。�
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-2)
 
 **調査ルート**
 

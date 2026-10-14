@@ -65,6 +65,8 @@ $ GOTOOLCHAIN=go1.27.0 go version -m "$(GOTOOLCHAIN=go1.27.0 go env GOTOOLDIR)/c
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go Documentation](https://go.dev/doc) から Go コマンドのドキュメントへ進み、[`go version` の説明](https://go.dev/cmd/go/#hdr-Print_Go_version)を読む。`-m` は実行ファイルに埋め込まれたモジュール・ビルド情報を表示するオプションだと確認する。
@@ -110,6 +112,8 @@ $ GOTOOLCHAIN=go1.27.0 go version -m "$(GOTOOLCHAIN=go1.27.0 go env GOTOOLDIR)/c
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-2)
+
 **調査ルート**
 
 1. [Go compiler の公式ドキュメント](https://go.dev/cmd/compile/) からコンパイラの役割を確認し、ソースコードを読み込んでコンパイルする処理を調査対象にする。
@@ -153,6 +157,8 @@ Go 1.27.0 のビルドに必要な過去の Go バージョンを求めてくだ
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-3)
 
 **調査ルート**
 
@@ -206,6 +212,8 @@ Go 1.27.0 の `cmd/dist` に書かれた大筋は次のとおりです。
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-4)
 
 **調査ルート**
 

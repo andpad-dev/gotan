@@ -55,6 +55,8 @@ const (
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. https://go.dev/ref/spec を開き、ページ内検索で `Iota` を探す。
@@ -97,6 +99,8 @@ const (
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-2)
 
 **調査ルート**
 

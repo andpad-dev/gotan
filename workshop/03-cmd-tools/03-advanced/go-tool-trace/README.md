@@ -126,6 +126,8 @@ ok  	example.com/trace-demo	0.853s
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go の診断ツール案内](https://go.dev/doc/diagnostics) を読み、CPU profile は CPU サイクルを実際に消費している時間を、execution tracer はレイテンシー・利用率・goroutine の動きを調べるものだと区別する。
@@ -160,6 +162,8 @@ ok  	example.com/trace-demo	0.853s
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-2)
 
 **調査ルート**
 
@@ -226,6 +230,8 @@ execution tracer が Go 1.21〜1.22 でどう変わったかを追ってくだ�
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-3)
+
 **調査ルート**
 
 1. [Go 1.21 リリースノート](https://go.dev/doc/go1.21) の `runtime/trace` を読み、amd64 / arm64 での trace 採取コストが大幅に下がったことを確認する。
@@ -261,6 +267,8 @@ Go 1.27 で変わった `go tool trace -http=:6060` の扱いを、一次情報�
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-4)
 
 **調査ルート**
 

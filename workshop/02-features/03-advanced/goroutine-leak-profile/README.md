@@ -99,7 +99,7 @@ goroutineleak profile: total 4
 #	0x...	main.processWorkItems.func1+0x9b	./main.go:30
 ```
 
-同じ瞬間なのに `goroutine` は total 5、`goroutineleak` は total 4 です。  
+同じプログラムで続けて採取すると、`goroutine` は total 5、`goroutineleak` は total 4 です。
 この 1 個の差は何を意味するのでしょうか。  
 ランタイムは「絶対に起きない」と「そうでない」をどう判別しているのでしょうか。
 
@@ -139,6 +139,8 @@ goroutineleak profile: total 4
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-1)
 
 **調査ルート**
 
@@ -192,6 +194,8 @@ mutex がこれから解放されるかもしれません。
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-2)
 
 **調査ルート**
 
@@ -252,6 +256,8 @@ Go 1.27 リリースノートの `Goroutine leak profile` 節には但し書き�
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-3)
+
 **調査ルート**
 
 1. [Go 1.27 リリースノート](https://go.dev/doc/go1.27) の `Goroutine leak profile` 節で、到達可能性に基づくため検出できない例があるという但し書きを確認する。
@@ -302,6 +308,8 @@ Go 1.26 で experimental、Go 1.27 で GA。
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-4)
 
 **調査ルート**
 

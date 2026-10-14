@@ -59,6 +59,16 @@ research!rsc は Go プロジェクトの公式ドキュメントではありま
 | Go の版で標準パッケージの挙動が変わり、古い挙動に依存する呼び出し箇所を絞り込みたい | 対象版のリリースノートと、たとえば [Go 1.23 の Timer Channel Changes](https://go.dev/wiki/Go123Timer) で変更条件を固定する | `Hash-Based Bisect Debugging` → `runtime`、`GODEBUG` → [記事](https://research.swtch.com/bisect) |
 | パッケージの API 例や境界条件のテストを、小さく読みやすく組み立てたい | [Add a test](https://go.dev/doc/tutorial/add-a-test) → [`testing`](https://pkg.go.dev/testing) の順に、現在のテスト API と実行方法を確認する | `Go Testing By Example` → `testdata`、`test failures` → [記事](https://research.swtch.com/testing) |
 
+## 変更された版と議論の背景を探したい
+
+- 問題本文が版を指定している場合は、[Go Documentation](https://go.dev/doc/) の Release History からその版のリリースノートへ進み、問題に出たパッケージ名を検索します。新しい機能は [Go 1.26](https://go.dev/doc/go1.26) と [Go 1.27](https://go.dev/doc/go1.27) を確認し、追加時の説明と現在の契約を分けます。
+- リリースノート本文に背景のリンクが見つからない場合は、ページの HTML ソースの該当箇所も確認します。`go.dev/issue/番号` のコメントがあれば、その番号から提案 Issue へ進めます。番号が見つからない段階で推測して検索しません。
+- Issue は本文だけでなく議論・採用・実装完了まで読み、途中の案を現行仕様と混同しないよう API と対象版のソースへ戻って照合します。
+
+## 読んだ内容から次の疑問を作る
+
+最初の検索語は問題本文の名前・記号から取ります。説明を読んだ後は、戻り値、条件、例外、参照先を区別し、まだ説明できない観測を一つ選びます。その疑問に関係する宣言リンクや本文中のリンクへ進み、新しく読んだ語を次の検索に使ってください。実行結果には対象版と実行条件を添え、確認していない範囲を API の保証として広げないようにします。
+
 ## pkg.go.dev の小技
 
 ### キーボードショートカット
