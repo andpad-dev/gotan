@@ -4,7 +4,7 @@
 
 問題文とカテゴリ README に見えている情報を出発点に、資料のどこを読み、どう解釈して次へ進むかを示します。問題のヒント・答えを検索語の出所にはしていません。唯一の正解ルートではありません。
 
-画面は 2026-10-02 の調査時に取得したものです。本文と実行結果は 2026-10-13 に再確認しました。画面の一部だけで判断せず、リンク先の本文と対象版の実装も読みます。実行環境は Go 1.27.1 / darwin/arm64。実装を Go 1.27.0 に固定している箇所は、問題で指定された版の調査です。
+画面は 2026-10-02 の調査時に取得したものです。本文と実行結果は 2026-10-13 に再確認しました。原文の語句と識別子に沿う読解補足は、2026-10-14 に一次資料を再取得して確認しました。画面の一部だけで判断せず、リンク先の本文と対象版の実装も読みます。実行環境は Go 1.27.1 / darwin/arm64。実装を Go 1.27.0 に固定している箇所は、問題で指定された版の調査です。
 
 ## 最初に分かっていること
 
@@ -16,9 +16,9 @@
 
 ![WithoutCancel の公開 API が保証する内容](assets/research/02-withoutcancel.jpg)
 
-説明には、親がキャンセルされても取り消されないことだけでなく、期限がないこと、`Err` と `Done` が `nil` になること、`Cause` も `nil` になることが並んでいます。`Done` は「まだ閉じていないチャンネル」ではなく、`nil` そのものです。
+説明の `The returned context` は親ではなく、WithoutCancel が返す派生 context を指します。親をキャンセルしてもその派生側は取り消されず、`no Deadline or Err` は派生側に期限もエラーもないという意味です。さらに `its Done channel is nil` の `its` も派生側を指すので、親の Done が閉じるかどうかとは分けて読みます。`Cause` を派生側で呼んだ結果も nil と明記されています。`Done` は「まだ閉じていないチャンネル」ではなく、`nil` そのものです。
 
-値の継承を確かめるため、宣言から [context.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/context/context.go) を開きます。`withoutCancelCtx` は親を保持し、`Deadline`、`Done`、`Err` のメソッドはキャンセル情報を返しません。`Value` の先の `value` 関数は親へ探索を続けます。ただしキャンセル原因の内部キーについては `nil` にする分岐があります。「すべてを複製する」のではなく、必要な情報の伝え方を変えるラッパーとして読めます。
+値の継承を確かめるため、宣言から [context.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.0:src/context/context.go) を開きます。`withoutCancelCtx` は親を保持し、`Deadline`、`Done`、`Err` のメソッドはキャンセル情報を返しません。`Value` は `value(c, key)` を呼び、その `case withoutCancelCtx` 内の `c = ctx.c` により、保存していた親へ探索を続けます。問題の `markerKey{}` の値を親から取り出せる根拠はこの分岐です。ただしキャンセル原因の内部キーについては `nil` にする分岐があります。「すべてを複製する」のではなく、必要な情報の伝え方を変えるラッパーとして読めます。
 
 **回答例:** `markerKey{}` に対応する値を親から取得できますが、親のキャンセルと期限を継承しません。`Deadline` の有無は false、`Done` と `Err` は nil です。
 
@@ -32,11 +32,11 @@
 
 ## 設問 2: 切り離した後に、誰が止めるのかを決める
 
-問題に既にある `WithTimeout` を同じパッケージで調べます。[WithTimeout](https://pkg.go.dev/context@go1.27.1#WithTimeout) は現在時刻に期間を足した期限を設定し、返されたキャンセル関数で関連リソースを解放できると説明しています。
+問題に既にある `WithTimeout` を同じパッケージで調べます。[WithTimeout](https://pkg.go.dev/context@go1.27.1#WithTimeout) の冒頭には `WithDeadline(parent, time.Now().Add(timeout))` とあります。`time.Now()` に `timeout` を足すので、ここで新しい期限を付けると読めます。続く `releases resources` はキャンセル時に関連資源を解放する意味で、例の `defer cancel()` は処理が期限より早く終わった場合にも解放するためです。
 
 したがって、先に `WithoutCancel(parent)`、その結果に `WithTimeout` を適用します。順を逆にすると、付けた期限まで WithoutCancel で取り除くことになるため、要件を満たしません。返された `stop` は処理終了時に呼びます。
 
-`nil` の `Done` の影響は、カテゴリから言語仕様へ移り [Select statements](https://go.dev/ref/spec#Select_statements) で確認します。nil チャンネルの通信は進行しないため、その受信ケースが親のキャンセルによって選ばれることはありません。直接受信だけで待てば止まったままになります。
+`nil` の `Done` の影響は、カテゴリから言語仕様へ移り [Select statements](https://go.dev/ref/spec#Select_statements) で確認します。`never proceed` は nil チャンネルでの通信が「決して進行しない」という意味です。そのため、その受信ケースが親のキャンセルによって選ばれることはありません。直接受信だけで待てば止まったままになります。
 
 **回答例:** 切り離した context に独自の `WithTimeout` を重ねます。処理側もその `Done` や API のキャンセル契約に従う必要があります。context を作るだけで任意の処理を強制停止する仕組みではありません。
 

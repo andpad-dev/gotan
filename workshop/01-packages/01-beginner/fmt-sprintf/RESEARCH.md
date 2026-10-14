@@ -14,7 +14,7 @@
 
 ![Sprintfの戻り値と説明](assets/research/01-sprintf.jpg)
 
-**読んだ箇所と解釈。** [Sprintf](https://pkg.go.dev/fmt#Sprintf) の戻り値は `string` で、書式に従った結果を返します。Overview の **Printing** に戻ると、Print 系は標準出力、Sprint 系は文字列を返すという分類があります。同じ一覧の String/Integer から `%s` は文字列のバイト列、`%d` は整数の十進表示と読めます。
+**読んだ箇所と解釈。** [Sprintf](https://pkg.go.dev/fmt#Sprintf) の宣言は末尾が `string`、説明は `returns the resulting string` です。`returns` の対象は整形した文字列で、標準出力への書き込みではありません。したがって代入先 `msg` がその文字列を受け取ります。Overview の **Printing** に戻ると、Print 系は標準出力、Sprint 系は文字列を返すという分類があります。同じ一覧の String/Integer から `%s` は文字列のバイト列、`%d` は整数の十進表示と読めます。
 
 **次の確認。** 宣言リンクの [print.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/fmt/print.go;l=229) では、書式処理後に `s := string(p.buf)` を作り `return s` しています。すぐ上の `Printf` は `os.Stdout` を渡しており、画面への出力と戻り値の違いを実装からも確認できます。
 
@@ -29,7 +29,7 @@
 
 **手がかりと操作。** 今度のコードには `%5d`、`%-5d`、`%05d`、`%.2f`、`%8.2f` があります。Overview の書式一覧を読み進めると **Width is specified** から始まる段落と **Other flags** が現れました。新しい API を探す必要はなく、同じ [Printing の説明](https://pkg.go.dev/fmt#hdr-Printing)に規則がまとまっています。
 
-**読んだ箇所と解釈。** 幅は verb 前の十進数、精度はピリオドの後の数です。幅は通常「最小幅」であり、切り詰める指定ではありません。`f` の精度は小数点以下の桁数です。フラグ表では `-` が左寄せ、`0` が空白の代わりのゼロ埋めです。先ほどの `print.go` の `doPrintf` でも、フラグ→幅→精度の順で読む処理が見つかります。
+**読んだ箇所と解釈。** 幅は verb 前の十進数、精度はピリオドの後の数です。説明の `minimum number of runes` は出力の最小文字数（Unicode コードポイント数）なので、幅は切り詰める上限ではありません。浮動小数点の段落の `places after the decimal` を、問題で使う `f` に適用すると小数点以下の桁数です。`Other flags` の `-` は空白を `on the right`（右側）に置く指定なので左寄せになります。`0` の `leading zeros` は先頭側のゼロ埋めで、通常の空白を置き換えます。先ほどの `print.go` の `doPrintf` でも、フラグ→幅→精度の順で読む処理が見つかります。
 
 **実験と回答。** [設問のコード](https://go.dev/play/p/SMFWIRANv3B)をそのまま実行しました。
 

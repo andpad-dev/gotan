@@ -15,7 +15,7 @@
 
 ![Stopの戻り値と古い値を受信しない保証](assets/research/01-guarantee.jpg)
 
-**解釈。** [Stop](https://pkg.go.dev/time@go1.27.1#Timer.Stop) の説明は、返った後の受信が古い時刻を受け取らずブロックすることを保証します。[Reset](https://pkg.go.dev/time@go1.27.1#Timer.Reset) 後の受信も、変更前の設定に対応した古い時刻を受け取りません。ここで読んでいるのはチャンネル式のタイマーであり、AfterFuncのコールバック完了待ちまで保証するものではありません。
+**解釈。** [Stop](https://pkg.go.dev/time@go1.27.1#Timer.Stop) の `chan-based timer` の段落を読みます。対象は NewTimer で作るチャンネル式のタイマーで、`after Stop has returned` は保証が適用される時点、`stale time value from before the Stop` は受信しなくなる対象です。つまり Stop から戻った後の受信は、停止前の古い時刻を受け取る代わりにブロックします。[Reset](https://pkg.go.dev/time@go1.27.1#Timer.Reset) の対応する段落では、対象が `previous timer settings`（変更前のタイマー設定）です。Reset 後の受信は、その古い設定に対応する時刻を受け取りません。新しく設定した期限の通知まで禁止する保証ではありません。ここで読んでいるのはチャンネル式のタイマーであり、AfterFuncのコールバック完了待ちまで保証するものではありません。
 
 [導入コード](https://go.dev/play/p/F4r40BDO4dv)の再実行結果です。
 
@@ -32,7 +32,7 @@ reset timer fired
 <a id="question-2"></a>
 ## 設問 2: falseの意味に「未受信」を勝手に加えない
 
-**残る疑問。** Stop の false を「チャンネルに値が残っている」と読めるでしょうか。説明は期限切れや停止済みを含めており、受信済みかどうかとは別です。問題の2本目は、すでに受信した後に Stop を呼んでいます。
+**残る疑問。** Stop の false を「チャンネルに値が残っている」と読めるでしょうか。[Stop の説明](https://pkg.go.dev/time@go1.27.1#Timer.Stop) で false に対応する条件は `already expired or been stopped` です。`or` で「期限切れ」と「停止済み」を含んでおり、「値が未受信で残っている」とは書かれていません。問題の2本目は、すでに受信した後に Stop を呼んでいます。
 
 [ドレイン実験](https://go.dev/play/p/X_a-_2PuQoV)の再実行結果です。
 
@@ -54,7 +54,7 @@ unconditional drain would block
 
 ![削除済みGODEBUGをビルド設定に書く場合の説明](assets/research/02-removal.jpg)
 
-**条件ごとの読み分け。** Go 1.27 の [go command のGODEBUG説明](https://go.dev/doc/go1.27) は、`go.mod` の godebug と `//go:debug` に既定値を残す場合は受理し、旧値は拒否すると書いています。HTMLの Issue 番号から [#79422](https://github.com/golang/go/issues/79422)、そこから [提案 #76163](https://github.com/golang/go/issues/76163) へ進みました。調査チームで両Issueの本文と全コメントを確認し、起動時の環境変数とソースの指定を区別しました。
+**条件ごとの読み分け。** Go 1.27 の [go command のGODEBUG説明](https://go.dev/doc/go1.27) は、対象を `go.mod` の godebug と `.go` の `//go:debug` に限定して説明しています。`final default value` は「削除直前の最終的な既定値」で、それなら受理し、`old value` なら go command が失敗します。環境変数を起動時に読む動作まで、この段落だけから一般化しません。HTMLの Issue 番号から [#79422](https://github.com/golang/go/issues/79422)、そこから [提案 #76163](https://github.com/golang/go/issues/76163) へ進みました。調査チームで両Issueの本文と全コメントを確認し、起動時の環境変数とソースの指定を区別しました。
 
 | 指定方法 | Go 1.27での意味 |
 | --- | --- |
@@ -82,7 +82,7 @@ fatal error: removed GODEBUG "asynctimerchan" set to old value "1" in environmen
 
 **具体的に読んだ判断材料。** [利用コード調査](https://github.com/golang/go/issues/37196#issuecomment-641698749) は、受信したかを記録せずlenで調べるコードや、Reset後のドレインが新しい通知まで捨てるコードを挙げています。[意味論の整理](https://github.com/golang/go/issues/37196#issuecomment-1988468916) では、内部の最適化と利用者から見える同期性を分けています。
 
-**実装との照合。** NewTimerの宣言先 [sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/time/sleep.go;l=111) には内部容量1の生成があり、観測したcap=0だけでは内部表現までは説明できません。提案で出た `chanlen` / `chancap` を [runtime/chan.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/runtime/chan.go;l=818) で探すと、タイマーチャンネルは0を返し送信を取り消せるようにするコメントがあります。[runtime/time.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/runtime/time.go;l=1171) も、Stop / 変更で進める番号を送信前に照合し、古い設定の送信を抑止しています。
+**実装との照合。** NewTimerの宣言先 [sleep.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/time/sleep.go;l=111) には内部容量1の生成があり、観測したcap=0だけでは内部表現までは説明できません。提案で出た `chanlen` / `chancap` を [runtime/chan.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/runtime/chan.go;l=818) で探すと、タイマーチャンネルは0を返し送信を取り消せるようにするコメントがあります。[runtime/time.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/runtime/time.go;l=1171) の送信直前には `if t.seq != seq` があり、不一致なら送信関数 `f` を何もしない関数に差し替えます。コメントと合わせると、Stop / 変更が `t.seq` を進め、送信側が保存した `seq` と一致しなくなった古い送信を抑止する仕組みだと読めます。
 
 **影響箇所を探す続き。** WikiのDebuggingから問題で指定された [Hash-Based Bisect Debugging](https://research.swtch.com/bisect) を読みます。`git bisect` が変更履歴のどの版から失敗するかを絞るのに対し、ここでの `bisect` は呼び出しスタックの集合を分け、その呼び出しで新旧のどちらを使うと失敗するかを絞ります。記事のタイマー例では、見えていた1分のタイムアウトをテスト用の層が1nsへ変更していたことがスタックから分かりました。
 

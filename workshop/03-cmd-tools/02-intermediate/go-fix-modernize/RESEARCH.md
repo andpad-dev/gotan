@@ -13,7 +13,7 @@
 
 ![Go 1.26 の go fix 刷新の説明](assets/research/01-go126-fix.jpg)
 
-**解釈。** modernizer と自作 API 移行用の inliner が導入され、古い fixer 群は削除された。`go vet` と同じ解析基盤を使うという説明だけでは両者の役割が同じとは言えないため、問題の入口の [解説記事](https://go.dev/blog/gofix) の “The Go analysis framework” へ進んだ。vet は間違いらしい箇所を診断し、fix は適用可能な修正を行う、という違いまで確認する。
+**解釈。** modernizer と自作 API 移行用の inliner が導入され、古い fixer 群は削除された。`go vet` と同じ解析基盤を使うという説明だけでは両者の役割が同じとは言えないため、問題の入口の [解説記事](https://go.dev/blog/gofix) の “The Go analysis framework” へ進んだ。同節の `checker` の動詞は `reports`、`fixer` の動詞は `edits` である。前者は間違いらしい箇所を報告し、後者はコードを書き換える。共通の解析基盤を使うことと、診断を表示するか修正を適用するかは別の説明だと読める。
 
 **出典を一段深く読む。** カテゴリのリリースノート調査の案内に従い HTML の関連番号を確認すると [#75432](https://github.com/golang/go/issues/75432) がある。本文と全 10 コメントでは、構造化された標準出力が標準エラーと混ざる問題、出力ファイル経由で分離する変更、fix/vet 統合の CL がつながっていた。これは基盤統合の裏付けであり、個々の modernizer の安全性を保証する証明とは読まない。
 
@@ -34,7 +34,7 @@
 
 **深掘り。** 記事の説明と実際の一覧をつなぐため、問題の入口の [fix suite](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/cmd/vendor/golang.org/x/tools/go/analysis/suite/fix/fix.go) を読む。`buildtag`、`hostport`、`inline` と `modernize.Suite` が結合される。コメントには候補と却下理由もあり、診断できるものを何でも自動修正へ採用するわけではないことを確認できる。
 
-**回答。** 版と一覧を記録し、必要な analyzer を選んで `-diff` を確認してから適用する。記事が注意するように、一度の実行は一つのビルド条件しか解析せず、修正同士の意味上の衝突もありうる。適用後はコードレビューとプロジェクトの既存テストで振る舞いを確認する。
+**回答。** 版と一覧を記録し、必要な analyzer を選んで `-diff` を確認してから適用する。記事の `each run` に対する `only a specific build configuration` は、一回で全 OS・CPU 向けのコードを解析するという意味ではない。直後の `GOOS`・`GOARCH` を変える例から、対象環境ごとに確認が必要だと読める。また “Merging fixes and conflicts” の `semantic conflict` は、編集する文字位置が重ならなくても、組み合わせると意味が両立しない修正を指す。本文の例は、それぞれが変数の使用箇所を消した結果、未使用変数が残る場合である。適用後はコードレビューとプロジェクトの既存テストで振る舞いを確認する。
 
 ---
 
@@ -52,7 +52,7 @@
 | `BenchmarkHello`、`TestSomethingElse` | `"hello"` へ展開される |
 | `UseHello` | `"hello"` へ展開される |
 
-予想しにくい `Bench` と `Benchmark` の違いを説明するため、[同梱版 inline.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/cmd/vendor/golang.org/x/tools/go/analysis/passes/inline/inline.go) の呼び出しの除外判定へ進む。`withinTestOf` は対象パッケージかその外部テストパッケージ（パス末尾の `_test` を除いて比較）、`_test.go`、レシーバーのない関数であることを調べ、`Test`・`Example`・`Bench` と対象名の組み合わせを判定する。Go の benchmark 自動検出と同じ判定だと推測すると間違える。
+予想しにくい `Bench` と `Benchmark` の違いを説明するため、[同梱版 inline.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/cmd/vendor/golang.org/x/tools/go/analysis/passes/inline/inline.go) の呼び出しの除外判定へ進む。`withinTestOf` は対象パッケージかその外部テストパッケージ（パス末尾の `_test` を除いて比較）、`_test.go`、レシーバーのない関数であることを調べ、`Test`・`Example`・`Bench` と対象名の組み合わせを判定する。名前の条件は `fname == pre+symbol` または接頭辞 `pre+symbol+"_"` との一致である。対象名が `Hello` なら `BenchHello` は前者に一致するが、`BenchmarkHello` はどちらにも一致しない。これで表の違いを説明でき、Go の benchmark 自動検出と同じ判定だと推測すると間違える。
 
 **回答と続き。** 非推奨関数のラッパーに指示を付けて移行できるが、無条件にすべての呼び出しが消えるわけではない。ここで確認した例外は Go 1.27.1 の実装である。別の版へ更新したときは同じ小さな例と差分を再確認し、期待する移行対象と残すテストを照合する。
 

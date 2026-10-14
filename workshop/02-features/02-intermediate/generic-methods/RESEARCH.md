@@ -16,7 +16,7 @@
 
 ## 設問1: 変更の紹介から、実際の構文へ進む
 
-**最初に読む範囲。** [言語の変更の段落](https://go.dev/doc/go1.27#language)には、メソッドが自身の型パラメータを宣言できること、インタフェースには制限が残ることが並んでいます。できることだけ拾わず、同じ段落の制限もメモします。
+**原文と意味の対応。** [言語の変更の段落](https://go.dev/doc/go1.27#language)では、`method declaration`（メソッド宣言）が `may declare`（宣言してよい）と説明され、その対象が `its own type parameters`（メソッド自身の型パラメータ）です。`own` を読み落とすと、レシーバーの型パラメータを使えることまで今回の変更だと誤解します。同じ段落の `Note that` 以降には、インタフェースについての制限もあるので、そこまで読みます。
 
 ![Go 1.27 リリースノートの言語変更](assets/research/01-release.jpg)
 
@@ -40,7 +40,9 @@
 
 ## 設問2: 仕様の制限から、設計上の問いへ進む
 
-**次の疑問。** リリースノートは「何が許されないか」を教えてくれますが、「なぜその境界か」はまだ説明し切れていません。同じ場所から到達した #77273 の **Background** を読みます。
+**原文の制限を二つに分ける。** `methods of interfaces` は「インタフェースに宣言するメソッド」を指し、`may not declare` がその型パラメータ宣言を禁止します。続く `nor` は別の禁止事項を加えています。後半の `interface methods` が `be implemented by generic methods` と結ばれるので、「具体型のジェネリックメソッドでインタフェースのメソッドを満たすこと」も禁止と読みます。前半だけを「インタフェースには書けない」と訳して済ませると、問題の代入が失敗する理由が抜けます。
+
+**次の疑問。** この二つの禁止は確認できましたが、「なぜその境界か」はまだ説明し切れていません。同じ場所から到達した #77273 の **Background** を読みます。
 
 ![提案の Background。具体メソッドとインタフェースを分けて説明している](assets/research/03-proposal-background.jpg)
 
@@ -71,9 +73,9 @@ want Read([]byte) (int, error)
 
 ## 設問3: 仕様の例を問題の型へ写し、推論を確かめる
 
-**何を手掛かりに書くか。** 現在の問題にある[関数版の共有コード](https://go.dev/play/p/MpoXrhxatOW)を開き、2026-10-13 に実行しました。続いて、設問1で読んだ Method declarations の `List[E].Apply[F any]` の例は、入力の各要素に関数を適用して、出力側の型を持つ入れ物を返しています。これを問題の `items []T` を持つ構造体へ対応付け、`MapSlice` の宣言をレシーバー付きの `Map` へ変えます。二つの呼び出しも `nums.Map(...)`、`labels.Map(...)` に変え、本体は維持します。
+**何を手掛かりに書くか。** 現在の問題にある[関数版の共有コード](https://go.dev/play/p/MpoXrhxatOW)を開き、2026-10-13 に実行しました。設問1で読んだ Method declarations の `List[E].Apply[F any]` の例は、入力の各要素に関数を適用して、出力側の型を持つ入れ物を返しています。これを問題の `items []T` を持つ構造体へ対応付け、`MapSlice` の宣言をレシーバー付きの `Map` へ変えます。二つの呼び出しも `nums.Map(...)`、`labels.Map(...)` に変え、本体は維持します。
 
-入力の長さだけ `[]F` を作り、各要素を変換して `Slice[F]` として返します。レシーバーの `T` を書き換えるのではなく、別の要素型 `F` の結果を作る、と読めます。仕様本文の **instantiated** リンクから [Instantiations](https://go.dev/ref/spec#Instantiations) と [Type inference](https://go.dev/ref/spec#Type_inference) を読み、提案の呼び出し説明とも照合します。
+入力の長さだけ `[]F` を作り、各要素を変換して `Slice[F]` として返します。レシーバーの `T` を書き換えるのではなく、別の要素型 `F` の結果を作る、と読めます。仕様本文の **instantiated** リンクから [Instantiations](https://go.dev/ref/spec#Instantiations) へ進みます。`instantiated`（実体化される）は、型パラメータへ型引数を代入し、制約を満たすか確認することです。同じ節の **inferred** リンクから [Type inference](https://go.dev/ref/spec#Type_inference) へ進むと、`inferred`（推論される）は、その型引数を呼び出し側などの型の関係から求めることだと分かります。型引数を省略できる条件と、実体化に必要な条件を区別し、提案の呼び出し説明とも照合します。
 
 ![実体化と型推論の条件](assets/research/05-instantiations.jpg)
 

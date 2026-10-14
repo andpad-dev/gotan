@@ -22,7 +22,7 @@
 <a id="question-2"></a>
 ## 設問 2: 待ちを集計し、ソースへ戻る
 
-[cmd/trace](https://go.dev/cmd/trace/) の Overview に profile へ変換する例がある。列挙された種類から、今回の疑問に合う `sync` を選ぶ。
+[cmd/trace](https://go.dev/cmd/trace/) の Overview に profile へ変換する例がある。列挙された `sync` の説明は `synchronization blocking profile` であり、同期処理でブロックした時間の記録を指す。今回知りたいロック待ちはこれに対応するため、`sync` を選ぶ。
 
 ```console
 go test -run '^TestProcessWork$' -trace=work.trace
@@ -33,20 +33,20 @@ go tool pprof -list=processWork sync.pprof
 
 **実測と解釈。** 今回は `sync.(*Mutex).Lock` に 153.46ms、`sync.(*WaitGroup).Wait` に 102.11ms の遅延が集計された。`list` で `lock.Lock()` と `wg.Wait()` の行へ対応付けた。複数 goroutine の待ちの合計なので、合計値を一回の処理の壁時計時間と同一視しない。
 
-ソースを読み返すとロックを保持したまま `Sleep` するため、同じロックを使う処理が待つ。さらに [runtime/trace の User annotation](https://pkg.go.dev/runtime/trace@go1.27.1#hdr-User_annotation) を読むと、task は context を通じて複数 goroutine を結び、region は同じ goroutine 内の区間を示すと分かる。実装の [annotation.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/runtime/trace/annotation.go) でも task ID と region 開始・終了の記録を確認する。
+ソースを読み返すとロックを保持したまま `Sleep` するため、同じロックを使う処理が待つ。さらに [runtime/trace の User annotation](https://pkg.go.dev/runtime/trace@go1.27.1#hdr-User_annotation) を読むと、region の開始と終了には `same goroutine` という条件があり、一つの goroutine 内の区間を示すと分かる。task は `multiple goroutines` にまたがりうるので `context.Context` で追跡すると説明される。問題の `work` は処理全体の task、`step` は各 goroutine 内の region と対応させられる。実装の [annotation.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/runtime/trace/annotation.go) でも task ID と region 開始・終了の記録を確認する。
 
 **回答。** `work` と `step` は処理名と区間を対応付ける手がかりである。名前を付けたことだけで待ちがなくなるのではなく、待ちの場所を元の処理のどこか説明しやすくなる。
 
 ---
 
 <a id="question-3"></a>
-## 設問 3: 過去を採るために、何を先に開始するか
+## 設問 3: `FlightRecorder` が直近の記録を残す条件を読む
 
 問題の [Go 1.21](https://go.dev/doc/go1.21) と [Go 1.22](https://go.dev/doc/go1.22) を確認し、さらに入口の [overhaul 設計文書](https://go.googlesource.com/proposal/+/refs/heads/master/design/60773-execution-tracer-overhaul.md) の Background → Goals → Partitioning → Flight recording を読む。
 
 **解釈。** 設計文書は Go 1.21 期の採取負荷低減を背景に挙げ、従来は全体を解析しないと扱えないことを課題とする。Go 1.22 のリリース説明は定期的な分割とストリーミング可能な形式、syscall の全期間などを確認できる。独立して扱える区切りがあるなら直近の区間を保持し、遅延を検知した時点で保存する、という次の使い道につながる。
 
-[flight recorder の提案 #63185](https://github.com/golang/go/issues/63185) と現在の [FlightRecorder](https://pkg.go.dev/runtime/trace@go1.27.1#FlightRecorder) は時点を分けて読む。設計文書のスケッチにある `TakeSnapshot` を現在の API 名として使わず、現在は事前に `Start` し、必要時に `WriteTo` で直近の記録を取り出すことを確認する。[flightrecorder.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/runtime/trace/flightrecorder.go) の保持領域・設定・書き出しも照合した。
+[flight recorder の提案 #63185](https://github.com/golang/go/issues/63185) と現在の [FlightRecorder](https://pkg.go.dev/runtime/trace@go1.27.1#FlightRecorder) は時点を分けて読む。設計文書のスケッチにある `TakeSnapshot` を現在の API 名としては使わない。現在の型の説明にある `moving window` は、常に直近の実行記録を保持する、時間とともに動く範囲である。`Start` は記録を開始し、`WriteTo` は保持中の範囲をスナップショットとして書き出す。後者は recorder が非稼働ならエラーになるとも書かれている。この役割分担から、遅延を検知してから過去を取得したい場合は、検知前に `Start` しておく必要があると分かる。[flightrecorder.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/runtime/trace/flightrecorder.go) の保持領域・設定・書き出しも照合した。
 
 **まだ言えないこと。** ファイル形式が分割可能でも、すべての viewer が一定のメモリ使用量になるとは限らない。[cmd/trace の main.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/cmd/trace/main.go) で `parseTrace` を読むと、イベントを読みながら `events` に蓄積している。形式の能力とツールの実装を分けて答える。
 
@@ -61,7 +61,7 @@ go tool pprof -list=processWork sync.pprof
 
 ![Go 1.27 の localhost と全アドレス指定の説明](assets/research/02-trace-listen.jpg)
 
-ポートだけの `-http=:6060` は Go 1.27 で localhost に制限される、と書かれている。問題の実測は 1.27.0、今回の再確認は 1.27.1 で、いずれも変更後の版である。変更前の版でも同じ意味だったとは推測しない。
+変更の対象は `-http` の listen address で、条件は `when passed only a port`（ポートだけを渡した場合）である。例の `-http=:6060` には host 部分がないので、この条件に当たり、Go 1.27 では localhost に制限される。問題の実測は 1.27.0、今回の再確認は 1.27.1 で、いずれも変更後の版である。変更前の版でも同じ意味だったとは推測しない。
 
 HTML で見つけた [#78921](https://github.com/golang/go/issues/78921) の本文と全 4 コメントを読むと、以前は省略された host が全アドレスでの listen を意味し、Windows で開く URL が機能しない報告、localhost を選ぶ変更につながっていた。ここで変更前後の説明を確認できる。
 

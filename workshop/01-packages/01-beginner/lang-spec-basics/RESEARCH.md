@@ -14,7 +14,7 @@
 
 ![range節と反復値の対応表](assets/research/01-range.jpg)
 
-**読んだ箇所と解釈。** [range 節](https://go.dev/ref/spec#For_range)の表で `array or slice` 行を見ると、第 1 値は整数の index、第 2 値は `a[i]` です。問題の右辺は `[]string` なので、map や string 行を読む必要はありません。残る `_` は同じ段落にある **blank identifier** というリンクから[その説明](https://go.dev/ref/spec#Blank_identifier)へ進み、匿名のプレースホルダーと確認しました。さらに代入の節は blank identifier への代入が値を捨てると説明しています。
+**読んだ箇所と解釈。** [range 節](https://go.dev/ref/spec#For_range)の表で `array or slice` 行を、列見出し `1st value`・`2nd value` と対応させます。第1値は `index i`（添字）、第2値は `a[i]`（その添字の要素）です。左辺 `_, value` の第1位置が添字、第2位置が要素の受け取り先になります。問題の右辺は `[]string` なので、map や string 行を読む必要はありません。残る `_` は同じ段落にある **blank identifier** というリンクから[その説明](https://go.dev/ref/spec#Blank_identifier)へ進み、匿名のプレースホルダーと確認しました。さらに [Assignment statements](https://go.dev/ref/spec#Assignment_statements) の `ignore right-hand side values` は、右辺から得た値を使わずに捨てる意味です。例の `x, _ = f()` でも第2の結果を捨てているので、問題の `_, value` では対応する第1の値、つまり添字を捨てると読めます。
 
 **回答。** `for _, value := range values` では添字を `_` に捨て、要素を `value` に受け取ります。[問題コード](https://go.dev/play/p/bJ7XfrbuNHo)の実測は `a`、次の行が `b` でした。「range は常に添字と要素」という一般則ではなく、今回はスライスの行が根拠です。
 
@@ -27,7 +27,7 @@
 
 ![Expression switchesにあるfallthroughの規則](assets/research/02-switch.jpg)
 
-**読んだ箇所と解釈。** [Expression switches](https://go.dev/ref/spec#Expression_switches)には、最初に一致した case を実行し、他の case を飛ばすことが書かれています。その後の段落は、case の最後の空でない文を `fallthrough` にすると次の節の最初へ制御を移す、と定めています。最終 case では使えないという制約も同じ段落にあります。
+**読んだ箇所と解釈。** [Expression switches](https://go.dev/ref/spec#Expression_switches)には、最初に一致した case を実行し、他の case を飛ばすことが書かれています。その後の段落の `last non-empty statement` は「case 内の最後の空でない文」という置き場所、`first statement of the next clause` は移動先の「次の case 節の最初の文」です。この二つを結ぶのが `fallthrough` なので、次の条件式を再評価する指示ではありません。`all but the last clause` は最後の節を除くという制約で、最終 case では使えません。
 
 **実験。** 元の [Playground](https://go.dev/play/p/FhO9_Qu5-ca)は `one` だけでした。そこで `case 1` の `fmt.Println("one")` の直後に `fallthrough` を加えた[追加実験](https://go.dev/play/p/fOZxxOIZNDA)を実行しました。
 

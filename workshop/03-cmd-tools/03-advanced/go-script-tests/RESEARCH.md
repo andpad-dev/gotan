@@ -38,7 +38,7 @@ matched: hello world
 
 ![script test 導入 commit の説明](assets/research/02-script-introduction.jpg)
 
-旧 shell script は Windows、個別選択、実行速度などに課題があった。Go のテストへ移したことで実行上の問題は改善したが、準備コードが多く読みづらかった。新形式は短い script と txtar の読みやすさを戻し、subtest・隔離・並列実行の利点を残す、と説明されている。ここで初めて「bash に戻した」のではなく小さな専用言語を導入した理由が分かる。
+メッセージ冒頭の `difficult to run` は旧 shell script の実行上の問題で、その後に Windows・個別選択・速度が列挙される。一方、Go へ移した後の例に続く `difficult to skim` は、テストをざっと読んで内容を把握しにくいという問題である。二つの評価は対象と時点が異なる。新形式は短い script と txtar の読みやすさを戻し、subtest・隔離・並列実行の利点を残す、と説明されている。ここで初めて「bash に戻した」のではなく小さな専用言語を導入した理由が分かる。
 
 次に、カテゴリの歴史表にある [Go Testing By Example](https://research.swtch.com/testing) を読む。
 
@@ -51,7 +51,7 @@ matched: hello world
 <a id="question-3"></a>
 ## 設問 3: 形式・runner・公開範囲を分けて持ち帰る
 
-**疑問の根拠。** 問題とソースの import に `internal` が含まれる。カテゴリの Go Command で Internal packages の説明を探すと、その親ディレクトリ以下からに import を制限する規則がある。Go 本体で使っていることだけで、自分の module から公開 API として使えるとは判断できない。
+**疑問の根拠。** 問題とソースの import に `internal` が含まれる。カテゴリの Go Command で Internal packages の説明を探す。`above the internal directory` は、import される側のパスで `internal` より前の部分を指す。同節の例では `example.com/m/foo/internal/baz` を import できるのは `example.com/m/foo` 以下のパッケージである。今回の `cmd/internal/script` なら境界は `cmd` なので、自分の別 module からの import はこの条件を満たさない。Go 本体で使っていることだけで、自分の module から公開 API として使えるとは判断できない。
 
 必要なのがファイルの束なら、問題の入口の [golang.org/x/tools/txtar@v0.47.0](https://pkg.go.dev/golang.org/x/tools/txtar@v0.47.0) を読む。`Archive`、`Parse`、`Format` はテキストの格納形式を扱い、[公開版 archive.go](https://cs.opensource.google/go/x/tools/+/refs/tags/v0.47.0:txtar/archive.go) を読んでもコマンドを実行する機能ではない。
 

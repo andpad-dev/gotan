@@ -15,12 +15,12 @@
 
 ![Handlerの宣言と出力前後の契約](assets/research/01-handler.jpg)
 
-| メソッド | 説明の解釈 |
-| --- | --- |
-| `Enabled` | 指定レベルを処理するかを早い段階で判断する |
-| `Handle` | 有効と判断された Record を処理する、出力の中心 |
-| `WithAttrs` | 共通属性を追加した新しい Handler を返す |
-| `WithGroup` | 後続の属性にグループを追加した新しい Handler を返す |
+| メソッド | 説明中の手がかり | 問題への読み替え |
+| --- | --- | --- |
+| `Enabled` | `before any arguments are processed` | 引数の処理前に指定レベルを受け付けるか決める |
+| `Handle` | `only ... when Enabled returns true` | Enabled が true の場合に Record を受け取る。今回のログを出力する中心 |
+| `WithAttrs` | `returns a new Handler` | 属性を加えた別の Handler を返す。ここで1件のログを出力するわけではない |
+| `WithGroup` | `all subsequent attributes` | 指定したグループ名は後続の属性に作用する。グループを追加した Handler を返す |
 
 同じページの型一覧に [TextHandler](https://pkg.go.dev/log/slog@go1.27.1#TextHandler) と [JSONHandler](https://pkg.go.dev/log/slog@go1.27.1#JSONHandler) があり、4つのメソッドも確認できます。同じ一覧の [MultiHandler](https://pkg.go.dev/log/slog@go1.27.1#MultiHandler) も実装型で、複数ハンドラーへ渡すものです。[DiscardHandler](https://pkg.go.dev/log/slog@go1.27.1#DiscardHandler) は型ではなくパッケージ変数なので、分類を区別します。宣言先の [handler.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/log/slog/handler.go;l=31) と、Logger の [logger.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/log/slog/logger.go;l=248) を読むと、Enabled を確認してから Record を作り Handle に渡す流れに対応します。
 
@@ -41,7 +41,7 @@ with Resolve: REDACTED
 
 最初の panic は nil の Handler を埋め込み、Enabled などを実装していないためです。「埋め込みという構文はいつでも禁止」と一般化はしません。非 nil の別ハンドラーへ委譲する設計でも、WithAttrs / WithGroup が返す値で自分の処理が失われないかを確認する必要があります。
 
-二つ目は問題の password 型が [LogValuer](https://pkg.go.dev/log/slog@go1.27.1#LogValuer) を実装していることに対応します。[Value.Resolve](https://pkg.go.dev/log/slog@go1.27.1#Value.Resolve) の説明と宣言先の [value.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/log/slog/value.go) を読むと、LogValue の結果を解決する役割が分かります。Any を直接表示すると、この変換を経由しません。
+二つ目は問題の password 型が [LogValuer](https://pkg.go.dev/log/slog@go1.27.1#LogValuer) を実装していることに対応します。[Value.Resolve](https://pkg.go.dev/log/slog@go1.27.1#Value.Resolve) の `repeatedly calls LogValue` と `while it implements LogValuer` を読むと、値が LogValuer である間 LogValue を呼び、その結果を返す処理だと分かります。問題の password 型なら LogValue が返す `"REDACTED"` を得るための操作です。宣言先の [value.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/log/slog/value.go) でもこの繰り返しを確認しました。Any を直接表示すると、この変換を経由しません。
 
 **回答に含める注意。** 全メソッドが並行に呼ばれ得ること、属性・グループの契約、元のハンドラーを変更しない派生ハンドラー、Resolve を適用する場所を確認します。今回の表示変換だけ直しても、この契約すべてを満たしたことにはなりません。
 
@@ -53,6 +53,8 @@ with Resolve: REDACTED
 **手がかり。** guide の Testing には、契約確認に [testing/slogtest](https://pkg.go.dev/testing/slogtest@go1.27.1) を使うリンクがあります。問題にある TestHandler / Run の引数と結果を比べ、[slogtest.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/testing/slogtest/slogtest.go;l=267) で同じケース集合を走査することを確認しました。
 
 ![RunとTestHandlerの契約を並べて読む](assets/research/02-tests.jpg)
+
+**原文と呼び出し形の対応。** TestHandler の `results func() []map[string]any` は複数件の結果を返す形です。説明も `after all such calls` とあるので、Logger の呼び出しがすべて終わってから結果を集めます。一方 Run は `For each test case` の下で newHandler → 実行 → result の順を定め、`result func(*testing.T) map[string]any` は各ケースの1件を返します。
 
 **回答。** TestHandler は一つのハンドラーへ複数ログを送り、まとめた結果を `[]map[string]any` で受け取り、失敗を結合した error を返します。Run は同じ検査をサブテストごとに行い、ケースごとに newHandler を呼び、結果1件を受け取って `t.Error` で失敗を報告します。
 

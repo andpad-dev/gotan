@@ -16,7 +16,7 @@
 
 ## 設問1: 名前の似た二つのプロファイルを読み分ける
 
-**リリースノートで確認したこと。** [Go 1.27 の該当節](https://go.dev/doc/go1.27#goroutineleak-profiles)には、起きる可能性のない待機を検出すること、GCを利用すること、検出できない場合もあることが続けて書かれています。最初の紹介文だけで止めません。
+**原文と意味の対応。** [Go 1.27 の該当節](https://go.dev/doc/go1.27#goroutineleak-profiles)は、まず `leaked` という語を定義しています。対象は並行処理の仕組みで `blocked`（処理が進めず待っている）状態のgoroutineで、条件は `cannot possibly become unblocked`（待機を解除される可能性がない）です。`blocked` だけを読んで「止まっているものはすべてリーク」とは判断できません。その後のGCを使う判定と、検出できない場合の説明まで読みます。
 
 ![Go 1.27 の Goroutine leak profile 節](assets/research/01-release.jpg)
 
@@ -51,7 +51,9 @@ goroutineleak profile: total 4
 
 ## 設問2: 「GCを使う」を判定の手順へ分解する
 
-**残った疑問。** リリースノートには到達可能性を使うとありますが、止まっているgoroutineを全部除くだけでよいのかはまだ分かりません。起きられるgoroutineが別のgoroutineを起こす連鎖も考える必要がありそうです。これは本文の「そこから起こせるgoroutine」という条件から得た問いです。
+**条件と代名詞を追う。** リリースノートは、goroutine `G` が待つ対象を `P` と置き、`P` が `unreachable`（到達できない）である条件を説明しています。どこから到達できないのかを、`runnable goroutine`（実行可能なgoroutine）と、それらが `unblock`（待機を解除）できるgoroutineの二つに分けます。原文の `those` は前の実行可能なgoroutineを指します。`P` から `G` へ到達できないという向きの話ではありません。
+
+**残った疑問。** 実行可能なgoroutineが別のgoroutineを起こす連鎖も条件に含まれています。一度だけ到達できるか調べれば足りるのか、連鎖の先まで判定するのかが次の問いになります。
 
 **提案への動線。** カテゴリにあるリリースノートのHTML確認手順に従い、該当節の直前を確認しました。今回はHTMLをHTTPで取得して読み、`go.dev/issue/74609` というコメントを見つけました。[#74609](https://go.dev/issue/74609)の本文と全33コメントを取得して読み、本文の **Design document** へ進みます。Issue番号を記憶から入力した経路ではありません。
 
@@ -59,7 +61,15 @@ goroutineleak profile: total 4
 
 ![設計文書のマーキング手順](assets/research/04-marking.jpg)
 
-**自分の言葉への置き換え。** 実行できるgoroutineを出発点にメモリを辿る。待ち対象へ到達できたgoroutineも、起きる可能性がある側に加えてさらに辿る。加えられるものがなくなるまで繰り返し、残った待機をリークとして報告する、という流れです。「一度マークされなかったら即リーク」ではありません。
+**原文の手順を対応付ける。** 次の語を、何を辿るか・何を追加するか・いつ止めるかに分けます。
+
+| Proposal の語 | 手順での意味 | 読み取る判断 |
+| --- | --- | --- |
+| `mark roots` | GCがメモリを辿り始める起点 | goroutineのうち、最初の起点にするのは実行可能なものだけ |
+| `eventually runnable` | 待ち対象がマークされ、後で実行できる可能性を残すgoroutine | 待ち対象へ到達できたものを新たな起点にして、再びメモリを辿る |
+| `fixed point` | 繰り返しても到達可能な範囲が増えなくなった状態 | この状態になるまで判定を繰り返してから、起点に加わらなかったものを報告する |
+
+`eventually runnable` は「必ず後で動く」という予告ではありません。到達可能性から待機を解除できる可能性を残す分類です。また、最後の手順は、報告したgoroutineも起点として再度マークすると指定しています。検出と、通常GCが保存すべきメモリのマークを分けて読むと、検出したgoroutineをその場で回収する手順ではないことが分かります。
 
 **現行実装への照合。** 設問1で見つけた `runtime_goroutineLeakGC` を、手元の同版Goソースで検索しました。リンク名の宣言から `runtime/mgc.go` の `goroutineLeakGC` に到達し、そのファイルの漏れ検出の分岐から `findGoroutineLeaks`、`findMaybeRunnableGoroutines`、`isMaybeRunnable` を読みました。[同じタグの実装](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/runtime/mgc.go;l=1157)では、待ち理由に応じて対象のマークを確認し、新しく起きる可能性のあるgoroutineが見つかればマーキングを再開します。
 

@@ -16,7 +16,7 @@
 
 ![Cutの三つの戻り値](assets/research/01-cut.jpg)
 
-**読んだ箇所と解釈。** 宣言の戻り値名は `before`、`after`、`found`。説明は区切りの前後を返し、`found` は区切りが現れたかを表すと定めています。区切りなしの結果は元の文字列、空文字、false です。ここから「値が空」という観測だけでは区切りの存在を区別できないと考えられます。
+**読んだ箇所と解釈。** 宣言の戻り値名は `before`、`after`、`found`。説明の `whether sep appears in s` は「区切り `sep` が入力 `s` に現れるか」であり、区切り後の文字数を尋ねていません。`found` はこの有無を表します。`If sep does not appear in s` の条件では `s, "", false` を返すので、問題の `s="left"`、`sep="="` はこの分岐に当たります。ここから「値が空」という観測だけでは区切りの存在を区別できないと考えられます。
 
 **次の確認と回答。** 宣言リンクの [strings.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/strings/strings.go;l=1266)でも同じ契約を読み、`stringslite.Cut` への委譲を確認しました。`"left"` では `found=false` です。[現行の問題コード](https://go.dev/play/p/ieMFoFpSNtz)を実行すると次の結果でした。
 
@@ -39,7 +39,7 @@
 <a id="question-2"></a>
 ## 設問 2: 複数の区切りがある入力に当てはめる
 
-**手がかりと操作。** 新しい入力では `=` が二回現れます。先ほどの説明に戻り、どの位置を選ぶのかを表す **first instance** に注目しました。この段階で、Split 系など別の API を探す必要はありません。
+**手がかりと操作。** 新しい入力では `=` が二回現れます。先ほどの説明に戻り、どの位置を選ぶのかを表す **first instance of sep** に注目しました。`first` は「最初の」、`sep` は今回の `"="` です。`before and after sep` と合わせると、最初の `=` の前後を返し、それより後の `=` は後半に残る、と読めます。この段階で、Split 系など別の API を探す必要はありません。
 
 ![最初の区切りを使う契約と委譲先](assets/research/02-source.jpg)
 

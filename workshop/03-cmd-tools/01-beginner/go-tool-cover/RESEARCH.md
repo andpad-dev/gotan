@@ -13,9 +13,9 @@
 
 ![cover の Overview](assets/research/01-cover-overview.jpg)
 
-**読み取ったこと。** `go test -coverprofile` が作る記録を cover が解析する。さらに元のコードを計測用に書き換えること、基本ブロックを近似しており `&&` や `||` の内部まで区別しないことが書かれている。「テストが正しい確率」でも「すべての条件の組み合わせ」でもない。
+**読み取ったこと。** `go test -coverprofile` が作る記録を cover が解析する。Overview の `instrumentation` は、各関数のどこが実行されたかを追跡するため、元のコードへ計測用の注釈を加えることを指す。`approximate basic block` はソースから近似した基本ブロックという意味で、続く `does not probe inside` の対象が `&&` と `||` である。したがって、これらの式の内部の実行状況まで区別する計測ではない。「テストが正しい確率」でも「すべての条件の組み合わせ」でもない。
 
-**まだ足りないこと。** Overview だけでは関数ごとの分母が分からない。案内されている `go tool cover -help` の `-func` と、Source Files の `func.go` を読む。関数名・位置を集める処理に続く `coverage` では、対象関数に重なるブロックの `NumStmt` を分母に足し、`Count > 0` のときだけ分子にも足している。
+**まだ足りないこと。** Overview だけでは関数ごとの分母が分からない。案内されている `go tool cover -help` の `-func` と、Source Files の `func.go` を読む。関数名・位置を集める処理に続く `coverage` では、対象関数に重なるブロックの `NumStmt` を `total` に足し、`Count > 0` のときだけ `covered` にも足している。加える値は実行回数 `Count` ではなく文の数 `NumStmt` なので、分母は対象の文数、分子は一度以上実行されたブロックに属する文数と読める。これが問題の出力の `statements` に対応する。
 
 ![func.go の coverage とブロックの集計](assets/research/02-cover-count.jpg)
 

@@ -17,7 +17,7 @@
 
 ![新パッケージからAPI資料へのリンク](assets/research/01-release.jpg)
 
-**読んで分かったこと。** リリースノートだけでは `kem`・`kdf`・`aead` の分担までは分かりません。掲載リンクから [hpke](https://pkg.go.dev/crypto/hpke@go1.27.1) へ進み、問題にある三つの関数とその戻り値型を対応させます。
+**読んで分かったこと。** リリースノートだけでは `kem`・`kdf`・`aead` の分担までは分かりません。掲載リンクから [hpke](https://pkg.go.dev/crypto/hpke@go1.27.1) へ進み、問題にある三つの関数とその戻り値型を対応させます。型の説明にある `Key Encapsulation Mechanism` は鍵カプセル化機構、`key derivation` は鍵導出、`symmetric encryption` は対称暗号を指します。それぞれの宣言が返す `KEM`・`KDF`・`AEAD` を、この説明と次の具体的な実装名へ結び付けます。
 
 | 問題の呼び出し | 宣言・型の説明から分かった役割 |
 | --- | --- |
@@ -30,11 +30,11 @@
 ---
 
 <a id="question-2"></a>
-## 設問 2: Seal/Openからリンクされたコンテキストへ進む
+## 設問 2: Seal/Open の鍵型と info の一致条件を読む
 
-**手がかり。** 問題のコードにある [Seal](https://pkg.go.dev/crypto/hpke@go1.27.1#Seal) と [Open](https://pkg.go.dev/crypto/hpke@go1.27.1#Open) の引数型を比較しました。前者は PublicKey、後者は PrivateKey です。さらに説明中の NewSender / NewRecipient を読むと、`info` は両者で一致すべき追加の公開情報と分かります。
+**手がかり。** 問題のコードにある [Seal](https://pkg.go.dev/crypto/hpke@go1.27.1#Seal) と [Open](https://pkg.go.dev/crypto/hpke@go1.27.1#Open) の引数型を比較しました。鍵の仮引数が前者は `pk PublicKey`、後者は `k PrivateKey` なので、暗号化側と復号側で同じ種類の鍵を渡す形ではありません。説明のリンク先 [NewSender](https://pkg.go.dev/crypto/hpke@go1.27.1#NewSender) / [NewRecipient](https://pkg.go.dev/crypto/hpke@go1.27.1#NewRecipient) では、`info` を `additional public information` と呼び、`must match between sender and recipient` と定めています。`must match` の対象は `info` で、送受信者間で値を一致させる条件です。公開情報なので、秘密鍵をここへ渡すという意味でもありません。
 
-**なぜ一致が必要か。** 「一致する必要がある」で止めず、宣言先の [hpke.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/crypto/hpke/hpke.go;l=135)で NewSender / NewRecipient の共通の呼び出し先 `newContext` を読みました。今回の HKDF では `info` からハッシュを作り、それを鍵導出のコンテキストへ入れています。単なるログ用の注釈ではないため、片側だけ変更すると復号に必要な状態も一致しません。
+**なぜ一致が必要か。** 「一致する必要がある」で止めず、宣言先の [hpke.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/crypto/hpke/hpke.go;l=135)で NewSender / NewRecipient の共通の呼び出し先 `newContext` を読みました。今回の HKDF の分岐では、`info` を `labeledExtract` へ渡した結果が `infoHash` に入り、`ksContext = append(ksContext, infoHash...)` で鍵導出の入力に加わります。単なるログ用の注釈ではないため、片側だけ変更すると復号に必要な状態も一致しません。
 
 [問題のコード](https://go.dev/play/p/ONc5q75dM5t)の再実行結果です。
 
@@ -48,13 +48,13 @@ different info rejected: true
 ---
 
 <a id="question-3"></a>
-## 設問 3: 鍵を読む型と暗号スイートを分ける
+## 設問 3: KEM.NewPublicKey と suiteID の役割を分ける
 
 **残った疑問。** `NewPublicKey` がパッケージ直下ではなく `kem` のメソッドなのはなぜか。戻り値の PublicKey から KEM の宣言へ戻り、バイト列を復元する操作の所属を読みます。
 
 ![KEMに属する鍵の生成と復元](assets/research/02-suite.jpg)
 
-**解釈。** [KEM](https://pkg.go.dev/crypto/hpke@go1.27.1#KEM) は鍵の生成だけでなく、特定の KEM の形式で鍵を復元する役割を持っています。PublicKey にも `KEM()` があり、鍵と KEM の対応が保持されます。さらに hpke.go の `suiteID` は KEM・KDF・AEAD の識別子を合わせており、鍵の形式だけで後の二つが決まるわけではありません。
+**解釈。** [KEM](https://pkg.go.dev/crypto/hpke@go1.27.1#KEM) のメソッド宣言にある `NewPublicKey([]byte) (PublicKey, error)` を読みます。説明の `deserializes` は、受け取ったバイト列から鍵の値を復元する操作です。このメソッドは `KEM` に属するので、問題の `kem.NewPublicKey` は選んだ KEM の形式で復元し、失敗も戻り値で受け取る呼び出しです。PublicKey にも `KEM()` があり、鍵と KEM の対応が保持されます。さらに hpke.go の `suiteID` は KEM・KDF・AEAD の識別子を合わせており、鍵の形式だけで後の二つが決まるわけではありません。
 
 **もう一段確かめる。** 型の契約だけでなく、問題で選んだ `MLKEM768X25519` の宣言先 [pq.go](https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/crypto/hpke/pq.go;l=20) を読むと、戻り値は `hybridKEM` です。同じファイルでその `NewPublicKey` を探すと、長さを検証してからML-KEM部分と楕円曲線部分を分けて復元しています。一般的なKEMの説明から、今回の鍵形式を扱う実装まで結び付きました。
 

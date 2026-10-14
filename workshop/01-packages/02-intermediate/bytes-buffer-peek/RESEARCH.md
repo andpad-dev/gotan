@@ -11,13 +11,13 @@
 ---
 
 <a id="question-1"></a>
-## 設問 1: 「先読み」を読み取り位置の変化として調べる
+## 設問 1: Peek と Next の advancing の違いを読む
 
 **最初の手がかり。** 問題は `bytes.Buffer.Peek` を指定し、`Next` と比較しています。カテゴリの入口から [bytes](https://go.dev/pkg/bytes/) を開き、メソッド名で [Peek](https://pkg.go.dev/bytes@go1.27.1#Buffer.Peek) と [Next](https://pkg.go.dev/bytes@go1.27.1#Buffer.Next) を探します。名前の印象で判断せず、両方の説明の主語と動詞を比べました。
 
 ![NextとPeekの読み取り位置についての説明](assets/research/02-next.jpg)
 
-**読んだ内容と解釈。** Peek はバッファを進めず、Next は Buffer.Read と同じように進める、と書かれています。「返されたデータが同じか」と「後から読む位置が同じか」は別の問いだと分かります。[問題の観測コード](https://go.dev/play/p/OdJEVvlBSbf)の実行でも、先頭を返した後に全体が残りました。
+**読んだ内容と解釈。** Peek の `without advancing the buffer` は、次の n バイトを返しても読み取り位置を進めない、という条件です。Next は反対に `advancing the buffer` とあり、その進め方を `Buffer.Read` と同じと説明しています。今回の n は4なので、Peek 後も先頭の4バイトは次の読み取り対象に残り、Next 後はその次からになります。「返されたデータが同じか」と「後から読む位置が同じか」は別の問いだと分かります。[問題の観測コード](https://go.dev/play/p/OdJEVvlBSbf)の実行でも、先頭を返した後に全体が残りました。
 
 ```text
 prefix="ABCD" err=<nil> remaining="ABCDrest"
@@ -32,7 +32,7 @@ short="XY" err=EOF
 <a id="question-2"></a>
 ## 設問 2: エラーの有無と返されたデータを別々に読む
 
-**残った疑問。** 出力は `EOF` なのに `"XY"` も返しています。Peek の戻り値は `([]byte, error)` なので、「エラーならデータは空」という前提を置かず、条件文を読み直しました。
+**残った疑問。** 出力は `EOF` なのに `"XY"` も返しています。Peek の戻り値は `([]byte, error)` です。説明の `fewer than n bytes` は「返すバイト数が要求 n 未満」の条件で、`also returns io.EOF` の `also` は、そのデータに加えてエラーも返すという意味です。n=4 に対して2バイトの `"XY"` がある今回も、データを空にするとは読めません。
 
 ![Peekの不足データと有効期間の説明](assets/research/01-peek.jpg)
 
@@ -47,7 +47,7 @@ short="XY" err=EOF
 <a id="question-3"></a>
 ## 設問 3: 有効期間と共有を実装に対応させる
 
-**手がかり。** 問題の `prefix[0]` の変更がバッファにも現れました。Peek の説明の有効期間と alias の文を読みます。ソースの返り値も新しい配列へのコピーではなく `b.buf[b.off : b.off+n]` でした。これで「別の変数に入れたので独立したデータ」という解釈を捨てられます。
+**手がかり。** 問題の `prefix[0]` の変更がバッファにも現れました。[Peek の説明](https://pkg.go.dev/bytes@go1.27.1#Buffer.Peek) の `The slice aliases the buffer content` では、主語は返されたスライスで、`aliases` はバッファ内容と同じ領域を参照することを表します。続く変更が将来の読み取りへ影響するという説明を、問題の `prefix[0]` の変更に対応させます。直前の `until the next call to a read or write method` は有効期間の終わりで、次の読み書き操作をまたいで保持してよい保証ではありません。ソースの返り値も新しい配列へのコピーではなく `b.buf[b.off : b.off+n]` でした。これで「別の変数に入れたので独立したデータ」という解釈を捨てられます。
 
 **回答。** スライスはバッファと内容を共有し、次の読み書きメソッドまでしか有効ではありません。その場で読むだけなら共有して使えますが、後段が保持・変更するなら、バッファを次に操作する前に独立したコピーを作ります。
 

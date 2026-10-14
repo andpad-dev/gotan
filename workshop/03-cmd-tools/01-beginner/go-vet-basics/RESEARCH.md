@@ -13,7 +13,7 @@
 
 ![vet の役割と限界が書かれた Overview](assets/research/01-vet-overview.jpg)
 
-**読み方。** 「怪しい構造を報告する」という役割に続いて、ヒューリスティックなので指摘が必ず本当の問題とは限らず、すべての問題を検出するわけでもないと書かれている。成功したら正しいプログラムだ、とは読まない。
+**読み方。** Overview の `suspicious constructs` は「疑わしいコードの構造」を指し、直後の例は書式文字列と引数が合わない `Printf` である。問題でも `%d` に `string` を渡しているため、この例に対応する。続く `heuristics` は規則に基づく推定であり、`all reports` が本当の問題だとは保証しないという文は「指摘の誤りうる側」を説明する。終了コードの段落の `every possible problem` を検査するわけではないという文は「見逃しうる側」を説明する。二つを分けて読むと、成功したら正しいプログラムだとは言えない。
 
 問題の [main.go](main.go) を実行すると `hello, %!d(string=gopher)` だった。`go vet ./...` では `fmt.Printf format %d has arg name of wrong type string` と指摘され、終了コードは 1 だった。コードが実行できることと、書式文字列の意図が引数の型に合っていることを分けて説明できる。
 
