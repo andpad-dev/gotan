@@ -13,7 +13,7 @@ readonly SEGS=("$@")
 # 手拍子の立ち上がりから算出し、player の音声ストリームの開始遅れ (start_time) を足してある.
 readonly OFF_P1="-8.9198"
 readonly OFF_P2="-9.0646"
-# wide は青緑に寄っているので、grayworld の結果から求めた固定の倍率で白を合わせる.
+# wide は青緑に寄っているので、grayworld の結果から求めた固定の倍率で白を合わせる (cmd/wb-gains で求める).
 readonly WIDE_COLOR="colorchannelmixer=rr=1.738:gg=0.953:bb=0.813,"
 
 # bc は 0.5 を .5 と出力し ffmpeg が受け付けないので、printf で整形する.

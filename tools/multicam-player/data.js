@@ -1,5 +1,5 @@
 // プレイヤーに渡すデータ. file:// で開いても読めるように、JSON ではなく JS として置く.
-// scripts/build_data.py で生成する. 再生用ファイルの段階で同期済みなので offsets は 0.
+// go run ./cmd/build-data で生成する. 再生用ファイルの段階で同期済みなので offsets は 0.
 // ?dev=1 で微調整した値は offsets に書き戻す.
 window.GOTAN = {
   "title": "Go探無比 プレイ映像: slog.Value はなぜ == で比較できないのか",
