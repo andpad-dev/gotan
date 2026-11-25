@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Go探無比 プレイ映像</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #181b21;
+    --line: #2a2f38;
+    --text: #e6e8eb;
+    --muted: #8b93a1;
+    --accent: #4fb3d9;
+    --accent-ink: #0f1115;
+    --marker: #f0b44c;
+    --wipe-gap: 16px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif; }
+  body { display: grid; grid-template-rows: auto 1fr auto; height: 100vh; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 15px; margin: 0; font-weight: 600; }
+  header .spacer { flex: 1; }
+  .group { display: flex; align-items: center; gap: 4px; }
+  .group > span { color: var(--muted); margin-right: 4px; font-size: 12px; }
+  .group[hidden] { display: none; }
+  button, select { background: var(--panel); color: var(--text); border: 1px solid var(--line);
+    border-radius: 6px; padding: 4px 10px; font: inherit; cursor: pointer; }
+  button:hover { border-color: var(--muted); }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+  main { display: grid; grid-template-columns: 1fr 300px; min-height: 0; }
+  body.chapters-hidden main { grid-template-columns: 1fr; }
+  body.chapters-hidden aside { display: none; }
+
+  /* 大きい画面はグリッドに並べ、ワイプはその上に重ねる. */
+  #stage { position: relative; min-height: 0; padding: 8px; display: grid; gap: 8px; grid-template-rows: 1fr; }
+  #stage[data-layout="2"] { grid-template-columns: 1fr 1fr; }
+  #stage[data-layout="1"] { grid-template-columns: 1fr; }
+  .tile { position: relative; background: #000; border-radius: 6px; overflow: hidden; min-height: 0; }
+  .tile video { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .tile .label { position: absolute; left: 8px; top: 8px; padding: 2px 8px; border-radius: 4px;
+    background: rgba(0,0,0,.6); font-size: 12px; pointer-events: none; }
+  .tile .label .speaker { color: var(--accent); }
+  .tile[hidden] { display: none; }
+
+  /* ワイプ: 位置は四隅と中央下の 5 か所、大きさは 3 段階. */
+  .tile.wipe { position: absolute; z-index: 2; aspect-ratio: 16 / 9; height: auto;
+    border: 1px solid var(--line); box-shadow: 0 6px 24px rgba(0,0,0,.5); cursor: grab; touch-action: none; }
+  .tile.wipe[data-size="s"] { width: 15%; }
+  .tile.wipe[data-size="m"] { width: 22%; }
+  .tile.wipe[data-size="l"] { width: 30%; }
+  .tile.wipe[data-pos="tl"] { left: var(--wipe-gap); top: var(--wipe-gap); }
+  .tile.wipe[data-pos="tr"] { right: var(--wipe-gap); top: var(--wipe-gap); }
+  .tile.wipe[data-pos="bl"] { left: var(--wipe-gap); bottom: var(--wipe-gap); }
+  .tile.wipe[data-pos="br"] { right: var(--wipe-gap); bottom: var(--wipe-gap); }
+  .tile.wipe[data-pos="bc"] { left: 50%; bottom: var(--wipe-gap); transform: translateX(-50%); }
+  .tile.wipe.dragging { cursor: grabbing; right: auto; bottom: auto; transform: none; opacity: .85; }
+  .tile .sizes { display: none; position: absolute; right: 6px; top: 6px; gap: 2px; }
+  .tile.wipe:hover .sizes { display: flex; }
+  .tile.wipe.dragging .sizes { display: none; }
+  .tile .sizes button { padding: 0 6px; font-size: 11px; background: rgba(0,0,0,.65); }
+  .tile .sizes button[aria-pressed="true"] { background: var(--accent); }
+
+  /* 動画が見つからないときに出すフォルダ選択. */
+  #picker { position: absolute; inset: 8px; z-index: 3; display: grid; place-content: center; gap: 12px;
+    text-align: center; background: rgba(15,17,21,.94); border: 1px dashed var(--line); border-radius: 6px; padding: 16px; }
+  #picker[hidden] { display: none; }
+  #picker p { margin: 0; color: var(--muted); }
+  #picker code { color: var(--text); }
+  #picker label { justify-self: center; background: var(--accent); color: var(--accent-ink); border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+  #picker input { display: none; }
+
+  aside { border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  aside h2 { font-size: 13px; margin: 0; padding: 10px 12px; border-bottom: 1px solid var(--line); color: var(--muted); font-weight: 600; }
+  #chapters { list-style: none; margin: 0; padding: 4px 0; overflow-y: auto; }
+  #chapters li { display: grid; grid-template-columns: 56px 1fr; gap: 8px; padding: 6px 12px; cursor: pointer; }
+  #chapters li:hover { background: var(--panel); }
+  #chapters li.current { background: var(--panel); box-shadow: inset 3px 0 0 var(--accent); }
+  #chapters time { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  footer { border-top: 1px solid var(--line); padding: 8px 16px 10px; display: grid; gap: 8px; }
+  #seek { position: relative; height: 18px; cursor: pointer; }
+  #seek .track { position: absolute; left: 0; right: 0; top: 7px; height: 4px; background: var(--line); border-radius: 2px; }
+  #seek .fill { position: absolute; left: 0; top: 7px; height: 4px; background: var(--accent); border-radius: 2px; }
+  #seek .mark { position: absolute; top: 3px; width: 2px; height: 12px; background: var(--marker); transform: translateX(-1px); }
+  #seek .knob { position: absolute; top: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--text); transform: translateX(-6px); }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  #time { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 120px; }
+  #play { min-width: 64px; }
+  .hint { color: var(--muted); font-size: 12px; }
+  #dev { display: none; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; }
+  body.dev #dev { display: flex; }
+  #dev textarea { width: 360px; height: 40px; background: var(--panel); color: var(--text); border: 1px solid var(--line); font: 12px monospace; }
+
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; grid-template-rows: 1fr 160px; }
+    body.chapters-hidden main { grid-template-rows: 1fr; }
+    aside { border-left: 0; border-top: 1px solid var(--line); }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Go探無比 プレイ映像</h1>
+  <div class="spacer"></div>
+  <div class="group" id="layout-group"><span>表示</span>
+    <button data-layout="2" aria-pressed="true">2 画面</button>
+    <button data-layout="1" aria-pressed="false">1 画面</button>
+    <button id="wipe-toggle" aria-pressed="true" title="二人の様子を小窓で重ねる (W)">ワイプ</button>
+  </div>
+  <div class="group" id="pick2"><span>左右</span><select id="left"></select><select id="right"></select></div>
+  <div class="group" id="pick1" hidden><span>表示する映像</span><select id="single"></select></div>
+  <div class="group"><span>音声</span><select id="audio"></select>
+    <button id="mute" aria-pressed="false" title="ミュート (M)">ミュート</button>
+  </div>
+  <div class="group">
+    <button id="chapters-toggle" aria-pressed="true" title="チャプター一覧を開く・閉じる (C)">チャプター</button>
+    <button id="fullscreen" aria-pressed="false" title="全画面 (F)">全画面</button>
+  </div>
+</header>
+
+<main>
+  <div id="stage" data-layout="2">
+    <div id="picker" hidden>
+      <p>動画が見つかりませんでした。</p>
+      <p><code id="picker-files"></code> が入ったフォルダを選んでください。</p>
+      <label>フォルダを選ぶ<input id="picker-input" type="file" webkitdirectory multiple></label>
+    </div>
+  </div>
+  <aside>
+    <h2>チャプター</h2>
+    <ol id="chapters"></ol>
+  </aside>
+</main>
+
+<footer>
+  <div id="seek"><div class="track"></div><div class="fill"></div><div class="knob"></div></div>
+  <div class="controls">
+    <button id="play">▶ 再生</button>
+    <div class="group">
+      <button data-skip="-60">−60 秒</button>
+      <button data-skip="-10">−10 秒</button>
+      <button data-skip="10">+10 秒</button>
+      <button data-skip="60">+60 秒</button>
+    </div>
+    <div class="group" id="rates"><span>速度</span></div>
+    <span id="time">0:00 / 0:00</span>
+    <span class="hint">Space 再生・停止 / ← → 10 秒 / Shift+← → 60 秒 / 1 2 画面数 / W ワイプ / M ミュート / C チャプター / F 全画面 / [ ] 速度</span>
+  </div>
+  <div id="dev">
+    <span>同期の微調整 (1 フレーム = 1/30 秒)</span>
+    <span id="dev-rows"></span>
+    <textarea id="dev-out" readonly></textarea>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script>
+(() => {
+  // 再生用ファイルは同期とカットを済ませてあるので、3 本とも同じ時刻軸で再生できる.
+  // ここで行うのは、再生中に生じるわずかなずれの補正と、表示の切り替えだけ.
+  const D = window.GOTAN;
+  const RATES = [0.5, 1, 1.25, 1.5, 2];
+  const FRAME = 1 / 30;
+  const WIPE_POS = ['tl', 'tr', 'bl', 'br', 'bc'];
+  const WIPE_SIZES = [['s', '小'], ['m', '中'], ['l', '大']];
+  const STORE_KEY = 'multicam-player:ui';
+  const $ = (s) => document.querySelector(s);
+  const stage = $('#stage');
+  const offsets = Object.fromEntries(D.videos.map((v) => [v.id, (D.offsets && D.offsets[v.id]) || 0]));
+
+  // 見た目の設定はブラウザに保存して次回も使う. 保存できない環境では既定値で始める.
+  const saved = (() => { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch { return {}; } })();
+  const ui = {
+    chapters: saved.chapters !== false,
+    wipePos: WIPE_POS.includes(saved.wipePos) ? saved.wipePos : 'bc',
+    wipeSize: WIPE_SIZES.some(([k]) => k === saved.wipeSize) ? saved.wipeSize : 'm',
+  };
+  const saveUi = () => { try { localStorage.setItem(STORE_KEY, JSON.stringify(ui)); } catch { /* 保存できなくても動作は続ける. */ } };
+
+  const state = { layout: 2, wipe: true, left: 'player1', right: 'player2', single: 'player1',
+    audio: D.defaultAudio, muted: false, rate: 1, playing: false };
+
+  document.title = D.title;
+  $('#title').textContent = D.title;
+  if (new URLSearchParams(location.search).has('dev')) document.body.classList.add('dev');
+
+  // 映像のタイルを作る.
+  const vids = {};
+  const tiles = {};
+  for (const v of D.videos) {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.dataset.id = v.id;
+    tile.innerHTML = '<video preload="auto" playsinline muted></video><div class="label"><span class="name"></span> <span class="speaker"></span></div>';
+    tile.querySelector('.name').textContent = v.label;
+    stage.appendChild(tile);
+    vids[v.id] = tile.querySelector('video');
+    tiles[v.id] = tile;
+  }
+  const ids = D.videos.map((v) => v.id);
+  const master = () => vids[state.audio];
+  const fmt = (t) => {
+    t = Math.max(0, Math.floor(t));
+    const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
+    return (h ? `${h}:${String(m).padStart(2, '0')}` : `${m}`) + `:${String(s).padStart(2, '0')}`;
+  };
+  const duration = () => Math.min(...ids.map((id) => vids[id].duration || Infinity));
+
+  // 動画の読み込み先. mediaBase の URL、同じ階層の media/ の順に試し、どちらも駄目ならフォルダを選んでもらう.
+  const sources = Object.fromEntries(D.videos.map((v) => {
+    const list = [];
+    if (D.mediaBase) list.push(D.mediaBase.replace(/\/?$/, '/') + v.file);
+    list.push('media/' + v.file);
+    return [v.id, list];
+  }));
+  const tried = Object.fromEntries(ids.map((id) => [id, 0]));
+  function loadNext(id) {
+    const list = sources[id];
+    if (tried[id] >= list.length) { showPicker(); return; }
+    vids[id].src = list[tried[id]++];
+  }
+  for (const id of ids) {
+    vids[id].addEventListener('error', () => { if (!vids[id].src.startsWith('blob:')) loadNext(id); });
+    loadNext(id);
+  }
+  function showPicker() {
+    $('#picker-files').textContent = D.videos.map((v) => v.file).join('、');
+    $('#picker').hidden = false;
+  }
+  $('#picker-input').addEventListener('change', (e) => {
+    const byName = Object.fromEntries([...e.target.files].map((f) => [f.name, f]));
+    const missing = D.videos.filter((v) => !byName[v.file]).map((v) => v.file);
+    if (missing.length) { $('#picker-files').textContent = `${missing.join('、')} が見つかりません。` + D.videos.map((v) => v.file).join('、'); return; }
+    for (const v of D.videos) vids[v.id].src = URL.createObjectURL(byName[v.file]);
+    $('#picker').hidden = true;
+  });
+
+  // セレクトボックス.
+  for (const sel of ['#left', '#right', '#single', '#audio']) {
+    $(sel).innerHTML = D.videos.map((v) => `<option value="${v.id}"></option>`).join('');
+    $(sel).querySelectorAll('option').forEach((o, i) => (o.textContent = D.videos[i].label));
+  }
+  $('#left').value = state.left; $('#right').value = state.right; $('#single').value = state.single; $('#audio').value = state.audio;
+  $('#left').onchange = (e) => { state.left = e.target.value; render(); };
+  $('#right').onchange = (e) => { state.right = e.target.value; render(); };
+  $('#single').onchange = (e) => { state.single = e.target.value; render(); };
+  $('#audio').onchange = (e) => setAudio(e.target.value);
+  // 選んだあともフォーカスが残るとキー操作が効かなくなるので外す.
+  document.querySelectorAll('header select').forEach((s) => s.addEventListener('change', () => s.blur()));
+
+  function setAudio(id) {
+    // 音声を切り替えるときは、新しい基準の位置を旧基準に合わせてから切り替える.
+    const t = master().currentTime - offsets[state.audio];
+    state.audio = id;
+    render();
+    seek(t);
+  }
+  function toggleMute() { state.muted = !state.muted; render(); }
+  $('#mute').onclick = toggleMute;
+
+  // 表示. 大きい画面は 2 本か 1 本. ワイプの映像を大きい画面に選んだときは、同じ映像が 2 つ並ばないようにワイプを隠す.
+  const mainIds = () => (state.layout === 2 ? [state.left, state.right] : [state.single]);
+  function render() {
+    stage.dataset.layout = state.layout;
+    const main = mainIds();
+    const wipeOn = state.wipe && !main.includes(D.wipe);
+    for (const id of ids) {
+      const tile = tiles[id];
+      const isWipe = id === D.wipe && wipeOn;
+      tile.hidden = !main.includes(id) && !isWipe;
+      tile.classList.toggle('wipe', isWipe);
+      if (isWipe) { tile.dataset.pos = ui.wipePos; tile.dataset.size = ui.wipeSize; }
+      // 2 画面では左右の並び順を選択に合わせる.
+      tile.style.order = main.indexOf(id);
+      tile.querySelector('.speaker').textContent = state.audio === id ? (state.muted ? '🔇' : '🔊') : '';
+    }
+    for (const id of ids) vids[id].muted = state.muted || id !== state.audio;
+    document.querySelectorAll('#layout-group [data-layout]').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.layout === state.layout)));
+    $('#wipe-toggle').setAttribute('aria-pressed', String(state.wipe));
+    $('#pick2').hidden = state.layout !== 2;
+    $('#pick1').hidden = state.layout !== 1;
+    $('#audio').value = state.audio;
+    $('#mute').setAttribute('aria-pressed', String(state.muted));
+    $('#chapters-toggle').setAttribute('aria-pressed', String(ui.chapters));
+    document.body.classList.toggle('chapters-hidden', !ui.chapters);
+    document.querySelectorAll('#rates button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.rate === state.rate)));
+    tiles[D.wipe].querySelectorAll('.sizes button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.size === ui.wipeSize)));
+  }
+  function setLayout(n) { state.layout = n; render(); }
+  function toggleWipe() { state.wipe = !state.wipe; render(); }
+  function toggleChapters() { ui.chapters = !ui.chapters; saveUi(); render(); }
+  document.querySelectorAll('#layout-group [data-layout]').forEach((b) => (b.onclick = () => setLayout(+b.dataset.layout)));
+  $('#wipe-toggle').onclick = toggleWipe;
+  $('#chapters-toggle').onclick = toggleChapters;
+
+  // ワイプの大きさボタン. ワイプにマウスを重ねたときだけ出す.
+  const wipeTile = tiles[D.wipe];
+  const sizes = document.createElement('div');
+  sizes.className = 'sizes';
+  for (const [k, name] of WIPE_SIZES) {
+    const b = document.createElement('button');
+    b.dataset.size = k;
+    b.textContent = name;
+    b.title = `ワイプの大きさ: ${name}`;
+    b.onclick = () => { ui.wipeSize = k; saveUi(); render(); };
+    sizes.appendChild(b);
+  }
+  wipeTile.appendChild(sizes);
+
+  // ワイプのドラッグ. 離した位置にいちばん近い吸い付き先 (四隅と中央下) へ置く.
+  let drag = null;
+  wipeTile.addEventListener('pointerdown', (e) => {
+    if (!wipeTile.classList.contains('wipe') || e.target.closest('button')) return;
+    const w = wipeTile.getBoundingClientRect();
+    drag = { dx: e.clientX - w.left, dy: e.clientY - w.top };
+    wipeTile.setPointerCapture(e.pointerId);
+    wipeTile.classList.add('dragging');
+    moveWipe(e);
+  });
+  function moveWipe(e) {
+    const s = stage.getBoundingClientRect();
+    wipeTile.style.left = `${e.clientX - s.left - drag.dx}px`;
+    wipeTile.style.top = `${e.clientY - s.top - drag.dy}px`;
+  }
+  wipeTile.addEventListener('pointermove', (e) => { if (drag) moveWipe(e); });
+  const endDrag = () => {
+    if (!drag) return;
+    const s = stage.getBoundingClientRect(), w = wipeTile.getBoundingClientRect();
+    const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--wipe-gap')) || 16;
+    const cx = w.left + w.width / 2 - s.left, cy = w.top + w.height / 2 - s.top;
+    const l = gap + w.width / 2, r = s.width - gap - w.width / 2;
+    const t = gap + w.height / 2, b = s.height - gap - w.height / 2;
+    const anchors = { tl: [l, t], tr: [r, t], bl: [l, b], br: [r, b], bc: [s.width / 2, b] };
+    ui.wipePos = Object.entries(anchors).sort(([, p], [, q]) => Math.hypot(p[0] - cx, p[1] - cy) - Math.hypot(q[0] - cx, q[1] - cy))[0][0];
+    drag = null;
+    wipeTile.classList.remove('dragging');
+    wipeTile.style.left = wipeTile.style.top = '';
+    saveUi();
+    render();
+  };
+  wipeTile.addEventListener('pointerup', endDrag);
+  wipeTile.addEventListener('pointercancel', endDrag);
+
+  // 全画面. ページ全体を全画面にし、操作バーとチャプターもそのまま使えるようにする.
+  const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+  function toggleFullscreen() {
+    const el = document.documentElement;
+    if (fsElement()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+  }
+  $('#fullscreen').onclick = toggleFullscreen;
+  for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) {
+    document.addEventListener(ev, () => $('#fullscreen').setAttribute('aria-pressed', String(!!fsElement())));
+  }
+
+  // 速度.
+  for (const r of RATES) {
+    const b = document.createElement('button');
+    b.dataset.rate = r;
+    b.textContent = `${r}×`;
+    b.onclick = () => setRate(r);
+    $('#rates').appendChild(b);
+  }
+  function setRate(r) {
+    state.rate = r;
+    for (const id of ids) vids[id].playbackRate = r;
+    render();
+  }
+  function stepRate(d) {
+    const i = RATES.indexOf(state.rate);
+    setRate(RATES[Math.min(RATES.length - 1, Math.max(0, i + d))]);
+  }
+
+  // 再生・停止・シーク.
+  function play() {
+    state.playing = true;
+    for (const id of ids) vids[id].play().catch(() => {});
+    $('#play').textContent = '❚❚ 停止';
+  }
+  function pause() {
+    state.playing = false;
+    for (const id of ids) vids[id].pause();
+    $('#play').textContent = '▶ 再生';
+  }
+  async function seek(t) {
+    // 範囲外へ飛ばないように丸める. 先頭へ戻ってしまう事故を避ける.
+    const d = duration();
+    t = Math.min(Math.max(0, t), isFinite(d) ? d - 0.5 : t);
+    // 3 本のシーク完了を待ってから再生を再開する. 1 本だけ先に進むのを防ぐ.
+    const resume = state.playing;
+    for (const id of ids) vids[id].pause();
+    await Promise.all(ids.map((id) => new Promise((r) => {
+      vids[id].addEventListener('seeked', r, { once: true });
+      vids[id].currentTime = t + offsets[id];
+    })));
+    tick();
+    if (resume && state.playing) for (const id of ids) vids[id].play().catch(() => {});
+  }
+  const now = () => master().currentTime - offsets[state.audio];
+  $('#play').onclick = () => (state.playing ? pause() : play());
+  document.querySelectorAll('[data-skip]').forEach((b) => (b.onclick = () => seek(now() + +b.dataset.skip)));
+
+  // どれか 1 本が読み込み待ちになったら全体を止め、そろったら再開する.
+  for (const id of ids) {
+    vids[id].addEventListener('waiting', () => { if (state.playing) for (const k of ids) if (k !== id) vids[k].pause(); });
+    vids[id].addEventListener('canplay', () => { if (state.playing) for (const k of ids) if (vids[k].paused) vids[k].play().catch(() => {}); });
+    vids[id].addEventListener('ended', pause);
+  }
+
+  // 音声を担当する 1 本を基準に、ほかの映像のずれを補正する. ミュート中も基準は同じ.
+  // 小さなずれは速度の微調整で、大きなずれは位置の再設定で直す.
+  function syncFollowers() {
+    const m = master();
+    const base = m.currentTime - offsets[state.audio];
+    for (const id of ids) {
+      if (id === state.audio) continue;
+      const v = vids[id];
+      const diff = (v.currentTime - offsets[id]) - base;
+      if (Math.abs(diff) > 0.25 || m.paused) {
+        if (Math.abs(diff) > 0.05) v.currentTime = base + offsets[id];
+        v.playbackRate = state.rate;
+      } else if (Math.abs(diff) > 0.04) {
+        v.playbackRate = state.rate * (diff > 0 ? 0.9 : 1.1);
+      } else {
+        v.playbackRate = state.rate;
+      }
+    }
+  }
+  setInterval(() => { if (state.playing) syncFollowers(); }, 250);
+
+  // シークバーとチャプター.
+  const seekEl = $('#seek');
+  const chapters = (D.chapters || []).slice().sort((a, b) => a.t - b.t);
+  function drawMarks() {
+    const d = duration();
+    if (!isFinite(d)) return;
+    seekEl.querySelectorAll('.mark').forEach((n) => n.remove());
+    for (const c of chapters) {
+      const m = document.createElement('div');
+      m.className = 'mark';
+      m.style.left = `${(c.t / d) * 100}%`;
+      m.title = `${fmt(c.t)} ${c.title}`;
+      seekEl.appendChild(m);
+    }
+  }
+  const list = $('#chapters');
+  for (const [i, c] of chapters.entries()) {
+    const li = document.createElement('li');
+    li.innerHTML = '<time></time><span></span>';
+    li.querySelector('time').textContent = fmt(c.t);
+    li.querySelector('span').textContent = c.title;
+    li.onclick = () => seek(chapters[i].t);
+    list.appendChild(li);
+  }
+  seekEl.addEventListener('click', (e) => {
+    const r = seekEl.getBoundingClientRect();
+    seek(((e.clientX - r.left) / r.width) * duration());
+  });
+  let lastCh = -1;
+  function tick() {
+    const d = duration(), t = now();
+    const p = isFinite(d) && d > 0 ? (t / d) * 100 : 0;
+    seekEl.querySelector('.fill').style.width = `${p}%`;
+    seekEl.querySelector('.knob').style.left = `${p}%`;
+    $('#time').textContent = `${fmt(t)} / ${isFinite(d) ? fmt(d) : '--:--'}`;
+    let ci = -1;
+    chapters.forEach((c, i) => { if (c.t <= t + 0.25) ci = i; });
+    if (ci !== lastCh) {
+      list.querySelectorAll('li').forEach((li, i) => li.classList.toggle('current', i === ci));
+      if (ci >= 0 && ui.chapters) list.children[ci].scrollIntoView({ block: 'nearest' });
+      lastCh = ci;
+    }
+  }
+  setInterval(tick, 200);
+  for (const id of ids) vids[id].addEventListener('loadedmetadata', () => { drawMarks(); tick(); });
+
+  // キーボード操作.
+  // ボタンにフォーカスが残ると Space がボタンも押してしまい、二重に切り替わるので外す.
+  document.addEventListener('click', (e) => e.target.closest?.('button')?.blur());
+  document.addEventListener('keydown', (e) => {
+    if (e.target.closest?.('textarea, input')) return;
+    // Cmd+C などブラウザのショートカットは横取りしない.
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const big = e.shiftKey ? 60 : 10;
+    switch (e.key.toLowerCase()) {
+      case ' ': e.preventDefault(); state.playing ? pause() : play(); break;
+      case 'arrowleft': e.preventDefault(); seek(now() - big); break;
+      case 'arrowright': e.preventDefault(); seek(now() + big); break;
+      case '1': case '2': setLayout(+e.key); break;
+      case 'w': toggleWipe(); break;
+      case 'm': toggleMute(); break;
+      case 'c': toggleChapters(); break;
+      case 'f': toggleFullscreen(); break;
+      case '[': stepRate(-1); break;
+      case ']': stepRate(1); break;
+    }
+  });
+
+  // ?dev=1 のときだけ、同期の微調整を出す.
+  if (document.body.classList.contains('dev')) {
+    const rows = $('#dev-rows');
+    const out = () => ($('#dev-out').value = JSON.stringify(offsets));
+    for (const id of ids) {
+      const s = document.createElement('span');
+      s.innerHTML = `${id} <button data-d="-1">−1f</button><button data-d="1">+1f</button> `;
+      s.querySelectorAll('button').forEach((b) => (b.onclick = () => {
+        offsets[id] = Math.round((offsets[id] + +b.dataset.d * FRAME) * 1000) / 1000;
+        seek(now());
+        out();
+      }));
+      rows.appendChild(s);
+    }
+    out();
+  }
+
+  setRate(1);
+  render();
+})();
+</script>
+</body>
+</html>
