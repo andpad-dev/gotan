@@ -68,6 +68,8 @@ Go 1.23 より前のタイマーチャンネルは容量 1 のバッファ付き
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go 1.23 Release Notes](https://go.dev/doc/go1.23) の「Timer changes」を読む。
@@ -135,6 +137,8 @@ unconditional drain would block
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-2)
+
 **調査ルート**
 
 1. [Go Playground の共有コード](https://go.dev/play/p/X_a-_2PuQoV) を実行し、`Stop=false` の後の受信がタイムアウトすることを観測する。
@@ -181,6 +185,8 @@ Go 1.23 では、新挙動の有効化にモジュールの `go` 行が関係し
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-3)
 
 **調査ルート**
 
@@ -234,6 +240,8 @@ Go 1.27 ではこの設定は恒久的に削除され、`time` のタイマー�
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-4)
 
 **調査ルート**
 

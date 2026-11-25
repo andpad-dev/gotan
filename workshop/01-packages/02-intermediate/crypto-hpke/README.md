@@ -82,6 +82,8 @@ different info rejected: true
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go 1.26 Release Notes](https://go.dev/doc/go1.26) で `crypto/hpke` が新しい標準パッケージであることを確認する。
@@ -113,6 +115,8 @@ HPKE の暗号スイートは KEM（鍵カプセル化方式）、KDF（鍵導�
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-2)
 
 **調査ルート**
 
@@ -147,6 +151,8 @@ HPKE の暗号スイートは KEM（鍵カプセル化方式）、KDF（鍵導�
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-3)
 
 **調査ルート**
 

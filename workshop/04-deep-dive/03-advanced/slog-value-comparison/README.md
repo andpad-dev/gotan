@@ -57,6 +57,8 @@ slog.Value の型定義を読み、`==` を禁止している仕掛けを見つ�
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go Documentation](https://go.dev/doc/) を入口に、標準ライブラリの `log/slog` パッケージを開く。
@@ -97,6 +99,8 @@ type Value struct {
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-2)
 
 **調査ルート**
 
@@ -194,6 +198,8 @@ func main() {
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-3)
+
 **調査ルート**
 
 1. [Go Playground の共有コード](https://go.dev/play/p/w9nhI8d9nnl) を実行し、先頭配置と末尾配置のサイズ差を観測する。
@@ -271,6 +277,8 @@ Value.Equal slice panicked: true
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-4)
 
 **調査ルート**
 

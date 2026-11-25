@@ -85,6 +85,8 @@ without last digit: 1.000000000000000 (false)
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go Documentation](https://go.dev/doc/) から標準ライブラリの `strconv` を探し、[`FormatFloat`](https://go.dev/pkg/strconv/#FormatFloat) の `prec = -1` の説明を読む。
@@ -121,6 +123,8 @@ without last digit: 1.000000000000000 (false)
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-2)
 
 **調査ルート**
 
@@ -169,6 +173,8 @@ Go 1.27.0 では `uscale.go` が追加されました。`uscale.go` は、浮動
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-3)
+
 **調査ルート**
 
 1. [変更コミット `71300e8`](https://go.dev/change/71300e80113c6ca56105aac524e9c1b0db43910f) の本文を読み、そこで参照されている変換方式と記事を確認する。
@@ -214,6 +220,8 @@ func (u unrounded) round() uint64 {
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-4)
 
 **調査ルート**
 

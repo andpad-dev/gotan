@@ -48,6 +48,8 @@ slog.Handler インタフェースにはメソッドがいくつあり、それ�
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go Documentation](https://go.dev/doc/) から標準ライブラリの `log/slog` を開く。
@@ -149,6 +151,8 @@ with Resolve: REDACTED
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-2)
+
 **調査ルート**
 
 1. [Go Playground の共有コード](https://go.dev/play/p/wXj_QdVwc19) を実行し、panic の有無と `Resolve` 前後の出力を観測する。
@@ -200,6 +204,8 @@ with Resolve: REDACTED
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-3)
 
 **調査ルート**
 

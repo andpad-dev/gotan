@@ -79,6 +79,8 @@ limited: context deadline exceeded
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go 1.21 リリースノートの context](https://go.dev/doc/go1.21#context) を開き、親のキャンセルを伝播しない派生コンテキストが追加されたことを確認する。
@@ -106,6 +108,8 @@ limited: context deadline exceeded
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-2)
 
 **調査ルート**
 
@@ -135,6 +139,8 @@ limited: context deadline exceeded
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-3)
 
 **調査ルート**
 

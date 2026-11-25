@@ -23,7 +23,7 @@ func main() {
 "gopher" string
 ```
 
-何をやっているコードか調べてみましょう。
+何をやっているコードか調べてみましょう。調べ方に迷ったら、[標準パッケージの調べ方](../01-packages/README.md)も参照してください。
 
 この例では、同じ `value` を「Go のリテラルらしい表示」と「型名」の2通りで確認しています。上の `"gopher"` と `string` が、それぞれどの書式から出たかを対応付けながら調べてみましょう。
 
@@ -53,6 +53,8 @@ func main() {
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-1)
 
 **調査ルート**
 
@@ -97,6 +99,8 @@ fmt.Printf("%#[1]v %[1]T\n", value)
 
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-2)
 
 **調査ルート**
 

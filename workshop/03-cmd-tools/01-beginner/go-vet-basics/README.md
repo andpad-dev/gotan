@@ -76,6 +76,8 @@ main.go:7:21: fmt.Printf format %d has arg name of wrong type string
 <details>
 <summary>答え</summary>
 
+[画面付きの調査・回答例](RESEARCH.md#question-1)
+
 **調査ルート**
 
 1. [Go Documentation](https://go.dev/doc/) を入口に、`go vet` の公式ドキュメントを探す。
@@ -124,6 +126,8 @@ Go の公式サイトのドキュメントを参照し、
 </details>
 <details>
 <summary>答え</summary>
+
+[画面付きの調査・回答例](RESEARCH.md#question-2)
 
 **調査ルート**
 
